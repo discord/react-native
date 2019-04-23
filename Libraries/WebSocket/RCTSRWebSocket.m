@@ -1474,10 +1474,7 @@ static const size_t RCTSRFrameHeaderOverhead = 32;
             // messages
             [self _performDelegateBlock:^{
               if ([self.delegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
-                [self.delegate webSocket:self
-                        didCloseWithCode:RCTSRStatusCodeGoingAway
-                                  reason:@"Stream end encountered"
-                                wasClean:NO];
+                [self.delegate webSocket:self didCloseWithCode:self->_closeCode reason:self->_closeReason wasClean:NO];
               }
             }];
           }
