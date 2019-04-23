@@ -19,7 +19,8 @@
 #define RCTAssertRunLoop() \
   RCTAssert(_runLoop == [NSRunLoop currentRunLoop], @"This method must be called on the CADisplayLink run loop")
 
-@implementation RCTDisplayLink {
+@implementation RCTDisplayLink
+{
   CADisplayLink *_jsDisplayLink;
   NSMutableSet<RCTModuleData *> *_frameUpdateObservers;
   NSRunLoop *_runLoop;
