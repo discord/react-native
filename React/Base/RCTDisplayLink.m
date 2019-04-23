@@ -8,7 +8,7 @@
 #import "RCTDisplayLink.h"
 
 #import <Foundation/Foundation.h>
-#import <QuartzCore/CADisplayLink.h>
+#import "DCDDisplayLink.h"
 
 #import "RCTAssert.h"
 #import "RCTBridgeModule.h"
@@ -20,7 +20,7 @@
   RCTAssert(_runLoop == [NSRunLoop currentRunLoop], @"This method must be called on the CADisplayLink run loop")
 
 @implementation RCTDisplayLink {
-  CADisplayLink *_jsDisplayLink;
+  DCDDisplayLink *_jsDisplayLink;
   NSMutableSet<RCTModuleData *> *_frameUpdateObservers;
   NSRunLoop *_runLoop;
 }
@@ -29,7 +29,7 @@
 {
   if ((self = [super init])) {
     _frameUpdateObservers = [NSMutableSet new];
-    _jsDisplayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(_jsThreadUpdate:)];
+    _jsDisplayLink = [DCDDisplayLink displayLinkWithTarget:self selector:@selector(_jsThreadUpdate:)];
   }
 
   return self;
@@ -107,7 +107,7 @@
   }
 }
 
-- (void)_jsThreadUpdate:(CADisplayLink *)displayLink
+- (void)_jsThreadUpdate:(DCDDisplayLink *)displayLink
 {
   RCTAssertRunLoop();
 
