@@ -7,7 +7,7 @@
 
 #import <Foundation/Foundation.h>
 
-@class DCDDisplayLink;
+@class CADisplayLink;
 
 /**
  * Interface containing the information about the last screen refresh.
@@ -24,7 +24,7 @@
  */
 @property (nonatomic, readonly) NSTimeInterval deltaTime;
 
-- (instancetype)initWithDisplayLink:(DCDDisplayLink *)displayLink NS_DESIGNATED_INITIALIZER;
+- (instancetype)initWithDisplayLink:(CADisplayLink *)displayLink NS_DESIGNATED_INITIALIZER;
 
 @end
 
