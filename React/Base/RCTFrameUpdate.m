@@ -5,7 +5,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-#import "DCDDisplayLink.h"
+#import <QuartzCore/CADisplayLink.h>
 
 #import "RCTFrameUpdate.h"
 
@@ -15,7 +15,7 @@
 
 RCT_NOT_IMPLEMENTED(-(instancetype)init)
 
-- (instancetype)initWithDisplayLink:(DCDDisplayLink *)displayLink
+- (instancetype)initWithDisplayLink:(CADisplayLink *)displayLink
 {
   if ((self = [super init])) {
     _timestamp = displayLink.timestamp;
