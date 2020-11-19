@@ -146,6 +146,11 @@ RCT_EXPORT_MODULE()
                                                  name:name
                                                object:nil];
   }
+
+  [[NSNotificationCenter defaultCenter] addObserver:self
+                                           selector:@selector(deviceProximityStateDidChange)
+                                               name:UIDeviceProximityStateDidChangeNotification
+                                             object:nil];
 }
 
 - (void)dealloc
@@ -180,6 +185,15 @@ RCT_EXPORT_MODULE()
 {
   _inBackground = NO;
   [self startTimers];
+}
+
+- (void)deviceProximityStateDidChange
+{
+  if ([[UIDevice currentDevice] proximityState]) {
+    [self appDidMoveToBackground];
+  } else {
+    [self appDidMoveToForeground];
+  }
 }
 
 - (void)stopTimers
