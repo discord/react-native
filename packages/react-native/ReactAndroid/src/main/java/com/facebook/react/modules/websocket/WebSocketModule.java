@@ -44,6 +44,13 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
     void onMessage(ByteString byteString, WritableMap params);
   }
 
+  public interface OnOpenHandler {
+
+    void onOpen(final WebSocket webSocket, final int socketId);
+  }
+
+  public @Nullable OnOpenHandler mOnOpenHandler = null;
+
   private final Map<Integer, WebSocket> mWebSocketConnections = new ConcurrentHashMap<>();
   private final Map<Integer, ContentHandler> mContentHandlers = new ConcurrentHashMap<>();
 
@@ -166,6 +173,10 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
             params.putInt("id", id);
             params.putString("protocol", response.header("Sec-WebSocket-Protocol", ""));
             sendEvent("websocketOpen", params);
+
+            if (mOnOpenHandler != null) {
+              mOnOpenHandler.onOpen(webSocket, id);
+            }
           }
 
           @Override
