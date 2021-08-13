@@ -9,12 +9,14 @@
 
 package com.facebook.react.views.image
 
+import android.annotation.SuppressLint
 import android.content.Context
 import android.graphics.Bitmap
 import android.graphics.BitmapShader
 import android.graphics.Canvas
 import android.graphics.Color
 import android.graphics.Matrix
+import android.graphics.Outline
 import android.graphics.Paint
 import android.graphics.Rect
 import android.graphics.Shader
@@ -22,6 +24,8 @@ import android.graphics.Shader.TileMode
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.view.View
+import android.view.ViewOutlineProvider
 import android.widget.Toast
 import com.facebook.common.references.CloseableReference
 import com.facebook.common.util.UriUtil
@@ -119,6 +123,7 @@ public class ReactImageView(
   private var resizeMultiplier = 1.0f
   private val reactBackgroundManager = ReactViewBackgroundManager(this)
   private var resizeMethod = ImageResizeMethod.AUTO
+  private var viewOutlineProvider: RoundingOutlineProvider? = null
 
   init {
     reactBackgroundManager.setOverflow("hidden")
@@ -452,11 +457,26 @@ public class ReactImageView(
 
     val roundingParams = hierarchy.roundingParams
     if (roundingParams != null) {
-      roundingParams.setCornersRadii(
+      if (
+        computedCornerRadii[0] == computedCornerRadii[1] &&
+        computedCornerRadii[0] == computedCornerRadii[2] &&
+        computedCornerRadii[0] == computedCornerRadii[3] &&
+        computedCornerRadii[0] > 0
+      ) {
+        if (viewOutlineProvider == null) {
+          viewOutlineProvider = RoundingOutlineProvider()
+        }
+        viewOutlineProvider!!.radius = computedCornerRadii[0]
+        clipToOutline = true
+        outlineProvider = viewOutlineProvider
+      } else {
+        roundingParams.setCornersRadii(
           computedCornerRadii[0],
           computedCornerRadii[1],
           computedCornerRadii[2],
-          computedCornerRadii[3])
+          computedCornerRadii[3]
+        )
+      }
 
       backgroundImageDrawable?.let { background ->
         background.setBorder(borderColor, borderWidth)
@@ -706,6 +726,14 @@ public class ReactImageView(
         "Warning: Image source \"$uri\" doesn't exist",
         Toast.LENGTH_SHORT)
         .show();
+    }
+  }
+
+  @SuppressLint("NewApi")
+  private inner class RoundingOutlineProvider : ViewOutlineProvider() {
+    var radius: Float = 0f
+    override fun getOutline(view: View, outline: Outline) {
+      outline.setRoundRect(0, 0, view.width, view.height, radius)
     }
   }
 
