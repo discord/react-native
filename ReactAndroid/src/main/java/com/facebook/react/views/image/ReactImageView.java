@@ -348,6 +348,37 @@ public class ReactImageView extends GenericDraweeView {
           warnImageSource(source.getString("uri"));
           imageSource = ImageSource.getTransparentBitmapImageSource(getContext());
         }
+      } else {
+        for (int idx = 0; idx < sources.size(); idx++) {
+          ReadableMap source = sources.getMap(idx);
+          String uri = source.getString("uri");
+          boolean isForceCached;
+          if (source.hasKey("isForceCached")) {
+            isForceCached = source.getBoolean("isForceCached");
+          } else {
+            isForceCached = false;
+          }
+          double width;
+          if (source.hasKey("width")) {
+            width = source.getDouble("width");
+          } else {
+            width = 0;
+          }
+          double height;
+          if (source.hasKey("height")) {
+            height = source.getDouble("height");
+          } else {
+            height = 0;
+          }
+          ImageSource imageSource =
+              new ImageSource(
+                  getContext(), uri, width, height, isForceCached);
+          tmpSources.add(imageSource);
+          if (Uri.EMPTY.equals(imageSource.getUri())) {
+            warnImageSource(source.getString("uri"));
+            imageSource = ImageSource.getTransparentBitmapImageSource(getContext());
+          }
+        }
         tmpSources.add(imageSource);
       }
     }
