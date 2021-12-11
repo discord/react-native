@@ -335,7 +335,7 @@ public class ReactImageView extends GenericDraweeView {
 
     if (sources == null || sources.size() == 0) {
       tmpSources.add(ImageSource.getTransparentBitmapImageSource(getContext()));
-    } else if (sources.size() == 1) {
+    } else if (sources.size() == 1)  {
       // Optimize for the case where we have just one uri, case in which we don't need the sizes
       ReadableMap source = sources.getMap(0);
       ImageSource imageSource = new ImageSource(getContext(), source.getString("uri"));
@@ -347,14 +347,30 @@ public class ReactImageView extends GenericDraweeView {
     } else {
       for (int idx = 0; idx < sources.size(); idx++) {
         ReadableMap source = sources.getMap(idx);
+        String uri = source.getString("uri");
+        boolean isForceCached;
+        if (source.hasKey("isForceCached")) {
+          isForceCached = source.getBoolean("isForceCached");
+        } else {
+          isForceCached = false;
+        }
+        double width;
+        if (source.hasKey("width")) {
+          width = source.getDouble("width");
+        } else {
+          width = 0;
+        }
+        double height;
+        if (source.hasKey("height")) {
+          height = source.getDouble("height");
+        } else {
+          height = 0;
+        }
         ImageSource imageSource =
             new ImageSource(
-                getContext(),
-                source.getString("uri"),
-                source.getDouble("width"),
-                source.getDouble("height"));
+                getContext(), uri, width, height, isForceCached);
         if (Uri.EMPTY.equals(imageSource.getUri())) {
-          warnImageSource(source.getString("uri"));
+          warnImageSource(uri);
           imageSource = ImageSource.getTransparentBitmapImageSource(getContext());
         }
         tmpSources.add(imageSource);
