@@ -9,22 +9,32 @@ package com.facebook.react.views.imagehelper;
 
 import android.content.Context;
 import android.net.Uri;
+import androidx.annotation.Nullable;
+import androidx.arch.core.util.Function;
+
+import com.facebook.infer.annotation.Assertions;
+import java.util.Objects;
+
 import java.util.Objects;
 
 /** Class describing an image source (network URI or resource) and size. */
 public class ImageSource {
 
-  private static final String TRANSPARENT_BITMAP_URI =
-      "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+  public static Function<String, String> mSourceOverride = null;
 
-  private Uri mUri;
+  private static final String TRANSPARENT_BITMAP_URI =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
+  private @Nullable Uri mUri;
   private String mSource;
   private double mSize;
   private boolean isResource;
+  private boolean isForceCached;
 
-  public ImageSource(Context context, String source, double width, double height) {
+  public ImageSource(Context context, String source, double width, double height, boolean forceCached) {
     mSource = source;
     mSize = width * height;
+    isForceCached = forceCached;
 
     // Important: we compute the URI here so that we don't need to hold a reference to the context,
     // potentially causing leaks.
@@ -52,7 +62,7 @@ public class ImageSource {
   }
 
   public ImageSource(Context context, String source) {
-    this(context, source, 0.0d, 0.0d);
+    this(context, source, 0.0d, 0.0d, false);
   }
 
   /** Get the source of this image, as it was passed to the constructor. */
@@ -70,6 +80,10 @@ public class ImageSource {
     return mSize;
   }
 
+  public boolean isForceCached() {
+    return isForceCached;
+  }
+
   /** Get whether this image source represents an Android resource or a network URI. */
   public boolean isResource() {
     return isResource;
@@ -77,6 +91,9 @@ public class ImageSource {
 
   private Uri computeUri(Context context) {
     try {
+      if (mSourceOverride != null) {
+        mSource = mSourceOverride.apply(mSource);
+      }
       Uri uri = Uri.parse(mSource);
       // Verify scheme is set, so that relative uri (used by static resources) are not handled.
       return uri.getScheme() == null ? computeLocalUri(context) : uri;

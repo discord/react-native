@@ -87,13 +87,20 @@ public class MultiSourceHelper {
     for (ImageSource source : sources) {
       double precision = Math.abs(1.0 - source.getSize() / viewArea);
       if (precision < bestPrecision) {
-        bestPrecision = precision;
-        best = source;
+        if (!source.isForceCached()) {
+          bestPrecision = precision;
+          best = source;
+        }
       }
       if (precision < bestCachePrecision
           && (imagePipeline.isInBitmapMemoryCache(source.getUri())
               || imagePipeline.isInDiskCacheSync(source.getUri()))) {
         bestCachePrecision = precision;
+        bestCached = source;
+      }
+
+      if (source.isForceCached()) {
+        bestCachePrecision = 0;
         bestCached = source;
       }
     }
