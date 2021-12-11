@@ -13,6 +13,8 @@ import androidx.annotation.Nullable;
 import com.facebook.infer.annotation.Assertions;
 import java.util.Objects;
 
+import java.util.Objects;
+
 /** Class describing an image source (network URI or resource) and size. */
 public class ImageSource {
 
@@ -20,10 +22,12 @@ public class ImageSource {
   private String mSource;
   private double mSize;
   private boolean isResource;
+  private boolean isForceCached;
 
-  public ImageSource(Context context, String source, double width, double height) {
+  public ImageSource(Context context, String source, double width, double height, boolean forceCached) {
     mSource = source;
     mSize = width * height;
+    isForceCached = forceCached;
 
     // Important: we compute the URI here so that we don't need to hold a reference to the context,
     // potentially causing leaks.
@@ -47,7 +51,7 @@ public class ImageSource {
   }
 
   public ImageSource(Context context, String source) {
-    this(context, source, 0.0d, 0.0d);
+    this(context, source, 0.0d, 0.0d, false);
   }
 
   /** Get the source of this image, as it was passed to the constructor. */
@@ -63,6 +67,10 @@ public class ImageSource {
   /** Get the area of this image. */
   public double getSize() {
     return mSize;
+  }
+
+  public boolean isForceCached() {
+    return isForceCached;
   }
 
   /** Get whether this image source represents an Android resource or a network URI. */
