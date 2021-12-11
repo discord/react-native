@@ -57,8 +57,10 @@ internal object MultiSourceHelper {
     for (source in sources) {
       val precision = abs(1.0 - source.size / viewArea)
       if (precision < bestPrecision) {
-        bestPrecision = precision
-        best = source
+        if (!source.isForceCached) {
+          bestPrecision = precision
+          best = source
+        }
       }
       if (
           precision < bestCachePrecision &&
@@ -70,6 +72,10 @@ internal object MultiSourceHelper {
                   imagePipeline.isInDiskCacheSync(source.uri))
       ) {
         bestCachePrecision = precision
+        bestCached = source
+      }
+      if (source.isForceCached) {
+        bestCachePrecision = 0.0
         bestCached = source
       }
     }
