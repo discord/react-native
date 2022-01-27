@@ -1,17 +1,26 @@
 #!/usr/bin/env python3
 
 from pathlib import Path
+from typing import List
 import re
 import subprocess
+import sys
+
+
+def check_output(args: List[str]) -> str:
+    return subprocess.check_output(args).decode('utf-8').strip()
+
 
 VERSION_MATCHER = re.compile(r'^(.*)-discord-(\d*)$')
 
-status_bytes = subprocess.check_output(['git', 'status', '--porcelain'])
-status = status_bytes.decode('utf-8').strip()
-assert status == '', f'Detected changed files, please remove or commit.\n\n{status}'
+status = check_output(['git', 'status', '--porcelain'])
+if status != '':
+    print('Detected changed files, please remove or commit them first.\n')
+    print(status)
+    sys.exit(1)
 
-root_bytes = subprocess.check_output(['git', 'rev-parse', '--show-toplevel'])
-root = root_bytes.decode('utf-8').strip()
+
+root = check_output(['git', 'rev-parse', '--show-toplevel'])
 android_path = Path(root) / "ReactAndroid"
 props_path = android_path / "gradle.properties"
 
@@ -39,13 +48,19 @@ with open(props_path, 'w') as f:
             f.write(f'{line}\n')
 
 
-branch_name_bytes = subprocess.check_output(['git', 'symbolic-ref', '--short', 'HEAD'])
-branch_name = branch_name_bytes.decode('utf-8').strip()
+branch_name = check_output(['git', 'symbolic-ref', '--short', 'HEAD'])
 
-subprocess.check_call(['../gradlew', 'publishReleasePublicationToDiscordRepository'], cwd=android_path.absolute())
+subprocess.check_call(
+    ['../gradlew', 'publishReleasePublicationToDiscordRepository'],
+    cwd=android_path.absolute()
+  )
 
 subprocess.check_call(['git', 'add', props_path.absolute()])
-subprocess.check_call(['git', 'commit', '-m', f'Bumping to version {new_version}'])
+subprocess.check_call(['git', 'commit', '-m', f'version bump: {new_version}'])
 subprocess.check_call(['git', 'push', 'origin', branch_name])
 
+new_commit = check_output(['git', 'rev-parse', 'HEAD'])
+
+
 print(f'NEW TAGGED VERSION: {new_version}')
+print(f'NEW COMMIT: {new_commit}')
