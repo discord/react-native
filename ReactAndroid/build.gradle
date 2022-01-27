@@ -16,6 +16,7 @@ plugins {
     id("com.facebook.react")
     id("maven-publish")
     id("de.undercouch.download")
+    id("com.google.cloud.artifactregistry.gradle-plugin") version "2.1.1"
 }
 
 import com.facebook.react.tasks.internal.*
@@ -495,8 +496,8 @@ afterEvaluate {
 
         repositories {
             maven {
-                name = "npm"
-                url = AAR_OUTPUT_URL
+                name = "discord"
+                url = uri("gcs://discord-maven")
             }
         }
     }
