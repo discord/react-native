@@ -774,9 +774,9 @@ public class ReactTextInputManager extends BaseViewManager<ReactEditText, Layout
 
   @ReactProp(name = "inlineImageLeft")
   public void setInlineImageLeft(ReactEditText view, @Nullable String resource) {
-    int id =
-        ResourceDrawableIdHelper.getInstance().getResourceDrawableId(view.getContext(), resource);
-    view.setCompoundDrawablesWithIntrinsicBounds(id, 0, 0, 0);
+    Drawable drawable =
+        ResourceDrawableIdHelper.getInstance().getResourceDrawable(view.getContext(), resource);
+    view.setCompoundDrawablesWithIntrinsicBounds(drawable, null, null, null);
   }
 
   @ReactProp(name = "inlineImagePadding")
