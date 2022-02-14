@@ -46,7 +46,7 @@ public class ResourceDrawableIdHelper {
     mResourceDrawableIdMap.clear();
   }
 
-  public int getResourceDrawableId(Context context, @Nullable String name) {
+  private int getResourceDrawableId(Context context, @Nullable String name) {
     if (name == null || name.isEmpty()) {
       return 0;
     }
