@@ -85,6 +85,8 @@ public class ReactScrollView extends ScrollView
         HasScrollEventThrottle,
         HasSmoothScroll {
 
+  static Integer MAX_FLING_VELOCITY = null;
+
   private static @Nullable Field sScrollerField;
   private static boolean sTriedToGetScrollerField = false;
 
@@ -564,7 +566,14 @@ public class ReactScrollView extends ScrollView
 
   @Override
   public void fling(int velocityY) {
-    final int correctedVelocityY = correctFlingVelocityY(velocityY);
+    final int correctedVelocityY;
+    if (MAX_FLING_VELOCITY != null) {
+      int velocityYBeforeMaxFling = correctFlingVelocityY(velocityY);
+      correctedVelocityY = (int) ((Math.min(Math.abs(velocityYBeforeMaxFling), MAX_FLING_VELOCITY)) *
+        Math.signum(velocityYBeforeMaxFling));
+    } else {
+      correctedVelocityY = correctFlingVelocityY(velocityY);
+    }
 
     if (mPagingEnabled) {
       flingAndSnap(correctedVelocityY);
