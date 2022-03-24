@@ -22,6 +22,7 @@ import android.graphics.Shader.TileMode
 import android.graphics.drawable.Animatable
 import android.graphics.drawable.Drawable
 import android.net.Uri
+import android.widget.Toast
 import com.facebook.common.references.CloseableReference
 import com.facebook.common.util.UriUtil
 import com.facebook.drawee.controller.AbstractDraweeControllerBuilder
@@ -107,6 +108,7 @@ public class ReactImageView(
   private var scaleType = defaultValue()
   private var tileMode = defaultTileMode()
   private var isDirty = false
+  private var useSmallCache = false
   private var tilePostprocessor: TilePostprocessor? = null
   private var iterativeBoxBlurPostProcessor: IterativeBoxBlurPostProcessor? = null
   private var downloadListener: ReactImageDownloadListener<ImageInfo>? = null
@@ -128,6 +130,13 @@ public class ReactImageView(
   public fun updateCallerContext(callerContext: Any?) {
     if (this.callerContext != callerContext) {
       this.callerContext = callerContext
+      isDirty = true
+    }
+  }
+
+  public fun setUseSmallCache(useSmallCache: Boolean) {
+    if (this.useSmallCache != useSmallCache) {
+      this.useSmallCache = useSmallCache
       isDirty = true
     }
   }
@@ -497,6 +506,12 @@ public class ReactImageView(
             .setAutoRotateEnabled(true)
             .setProgressiveRenderingEnabled(progressiveRenderingEnabled)
 
+    if (useSmallCache) {
+      imageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.SMALL);
+    } else {
+      imageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.DEFAULT);
+    }
+
     val imageRequest: ImageRequest =
         ReactNetworkImageRequest.fromBuilderWithHeaders(imageRequestBuilder, headers)
 
@@ -517,13 +532,20 @@ public class ReactImageView(
     callerContext?.let { builder.setCallerContext(it) }
 
     cachedImageSource?.let { cachedSource ->
-      val cachedImageRequest =
+      val cachedImageRequestBuilder =
           ImageRequestBuilder.newBuilderWithSource(cachedSource.uri)
               .setPostprocessor(postprocessor)
               .setResizeOptions(resizeOptions)
               .setAutoRotateEnabled(true)
               .setProgressiveRenderingEnabled(progressiveRenderingEnabled)
-              .build()
+
+      if (useSmallCache) {
+        cachedImageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.SMALL);
+      } else {
+        cachedImageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.DEFAULT);
+      }
+
+      val cachedImageRequest = cachedImageRequestBuilder.build()
       builder.setLowResImageRequest(cachedImageRequest)
     }
 
@@ -678,6 +700,12 @@ public class ReactImageView(
     // 4. Rinse and repeat.
     if (ReactBuildConfig.DEBUG && !ReactFeatureFlags.enableBridgelessArchitecture) {
       RNLog.w(context as ReactContext, "ReactImageView: Image source \"$uri\" doesn't exist")
+
+      Toast.makeText(
+        context,
+        "Warning: Image source \"$uri\" doesn't exist",
+        Toast.LENGTH_SHORT)
+        .show();
     }
   }
 
