@@ -123,6 +123,7 @@ public class ReactImageView extends GenericDraweeView {
   private ScalingUtils.ScaleType mScaleType = ImageResizeMode.defaultValue();
   private Shader.TileMode mTileMode = ImageResizeMode.defaultTileMode();
   private boolean mIsDirty;
+  private boolean mUseSmallCache;
   private final AbstractDraweeControllerBuilder mDraweeControllerBuilder;
   private @Nullable TilePostprocessor mTilePostprocessor;
   private @Nullable IterativeBoxBlurPostProcessor mIterativeBoxBlurPostProcessor;
@@ -152,6 +153,14 @@ public class ReactImageView extends GenericDraweeView {
     mDraweeControllerBuilder = draweeControllerBuilder;
     mGlobalImageLoadListener = globalImageLoadListener;
     mCallerContext = callerContext;
+  }
+
+  public void setUseSmallCache(boolean useSmallCache) {
+    if (this.mUseSmallCache != useSmallCache) {
+      this.mUseSmallCache = useSmallCache;
+
+      mIsDirty = true;
+    }
   }
 
   public void setShouldNotifyLoadEvents(boolean shouldNotify) {
@@ -483,6 +492,12 @@ public class ReactImageView extends GenericDraweeView {
             .setAutoRotateEnabled(true)
             .setProgressiveRenderingEnabled(mProgressiveRenderingEnabled);
 
+    if (mUseSmallCache) {
+      imageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.SMALL);
+    } else {
+      imageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.DEFAULT);
+    }
+
     ImageRequest imageRequest =
         ReactNetworkImageRequest.fromBuilderWithHeaders(imageRequestBuilder, mHeaders);
 
@@ -500,13 +515,18 @@ public class ReactImageView extends GenericDraweeView {
         .setImageRequest(imageRequest);
 
     if (mCachedImageSource != null) {
-      ImageRequest cachedImageRequest =
+      ImageRequestBuilder cachedImageRequestBuilder =
           ImageRequestBuilder.newBuilderWithSource(mCachedImageSource.getUri())
               .setPostprocessor(postprocessor)
               .setResizeOptions(resizeOptions)
               .setAutoRotateEnabled(true)
-              .setProgressiveRenderingEnabled(mProgressiveRenderingEnabled)
-              .build();
+              .setProgressiveRenderingEnabled(mProgressiveRenderingEnabled);
+      if (mUseSmallCache) {
+        cachedImageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.SMALL);
+      } else {
+        cachedImageRequestBuilder.setCacheChoice(ImageRequest.CacheChoice.DEFAULT);
+      }
+      ImageRequest cachedImageRequest = cachedImageRequestBuilder.build();
       mDraweeControllerBuilder.setLowResImageRequest(cachedImageRequest);
     }
 
@@ -574,7 +594,7 @@ public class ReactImageView extends GenericDraweeView {
       mSources.add(ImageSource.getTransparentBitmapImageSource(getContext()));
     } else if (hasMultipleSources()) {
       MultiSourceResult multiSource =
-          MultiSourceHelper.getBestSourceForSize(getWidth(), getHeight(), mSources);
+        MultiSourceHelper.getBestSourceForSize(getWidth(), getHeight(), mSources);
       mImageSource = multiSource.getBestResult();
       mCachedImageSource = multiSource.getBestResultInCache();
       return;
@@ -589,7 +609,7 @@ public class ReactImageView extends GenericDraweeView {
     // has no control over the original size
     if (mResizeMethod == ImageResizeMethod.AUTO) {
       return UriUtil.isLocalContentUri(imageSource.getUri())
-          || UriUtil.isLocalFileUri(imageSource.getUri());
+        || UriUtil.isLocalFileUri(imageSource.getUri());
     } else if (mResizeMethod == ImageResizeMethod.RESIZE) {
       return true;
     } else {
@@ -599,9 +619,11 @@ public class ReactImageView extends GenericDraweeView {
 
   private void warnImageSource(String uri) {
     if (ReactBuildConfig.DEBUG) {
-      RNLog.w(
-          (ReactContext) getContext(),
-          "ReactImageView: Image source \"" + uri + "\" doesn't exist");
+      Toast.makeText(
+        getContext(),
+        "Warning: Image source \"" + uri + "\" doesn't exist",
+        Toast.LENGTH_SHORT)
+        .show();
     }
   }
 }
