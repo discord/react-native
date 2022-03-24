@@ -115,6 +115,11 @@ public class ReactImageManager extends SimpleViewManager<ReactImageView> {
     return REACT_CLASS;
   }
 
+  @ReactProp(name = "useSmallCache")
+  public void setUseSmallCache(ReactImageView view, boolean useSmallCache) {
+    view.setUseSmallCache(useSmallCache);
+  }
+
   @ReactProp(name = "accessible")
   public void setAccessible(ReactImageView view, boolean accessible) {
     view.setFocusable(accessible);
