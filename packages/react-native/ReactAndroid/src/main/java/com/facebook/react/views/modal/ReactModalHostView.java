@@ -25,6 +25,9 @@ import android.view.accessibility.AccessibilityEvent;
 import android.widget.FrameLayout;
 import androidx.annotation.Nullable;
 import androidx.annotation.UiThread;
+import androidx.core.content.ContextCompat;
+import androidx.core.view.WindowCompat;
+
 import com.facebook.common.logging.FLog;
 import com.facebook.infer.annotation.Assertions;
 import com.facebook.react.R;
@@ -286,6 +289,14 @@ public class ReactModalHostView extends ViewGroup implements LifecycleEventListe
         .setFlags(
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE,
             WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE);
+
+    // Enabled Edge to Edge modal when transparent/translucent system UI.
+    if (mTransparent && mStatusBarTranslucent) {
+      mDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+      mDialog.getWindow().setNavigationBarColor(
+        ContextCompat.getColor(context, android.R.color.transparent));
+      WindowCompat.setDecorFitsSystemWindows(mDialog.getWindow(), false);
+    }
 
     // TODO(T85755791): remove after investigation
     FLog.e(TAG, "Creating new dialog from context: " + context + "@" + context.hashCode());
