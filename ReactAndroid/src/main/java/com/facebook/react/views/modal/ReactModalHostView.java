@@ -286,6 +286,7 @@ public class ReactModalHostView extends ViewGroup
 
     // Enabled Edge to Edge modal when transparent/translucent system UI.
     if (mTransparent && mStatusBarTranslucent) {
+      mDialog.getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
       mDialog.getWindow().setNavigationBarColor(
         ContextCompat.getColor(context, android.R.color.transparent));
       WindowCompat.setDecorFitsSystemWindows(mDialog.getWindow(), false);
