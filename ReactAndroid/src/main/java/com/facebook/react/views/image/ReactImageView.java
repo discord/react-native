@@ -563,7 +563,6 @@ public class ReactImageView extends GenericDraweeView {
     getCornerRadii(sComputedCornerRadii);
 
     RoundingParams roundingParams = hierarchy.getRoundingParams();
-    cornerRadii(sComputedCornerRadii);
 
     // If equal rounding on all corners and API 21+ use view clipping for rounding.
     if (
