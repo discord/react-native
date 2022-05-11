@@ -143,6 +143,8 @@ public class ReactEditText extends AppCompatEditText {
   private static final KeyListener sKeyListener = QwertyKeyListener.getInstanceForFullKeyboard();
   private @Nullable EventDispatcher mEventDispatcher;
 
+  private final ReactEditTextClickDetector clickDetector = new ReactEditTextClickDetector(this);
+
   public ReactEditText(Context context) {
     super(context);
     setFocusableInTouchMode(false);
@@ -265,6 +267,13 @@ public class ReactEditText extends AppCompatEditText {
         // Disallow parent views to intercept touch events, until we can detect if we should be
         // capturing these touches or not.
         this.getParent().requestDisallowInterceptTouchEvent(true);
+        clickDetector.handleDown(ev);
+        break;
+      case MotionEvent.ACTION_UP:
+        clickDetector.handleUp(ev);
+        break;
+      case MotionEvent.ACTION_CANCEL:
+        clickDetector.cancelPress();
         break;
       case MotionEvent.ACTION_MOVE:
         if (mDetectScrollMovement) {
