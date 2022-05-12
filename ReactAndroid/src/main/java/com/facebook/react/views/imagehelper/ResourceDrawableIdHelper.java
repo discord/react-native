@@ -68,23 +68,11 @@ public class ResourceDrawableIdHelper {
   }
 
   public @Nullable Drawable getResourceDrawable(Context context, @Nullable String name) {
-    Drawable otaDrawable = ImageOTAUtils.getResourceDrawable(context, name);
-
-    if (otaDrawable != null) {
-      return otaDrawable;
-    }
-
     int resId = getResourceDrawableId(context, name);
     return resId > 0 ? context.getResources().getDrawable(resId) : null;
   }
 
   public Uri getResourceDrawableUri(Context context, @Nullable String name) {
-    Uri otaUri = ImageOTAUtils.getResourceUri(context, name);
-
-    if (otaUri != null) {
-      return otaUri;
-    }
-
     int resId = getResourceDrawableId(context, name);
     return resId > 0
         ? new Uri.Builder().scheme(LOCAL_RESOURCE_SCHEME).path(String.valueOf(resId)).build()
