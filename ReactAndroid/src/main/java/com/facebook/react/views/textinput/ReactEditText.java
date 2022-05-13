@@ -212,15 +212,7 @@ public class ReactEditText extends AppCompatEditText
         clickDetector.handleDown(ev);
         break;
       case MotionEvent.ACTION_UP:
-        final boolean wasClick = clickDetector.handleUp(ev);
-        if (wasClick && forceShowKeyboardOnClicks() && isEnabled()) {
-          /*
-           It is intentional that we do not return true here.
-           We want to force the keyboard to show, but we still want to allow the user
-           to interact with the view in other ways (like changing the selection).
-          */
-          showSoftKeyboard();
-        }
+        handleTouchUp();
         break;
       case MotionEvent.ACTION_CANCEL:
         clickDetector.cancelPress();
@@ -1088,6 +1080,18 @@ public class ReactEditText extends AppCompatEditText
    */
   private boolean forceShowKeyboardOnClicks() {
     return Build.VERSION.SDK_INT <= Build.VERSION_CODES.P;
+  }
+
+  private void handleTouchUp() {
+    final boolean wasClick = clickDetector.handleUp(ev);
+    if (wasClick && forceShowKeyboardOnClicks() && isEnabled()) {
+      /*
+      It is intentional that we do not return true here from onTouchEvent.
+      We want to force the keyboard to show, but we still want to allow the user
+      to interact with the view in other ways (like changing the selection).
+      */
+      showSoftKeyboard();
+    }
   }
 
   /**
