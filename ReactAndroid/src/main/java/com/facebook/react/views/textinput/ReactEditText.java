@@ -212,7 +212,7 @@ public class ReactEditText extends AppCompatEditText
         clickDetector.handleDown(ev);
         break;
       case MotionEvent.ACTION_UP:
-        handleTouchUp();
+        clickDetector.handleUp(ev);
         break;
       case MotionEvent.ACTION_CANCEL:
         clickDetector.cancelPress();
@@ -1071,27 +1071,6 @@ public class ReactEditText extends AppCompatEditText
 
   void setEventDispatcher(@Nullable EventDispatcher eventDispatcher) {
     mEventDispatcher = eventDispatcher;
-  }
-
-  /**
-   * There is a bug on Android 7/8/9 where clicking the view while it is already
-   * focused does not show the keyboard. On those API levels, we force showing
-   * the keyboard when we detect a click.
-   */
-  private boolean forceShowKeyboardOnClicks() {
-    return Build.VERSION.SDK_INT <= Build.VERSION_CODES.P;
-  }
-
-  private void handleTouchUp() {
-    final boolean wasClick = clickDetector.handleUp(ev);
-    if (wasClick && forceShowKeyboardOnClicks() && isEnabled()) {
-      /*
-      It is intentional that we do not return true here from onTouchEvent.
-      We want to force the keyboard to show, but we still want to allow the user
-      to interact with the view in other ways (like changing the selection).
-      */
-      showSoftKeyboard();
-    }
   }
 
   /**
