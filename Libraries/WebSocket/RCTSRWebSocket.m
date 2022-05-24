@@ -554,48 +554,65 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   [self closeWithCode:RCTSRStatusCodeNormal reason:nil];
 }
 
+- (void)closeSync
+{
+  [self closeWithCode:RCTSRStatusCodeNormal reason:nil isBlocking:YES];
+}
+
 - (void)closeWithCode:(NSInteger)code reason:(NSString *)reason
 {
-  assert(code);
-  dispatch_async(_workQueue, ^{
-    if (self.readyState == RCTSR_CLOSING || self.readyState == RCTSR_CLOSED) {
-      return;
-    }
+  [self closeWithCode:code reason:reason isBlocking:NO];
+}
 
-    BOOL wasConnecting = self.readyState == RCTSR_CONNECTING;
-
-    self.readyState = RCTSR_CLOSING;
-
-    RCTSRLog(@"Closing with code %ld reason %@", code, reason);
-
-    if (wasConnecting) {
-      [self _disconnect];
-      return;
-    }
-
-    size_t maxMsgSize = [reason maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-    NSMutableData *mutablePayload = [[NSMutableData alloc] initWithLength:sizeof(uint16_t) + maxMsgSize];
-    NSData *payload = mutablePayload;
-
-    ((uint16_t *)mutablePayload.mutableBytes)[0] = NSSwapBigShortToHost(code);
-
-    if (reason) {
-      NSRange remainingRange = {0};
-
-      NSUInteger usedLength = 0;
-
-      BOOL success __unused = [reason getBytes:(char *)mutablePayload.mutableBytes + sizeof(uint16_t) maxLength:payload.length - sizeof(uint16_t) usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionExternalRepresentation range:NSMakeRange(0, reason.length) remainingRange:&remainingRange];
-
-      assert(success);
-      assert(remainingRange.length == 0);
-
-      if (usedLength != maxMsgSize) {
-        payload = [payload subdataWithRange:NSMakeRange(0, usedLength + sizeof(uint16_t))];
+- (void)closeWithCode:(NSInteger)code reason:(NSString *)reason isBlocking:(BOOL)isBlocking
+{
+    assert(code);
+  
+    void (^performClose)(void) = ^{
+      if (self.readyState == RCTSR_CLOSING || self.readyState == RCTSR_CLOSED) {
+        return;
       }
-    }
 
-    [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload];
-  });
+      BOOL wasConnecting = self.readyState == RCTSR_CONNECTING;
+
+      self.readyState = RCTSR_CLOSING;
+
+      RCTSRLog(@"Closing with code %ld reason %@", code, reason);
+
+      if (wasConnecting) {
+        [self _disconnect:isBlocking];
+        return;
+      }
+
+      size_t maxMsgSize = [reason maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+      NSMutableData *mutablePayload = [[NSMutableData alloc] initWithLength:sizeof(uint16_t) + maxMsgSize];
+      NSData *payload = mutablePayload;
+
+      ((uint16_t *)mutablePayload.mutableBytes)[0] = NSSwapBigShortToHost(code);
+
+      if (reason) {
+        NSRange remainingRange = {0};
+
+        NSUInteger usedLength = 0;
+
+        BOOL success __unused = [reason getBytes:(char *)mutablePayload.mutableBytes + sizeof(uint16_t) maxLength:payload.length - sizeof(uint16_t) usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionExternalRepresentation range:NSMakeRange(0, reason.length) remainingRange:&remainingRange];
+
+        assert(success);
+        assert(remainingRange.length == 0);
+
+        if (usedLength != maxMsgSize) {
+          payload = [payload subdataWithRange:NSMakeRange(0, usedLength + sizeof(uint16_t))];
+        }
+      }
+
+      [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload skipWorkQueueAssertion:isBlocking];
+    };
+    
+    if (isBlocking) {
+      performClose();
+    } else {
+      dispatch_async(_workQueue, performClose);
+    }
 }
 
 - (void)_closeWithProtocolError:(NSString *)message
@@ -630,15 +647,22 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   });
 }
 
-- (void)_writeData:(NSData *)data
+- (void)_writeData:(NSData *)data skipWorkQueueAssertion:(BOOL)skipWorkQueueAssertion
 {
-  [self assertOnWorkQueue];
+  if (skipWorkQueueAssertion == NO){
+    [self assertOnWorkQueue];
+  }
 
   if (_closeWhenFinishedWriting) {
     return;
   }
   [_outputBuffer appendData:data];
-  [self _pumpWriting];
+  [self _pumpWriting:skipWorkQueueAssertion];
+}
+
+- (void)_writeData:(NSData *)data
+{
+  [self _writeData:data skipWorkQueueAssertion:NO];
 }
 
 - (void)send:(id)data
@@ -772,12 +796,20 @@ static inline BOOL closeCodeIsValid(int closeCode)
   });
 }
 
-- (void)_disconnect
+- (void)_disconnect:(BOOL)skipWorkQueueAssertion
 {
-  [self assertOnWorkQueue];
+  if (skipWorkQueueAssertion == NO) {
+    [self assertOnWorkQueue];
+  }
+
   RCTSRLog(@"Trying to disconnect");
   _closeWhenFinishedWriting = YES;
   [self _pumpWriting];
+}
+
+- (void)_disconnect
+{
+  [self _disconnect:NO];
 }
 
 - (void)_handleFrameWithData:(NSData *)frameData opCode:(NSInteger)opcode
@@ -1005,9 +1037,14 @@ static const uint8_t RCTSRPayloadLenMask   = 0x7F;
   });
 }
 
-- (void)_pumpWriting
+- (void)_pumpWriting {
+  [self _pumpWriting:NO];
+}
+- (void)_pumpWriting:(BOOL)skipWorkQueueAssertion
 {
-  [self assertOnWorkQueue];
+    if (skipWorkQueueAssertion == NO) {
+        [self assertOnWorkQueue];
+    }
 
   NSUInteger dataLength = _outputBuffer.length;
   if (dataLength - _outputBufferOffset > 0 && _outputStream.hasSpaceAvailable) {
@@ -1223,9 +1260,16 @@ static const char CRLFCRLFBytes[] = {'\r', '\n', '\r', '\n'};
 
 static const size_t RCTSRFrameHeaderOverhead = 32;
 
-- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data
+- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data {
+  [self _sendFrameWithOpcode:opcode data:data skipWorkQueueAssertion:NO];
+}
+
+
+- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data skipWorkQueueAssertion:(BOOL)skipWorkQueueAssertion
 {
-  [self assertOnWorkQueue];
+  if (skipWorkQueueAssertion == NO) {
+    [self assertOnWorkQueue];
+  }
 
   if (nil == data) {
     return;
@@ -1290,7 +1334,7 @@ static const size_t RCTSRFrameHeaderOverhead = 32;
   assert(frame_buffer_size <= [frame length]);
   frame.length = frame_buffer_size;
 
-  [self _writeData:frame];
+  [self _writeData:frame skipWorkQueueAssertion:skipWorkQueueAssertion];
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode

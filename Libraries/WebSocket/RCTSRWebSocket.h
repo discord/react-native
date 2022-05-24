@@ -80,6 +80,8 @@ extern NSString *const RCTSRHTTPResponseErrorKey;
 - (void)open;
 
 - (void)close;
+- (void)closeSync;
+
 - (void)closeWithCode:(NSInteger)code reason:(NSString *)reason;
 
 // Send a UTF8 String or Data.
