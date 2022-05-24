@@ -24,6 +24,9 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sendData:(NSData *)data forSocketID:(nonnull NSNumber *)socketID;
 
+// Closes all open websockets on the main thread
+- (void)flush;
+
 @end
 
 @interface RCTBridge (RCTWebSocketModule)

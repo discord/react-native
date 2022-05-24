@@ -51,6 +51,16 @@ RCT_EXPORT_MODULE()
   return @[ @"websocketMessage", @"websocketOpen", @"websocketFailed", @"websocketClosed" ];
 }
 
+
+- (void)flush
+{
+  _contentHandlers = nil;
+  for (RCTSRWebSocket *socket in _sockets.allValues) {
+    socket.delegate = nil;
+    [socket closeSync];
+  }
+}
+
 - (void)invalidate
 {
   [super invalidate];
