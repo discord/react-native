@@ -549,6 +549,13 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   [_scheduledRunloops removeObject:@[aRunLoop, mode]];
 }
 
+- (void)flush
+{
+    // By queueing an empty block, all blocks queued before
+    // need to finish executing as this is a serial queue
+    dispatch_sync(_workQueue, ^{});
+}
+
 - (void)close
 {
   [self closeWithCode:RCTSRStatusCodeNormal reason:nil];
