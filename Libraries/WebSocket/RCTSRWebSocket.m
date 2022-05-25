@@ -580,7 +580,7 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
       RCTSRLog(@"Closing with code %ld reason %@", code, reason);
 
       if (wasConnecting) {
-        [self _disconnect:isBlocking];
+        [self _disconnect];
         return;
       }
 
@@ -605,11 +605,11 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
         }
       }
 
-      [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload skipWorkQueueAssertion:isBlocking];
+      [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload];
     };
     
     if (isBlocking) {
-      performClose();
+      dispatch_sync(_workQueue, performClose);
     } else {
       dispatch_async(_workQueue, performClose);
     }
@@ -647,22 +647,15 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   });
 }
 
-- (void)_writeData:(NSData *)data skipWorkQueueAssertion:(BOOL)skipWorkQueueAssertion
+- (void)_writeData:(NSData *)data
 {
-  if (skipWorkQueueAssertion == NO){
-    [self assertOnWorkQueue];
-  }
+  [self assertOnWorkQueue];
 
   if (_closeWhenFinishedWriting) {
     return;
   }
   [_outputBuffer appendData:data];
-  [self _pumpWriting:skipWorkQueueAssertion];
-}
-
-- (void)_writeData:(NSData *)data
-{
-  [self _writeData:data skipWorkQueueAssertion:NO];
+  [self _pumpWriting];
 }
 
 - (void)send:(id)data
@@ -796,20 +789,12 @@ static inline BOOL closeCodeIsValid(int closeCode)
   });
 }
 
-- (void)_disconnect:(BOOL)skipWorkQueueAssertion
+- (void)_disconnect
 {
-  if (skipWorkQueueAssertion == NO) {
-    [self assertOnWorkQueue];
-  }
-
+  [self assertOnWorkQueue];
   RCTSRLog(@"Trying to disconnect");
   _closeWhenFinishedWriting = YES;
   [self _pumpWriting];
-}
-
-- (void)_disconnect
-{
-  [self _disconnect:NO];
 }
 
 - (void)_handleFrameWithData:(NSData *)frameData opCode:(NSInteger)opcode
@@ -1037,14 +1022,9 @@ static const uint8_t RCTSRPayloadLenMask   = 0x7F;
   });
 }
 
-- (void)_pumpWriting {
-  [self _pumpWriting:NO];
-}
-- (void)_pumpWriting:(BOOL)skipWorkQueueAssertion
+- (void)_pumpWriting
 {
-    if (skipWorkQueueAssertion == NO) {
-        [self assertOnWorkQueue];
-    }
+  [self assertOnWorkQueue];
 
   NSUInteger dataLength = _outputBuffer.length;
   if (dataLength - _outputBufferOffset > 0 && _outputStream.hasSpaceAvailable) {
@@ -1260,16 +1240,9 @@ static const char CRLFCRLFBytes[] = {'\r', '\n', '\r', '\n'};
 
 static const size_t RCTSRFrameHeaderOverhead = 32;
 
-- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data {
-  [self _sendFrameWithOpcode:opcode data:data skipWorkQueueAssertion:NO];
-}
-
-
-- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data skipWorkQueueAssertion:(BOOL)skipWorkQueueAssertion
+- (void)_sendFrameWithOpcode:(RCTSROpCode)opcode data:(NSData *)data
 {
-  if (skipWorkQueueAssertion == NO) {
-    [self assertOnWorkQueue];
-  }
+  [self assertOnWorkQueue];
 
   if (nil == data) {
     return;
@@ -1334,7 +1307,7 @@ static const size_t RCTSRFrameHeaderOverhead = 32;
   assert(frame_buffer_size <= [frame length]);
   frame.length = frame_buffer_size;
 
-  [self _writeData:frame skipWorkQueueAssertion:skipWorkQueueAssertion];
+  [self _writeData:frame];
 }
 
 - (void)stream:(NSStream *)aStream handleEvent:(NSStreamEvent)eventCode
