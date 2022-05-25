@@ -24,7 +24,7 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sendData:(NSData *)data forSocketID:(nonnull NSNumber *)socketID;
 
-// Closes all open websockets on the main thread
+// Blocking call that waits until there are no more remaining actions on the queue
 - (void)flush;
 
 @end
