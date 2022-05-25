@@ -549,70 +549,60 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   [_scheduledRunloops removeObject:@[aRunLoop, mode]];
 }
 
+- (void)flush
+{
+    // By queueing an empty block, all blocks queued before
+    // need to finish executing as this is a serial queue
+    dispatch_sync(_workQueue, ^{});
+}
+
 - (void)close
 {
   [self closeWithCode:RCTSRStatusCodeNormal reason:nil];
 }
 
-- (void)closeSync
-{
-  [self closeWithCode:RCTSRStatusCodeNormal reason:nil isBlocking:YES];
-}
-
 - (void)closeWithCode:(NSInteger)code reason:(NSString *)reason
 {
-  [self closeWithCode:code reason:reason isBlocking:NO];
-}
-
-- (void)closeWithCode:(NSInteger)code reason:(NSString *)reason isBlocking:(BOOL)isBlocking
-{
-    assert(code);
-  
-    void (^performClose)(void) = ^{
-      if (self.readyState == RCTSR_CLOSING || self.readyState == RCTSR_CLOSED) {
-        return;
-      }
-
-      BOOL wasConnecting = self.readyState == RCTSR_CONNECTING;
-
-      self.readyState = RCTSR_CLOSING;
-
-      RCTSRLog(@"Closing with code %ld reason %@", code, reason);
-
-      if (wasConnecting) {
-        [self _disconnect];
-        return;
-      }
-
-      size_t maxMsgSize = [reason maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding];
-      NSMutableData *mutablePayload = [[NSMutableData alloc] initWithLength:sizeof(uint16_t) + maxMsgSize];
-      NSData *payload = mutablePayload;
-
-      ((uint16_t *)mutablePayload.mutableBytes)[0] = NSSwapBigShortToHost(code);
-
-      if (reason) {
-        NSRange remainingRange = {0};
-
-        NSUInteger usedLength = 0;
-
-        BOOL success __unused = [reason getBytes:(char *)mutablePayload.mutableBytes + sizeof(uint16_t) maxLength:payload.length - sizeof(uint16_t) usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionExternalRepresentation range:NSMakeRange(0, reason.length) remainingRange:&remainingRange];
-
-        assert(success);
-        assert(remainingRange.length == 0);
-
-        if (usedLength != maxMsgSize) {
-          payload = [payload subdataWithRange:NSMakeRange(0, usedLength + sizeof(uint16_t))];
-        }
-      }
-
-      [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload];
-    };
-    
-    if (isBlocking) {
-      dispatch_sync(_workQueue, performClose);
-    } else {
-      dispatch_async(_workQueue, performClose);
+  assert(code);
+  dispatch_async(_workQueue, ^{
+    if (self.readyState == RCTSR_CLOSING || self.readyState == RCTSR_CLOSED) {
+      return;
     }
+
+    BOOL wasConnecting = self.readyState == RCTSR_CONNECTING;
+
+    self.readyState = RCTSR_CLOSING;
+
+    RCTSRLog(@"Closing with code %ld reason %@", code, reason);
+
+    if (wasConnecting) {
+      [self _disconnect];
+      return;
+    }
+
+    size_t maxMsgSize = [reason maximumLengthOfBytesUsingEncoding:NSUTF8StringEncoding];
+    NSMutableData *mutablePayload = [[NSMutableData alloc] initWithLength:sizeof(uint16_t) + maxMsgSize];
+    NSData *payload = mutablePayload;
+
+    ((uint16_t *)mutablePayload.mutableBytes)[0] = NSSwapBigShortToHost(code);
+
+    if (reason) {
+      NSRange remainingRange = {0};
+
+      NSUInteger usedLength = 0;
+
+      BOOL success __unused = [reason getBytes:(char *)mutablePayload.mutableBytes + sizeof(uint16_t) maxLength:payload.length - sizeof(uint16_t) usedLength:&usedLength encoding:NSUTF8StringEncoding options:NSStringEncodingConversionExternalRepresentation range:NSMakeRange(0, reason.length) remainingRange:&remainingRange];
+
+      assert(success);
+      assert(remainingRange.length == 0);
+
+      if (usedLength != maxMsgSize) {
+        payload = [payload subdataWithRange:NSMakeRange(0, usedLength + sizeof(uint16_t))];
+      }
+    }
+
+    [self _sendFrameWithOpcode:RCTSROpCodeConnectionClose data:payload];
+  });
 }
 
 - (void)_closeWithProtocolError:(NSString *)message

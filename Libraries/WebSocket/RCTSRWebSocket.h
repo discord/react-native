@@ -80,7 +80,7 @@ extern NSString *const RCTSRHTTPResponseErrorKey;
 - (void)open;
 
 - (void)close;
-- (void)closeSync;
+- (void)flush;
 
 - (void)closeWithCode:(NSInteger)code reason:(NSString *)reason;
 
