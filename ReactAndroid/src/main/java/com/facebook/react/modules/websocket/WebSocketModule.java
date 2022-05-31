@@ -423,6 +423,7 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
 
   @Override
   public void invalidate() {
+    super.invalidate();
     mOnOpenHandler = null;
     mContentHandlers.clear();
     for (WebSocket socket : mWebSocketConnections.values()) {
