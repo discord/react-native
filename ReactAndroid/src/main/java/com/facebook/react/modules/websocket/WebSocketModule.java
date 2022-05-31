@@ -42,6 +42,8 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
 
   public static final String NAME = "WebSocketModule";
 
+  public static final int STATUS_CODE_NORMAL = 1000;
+
   public interface ContentHandler {
     void onMessage(String text, WritableMap params);
 
@@ -418,4 +420,15 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
 
   @Override
   public void removeListeners(double count) {}
+
+  @Override
+  public void invalidate() {
+    super.invalidate();
+    mOnOpenHandler = null;
+    mContentHandlers.clear();
+    for (WebSocket socket : mWebSocketConnections.values()) {
+      socket.close(STATUS_CODE_NORMAL, null);
+    }
+    mWebSocketConnections.clear();
+  }
 }
