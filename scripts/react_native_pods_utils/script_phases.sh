@@ -24,10 +24,13 @@ error () {
 }
 
 # Determine path to react-native-codegen
-if [ -d "$CODEGEN_REPO_PATH" ]; then
-    CODEGEN_CLI_PATH=$(cd "$CODEGEN_REPO_PATH" && pwd)
-elif [ -d "$CODEGEN_NPM_PATH" ]; then
+# DISCORD FIX: Our repo path isn't valid (has the files under `src`
+# rather than `lib`), so the order of this `if` was modified to prefer
+# the NPM path.
+if [ -d "$CODEGEN_NPM_PATH" ]; then
     CODEGEN_CLI_PATH=$(cd "$CODEGEN_NPM_PATH" && pwd)
+elif [ -d "$CODEGEN_REPO_PATH" ]; then
+    CODEGEN_CLI_PATH=$(cd "$CODEGEN_REPO_PATH" && pwd)
 else
     error "error: Could not determine react-native-codegen location in $CODEGEN_REPO_PATH or $CODEGEN_NPM_PATH. Try running 'yarn install' or 'npm install' in your project root."
 fi
