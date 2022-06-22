@@ -63,9 +63,6 @@ public class ReactViewManager extends ReactClippingViewManager<ReactViewGroup> {
     view.setFocusable(accessible);
   }
 
-  @ReactProp(name = "preventClipping")
-  public void setPreventClipping(ReactViewGroup view, bool
-
   @ReactProp(name = "hasTVPreferredFocus")
   public void setTVPreferredFocus(ReactViewGroup view, boolean hasTVPreferredFocus) {
     if (hasTVPreferredFocus) {
