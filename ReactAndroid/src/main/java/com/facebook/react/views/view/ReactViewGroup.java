@@ -132,6 +132,7 @@ public class ReactViewGroup extends ViewGroup
   private int mLayoutDirection;
   private float mBackfaceOpacity = 1.f;
   private String mBackfaceVisibility = "visible";
+  private boolean mPreventClipping = false;
 
   public ReactViewGroup(Context context) {
     super(context);
@@ -280,6 +281,19 @@ public class ReactViewGroup extends ViewGroup
     getOrCreateReactViewBackground().setBorderStyle(style);
   }
 
+  public void setPreventClipping(boolean preventClipping) {
+    mPreventClipping = preventClipping;
+
+    // TODO(apkumar)
+    //
+    // It would be nice to trigger the LayoutChangeListener at this point.
+  }
+
+  public boolean getPreventClipping() {
+    return mPreventClipping;
+  }
+
+
   @Override
   public void setRemoveClippedSubviews(boolean removeClippedSubviews) {
     if (removeClippedSubviews == mRemoveClippedSubviews) {
@@ -369,16 +383,22 @@ public class ReactViewGroup extends ViewGroup
     // it won't be size and located properly.
     Animation animation = child.getAnimation();
     boolean isAnimating = animation != null && !animation.hasEnded();
-    if (!intersects && child.getParent() != null && !isAnimating) {
+
+    boolean preventClipping = false;
+    if (child instanceof ReactViewGroup) {
+      preventClipping = ((ReactViewGroup)child).getPreventClipping();
+    }
+
+    if (!intersects && child.getParent() != null && !isAnimating && !preventClipping) {
       // We can try saving on invalidate call here as the view that we remove is out of visible area
       // therefore invalidation is not necessary.
       super.removeViewsInLayout(idx - clippedSoFar, 1);
       needUpdateClippingRecursive = true;
-    } else if (intersects && child.getParent() == null) {
+    } else if ((intersects || preventClipping) && child.getParent() == null) {
       super.addViewInLayout(child, idx - clippedSoFar, sDefaultLayoutParam, true);
       invalidate();
       needUpdateClippingRecursive = true;
-    } else if (intersects) {
+    } else if (intersects || preventClipping) {
       // If there is any intersection we need to inform the child to update its clipping rect
       needUpdateClippingRecursive = true;
     }
