@@ -145,6 +145,7 @@ public class ReactViewGroup extends ViewGroup
   private @Nullable Path mPath;
   private float mBackfaceOpacity;
   private String mBackfaceVisibility;
+  private boolean mPreventClipping;
 
   public ReactViewGroup(Context context) {
     super(context);
@@ -174,6 +175,7 @@ public class ReactViewGroup extends ViewGroup
     mPath = null;
     mBackfaceOpacity = 1.f;
     mBackfaceVisibility = "visible";
+    mPreventClipping = false;
   }
 
   /* package */ void recycleView() {
@@ -393,6 +395,19 @@ public class ReactViewGroup extends ViewGroup
     }
   }
 
+  public void setPreventClipping(boolean preventClipping) {
+    mPreventClipping = preventClipping;
+
+    // TODO(apkumar)
+    //
+    // It would be nice to trigger the LayoutChangeListener at this point.
+  }
+
+  public boolean getPreventClipping() {
+    return mPreventClipping;
+  }
+
+
   @Override
   public void setRemoveClippedSubviews(boolean removeClippedSubviews) {
     if (removeClippedSubviews == mRemoveClippedSubviews) {
@@ -480,16 +495,58 @@ public class ReactViewGroup extends ViewGroup
     // it won't be size and located properly.
     Animation animation = child.getAnimation();
     boolean isAnimating = animation != null && !animation.hasEnded();
-    if (!intersects && child.getParent() != null && !isAnimating) {
+
+    // NOTE (apkumar):
+    //
+    // The `preventClipping` logic here, and the `getDrawingOrderHelper().*`
+    // calls within the if-else statements below, are added in our fork. They
+    // work together to support `removeClippedSubviews` in the presence of
+    // animated subviews.
+    // 
+    // Typically, when `removeClippedSubviews` is turned on, you run the risk
+    // of animated subviews being clipped when they shouldn't be, since their
+    // bounding rectangle may be outside the clipping window, but due to the
+    // animation transforming the view, the actual rendering _would be_ inside
+    // the clipping window. To fix this, we added a `preventClipping` prop to
+    // Views, and here we simply never clip any View that has that prop set to
+    // true.
+    //
+    // That change fixes the clipping issue, but exposed a second problem: when
+    // `removeClippedSubviews` is turned on, React Native's zIndex system is
+    // not respected. The issue is that, normally, the drawing order helper is
+    // informed of new and removed views via handleAddView and
+    // handleRemoveView, called in `addView` and `removeView` respectively.
+    // However, when removeClippedSubviews is true,
+    // `addViewWithSubviewClippingEnabled` is called _instead of_ `addView`,
+    // which _does not_ call into the drawing order helper's handleAddView
+    // (with a similar story for removing views). Because of this, the drawing
+    // order helper is not aware of any child views, and so does not perform
+    // any of the z-indexing logic it normally does. 
+    //
+    // To fix that second issue, we simply have to call handleRemoveView /
+    // handleAddView explicitly here, when the clipping logic adds or removes
+    // views because of their intersection with the clipping window.
+    boolean preventClipping = false;
+    if (child instanceof ReactViewGroup) {
+      preventClipping = ((ReactViewGroup)child).getPreventClipping();
+    }
+
+    if (!intersects && child.getParent() != null && !isAnimating && !preventClipping) {
+      getDrawingOrderHelper().handleRemoveView(child);
+      setChildrenDrawingOrderEnabled(getDrawingOrderHelper().shouldEnableCustomDrawingOrder());
       // We can try saving on invalidate call here as the view that we remove is out of visible area
       // therefore invalidation is not necessary.
       removeViewInLayout(child);
       needUpdateClippingRecursive = true;
-    } else if (intersects && child.getParent() == null) {
+    } else if ((intersects || preventClipping) && child.getParent() == null) {
+      getDrawingOrderHelper().handleAddView(child);
+      setChildrenDrawingOrderEnabled(getDrawingOrderHelper().shouldEnableCustomDrawingOrder());
+
       addViewInLayout(child, idx - clippedSoFar, sDefaultLayoutParam, true);
+
       invalidate();
       needUpdateClippingRecursive = true;
-    } else if (intersects) {
+    } else if (intersects || preventClipping) {
       // If there is any intersection we need to inform the child to update its clipping rect
       needUpdateClippingRecursive = true;
     }

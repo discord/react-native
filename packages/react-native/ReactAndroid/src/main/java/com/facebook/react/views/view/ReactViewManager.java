@@ -69,6 +69,7 @@ public class ReactViewManager extends ReactClippingViewManager<ReactViewGroup> {
   private static final int CMD_SET_PRESSED = 2;
   private static final String HOTSPOT_UPDATE_KEY = "hotspotUpdate";
 
+
   public ReactViewManager() {
     super();
 
@@ -84,6 +85,11 @@ public class ReactViewManager extends ReactClippingViewManager<ReactViewGroup> {
       preparedView.recycleView();
     }
     return view;
+  }
+
+  @ReactProp(name = "preventClipping")
+  public void setPreventClipping(ReactViewGroup view, boolean preventClipping) {
+    view.setPreventClipping(preventClipping);
   }
 
   @ReactProp(name = "accessible")
