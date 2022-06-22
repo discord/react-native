@@ -713,9 +713,9 @@ public class ReactViewGroup extends ViewGroup
   // 
   // This is added in our (Discord's) fork. 
   //
-  // Normally, the drawing order is informed of new and removed views via
-  // handleAddView and handleRemoveView, called in `addView` and `removeView`
-  // respectively. However, when removeClippedSubviews is true,
+  // Normally, the drawing order helper is informed of new and removed views
+  // via handleAddView and handleRemoveView, called in `addView` and
+  // `removeView` respectively. However, when removeClippedSubviews is true,
   // `addViewWithSubviewClippingEnabled` is called _instead of_ `addView`,
   // which _does not_ call into the drawing order helper's handleAddView (with
   // a similar story for removing views). Because of this, the drawing order
