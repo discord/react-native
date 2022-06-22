@@ -74,6 +74,11 @@ public class ReactViewManager extends ReactClippingViewManager<ReactViewGroup> {
     return view;
   }
 
+  @ReactProp(name = "preventClipping")
+  public void setPreventClipping(ReactViewGroup view, boolean preventClipping) {
+    view.setPreventClipping(preventClipping);
+  }
+
   @ReactProp(name = "accessible")
   public void setAccessible(ReactViewGroup view, boolean accessible) {
     view.setFocusable(accessible);
