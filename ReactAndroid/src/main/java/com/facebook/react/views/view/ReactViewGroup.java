@@ -391,11 +391,11 @@ public class ReactViewGroup extends ViewGroup
       // therefore invalidation is not necessary.
       super.removeViewsInLayout(idx - clippedSoFar, 1);
       needUpdateClippingRecursive = true;
-    } else if (intersects && child.getParent() == null) {
+    } else if ((intersects || preventClipping) && child.getParent() == null) {
       super.addViewInLayout(child, idx - clippedSoFar, sDefaultLayoutParam, true);
       invalidate();
       needUpdateClippingRecursive = true;
-    } else if (intersects) {
+    } else if (intersects || preventClipping) {
       // If there is any intersection we need to inform the child to update its clipping rect
       needUpdateClippingRecursive = true;
     }
