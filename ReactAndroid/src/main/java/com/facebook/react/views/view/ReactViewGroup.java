@@ -787,8 +787,8 @@ public class ReactViewGroup extends ViewGroup
   }
 
   // NOTE(apkumar)
-  // 
-  // This is added in our (Discord's) fork. 
+  //
+  // This is added in our (Discord's) fork.
   //
   // Normally, the drawing order helper is informed of new and removed views
   // via handleAddView and handleRemoveView, called in `addView` and
