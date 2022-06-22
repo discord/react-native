@@ -382,6 +382,36 @@ public class ReactViewGroup extends ViewGroup
     Animation animation = child.getAnimation();
     boolean isAnimating = animation != null && !animation.hasEnded();
 
+    // NOTE (apkumar):
+    //
+    // The `preventClipping` logic here, and the `getDrawingOrderHelper().*`
+    // calls within the if-else statements below, are added in our fork. They
+    // work together to support `removeClippedSubviews` in the presence of
+    // animated subviews.
+    // 
+    // Typically, when `removeClippedSubviews` is turned on, you run the risk
+    // of animated subviews being clipped when they shouldn't be, since their
+    // bounding rectangle may be outside the clipping window, but due to the
+    // animation transforming the view, the actual rendering _would be_ inside
+    // the clipping window. To fix this, we added a `preventClipping` prop to
+    // Views, and here we simply never clip any View that has that prop set to
+    // true.
+    //
+    // That change fixes the clipping issue, but exposed a second problem: when
+    // `removeClippedSubviews` is turned on, React Native's zIndex system is
+    // not respected. The issue is that, normally, the drawing order helper is
+    // informed of new and removed views via handleAddView and
+    // handleRemoveView, called in `addView` and `removeView` respectively.
+    // However, when removeClippedSubviews is true,
+    // `addViewWithSubviewClippingEnabled` is called _instead of_ `addView`,
+    // which _does not_ call into the drawing order helper's handleAddView
+    // (with a similar story for removing views). Because of this, the drawing
+    // order helper is not aware of any child views, and so does not perform
+    // any of the z-indexing logic it normally does. 
+    //
+    // To fix that second issue, we simply have to call handleRemoveView /
+    // handleAddView explicitly here, when the clipping logic adds or removes
+    // views because of their intersection with the clipping window.
     boolean preventClipping = false;
     if (child instanceof ReactViewGroup) {
       preventClipping = ((ReactViewGroup)child).getPreventClipping();
