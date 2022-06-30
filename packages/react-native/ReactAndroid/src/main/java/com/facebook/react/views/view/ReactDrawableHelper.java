@@ -14,6 +14,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RoundRectShape;
 import android.os.Build;
 import android.util.TypedValue;
 import androidx.annotation.Nullable;
@@ -22,6 +24,8 @@ import com.facebook.react.bridge.ReadableMap;
 import com.facebook.react.bridge.SoftAssertions;
 import com.facebook.react.uimanager.PixelUtil;
 import com.facebook.react.uimanager.ViewProps;
+
+import java.util.Collections;
 
 /**
  * Utility class that helps with converting android drawable description used in JS to an actual
@@ -45,8 +49,7 @@ public class ReactDrawableHelper {
       Drawable drawable = getDefaultThemeDrawable(context);
       return setRadius(drawableDescriptionDict, drawable);
     } else if ("RippleAndroid".equals(type)) {
-      RippleDrawable rd = getRippleDrawable(context, drawableDescriptionDict);
-      return setRadius(drawableDescriptionDict, rd);
+      return getRippleDrawable(context, drawableDescriptionDict);
     } else {
       throw new JSApplicationIllegalArgumentException("Invalid type for android drawable: " + type);
     }
@@ -106,11 +109,16 @@ public class ReactDrawableHelper {
   }
 
   private static @Nullable Drawable getMask(ReadableMap drawableDescriptionDict) {
-    if (!drawableDescriptionDict.hasKey("borderless")
-        || drawableDescriptionDict.isNull("borderless")
-        || !drawableDescriptionDict.getBoolean("borderless")) {
-      return new ColorDrawable(Color.WHITE);
+    if (drawableDescriptionDict.hasKey("borderless") && drawableDescriptionDict.getBoolean("borderless")) {
+      // Borderless ripples don't have masks.
+      return null;
     }
-    return null;
+
+    if (drawableDescriptionDict.hasKey("rippleRadius")) {
+      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("rippleRadius"));
+      return new ShapeDrawable(new RoundRectShape(new float[] {rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius}, null, null));
+    }
+
+    return new ColorDrawable(Color.WHITE);
   }
 }
