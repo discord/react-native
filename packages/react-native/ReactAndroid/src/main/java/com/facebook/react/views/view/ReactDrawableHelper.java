@@ -13,6 +13,8 @@ import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.graphics.drawable.RippleDrawable;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.RoundRectShape;
 import android.util.TypedValue;
 import androidx.annotation.Nullable;
 import com.facebook.react.bridge.JSApplicationIllegalArgumentException;
@@ -100,11 +102,16 @@ public class ReactDrawableHelper {
   }
 
   private static @Nullable Drawable getMask(ReadableMap drawableDescriptionDict) {
-    if (!drawableDescriptionDict.hasKey("borderless")
-        || drawableDescriptionDict.isNull("borderless")
-        || !drawableDescriptionDict.getBoolean("borderless")) {
-      return new ColorDrawable(Color.WHITE);
+    if (drawableDescriptionDict.hasKey("borderless") && drawableDescriptionDict.getBoolean("borderless")) {
+      // Borderless ripples don't have masks.
+      return null;
     }
-    return null;
+
+    if (drawableDescriptionDict.hasKey("rippleCornerRadius")) {
+      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("rippleCornerRadius"));
+      return new ShapeDrawable(new RoundRectShape(new float[] {rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius}, null, null));
+    }
+
+    return new ColorDrawable(Color.WHITE);
   }
 }
