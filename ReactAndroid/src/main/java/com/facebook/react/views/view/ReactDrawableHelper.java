@@ -49,7 +49,8 @@ public class ReactDrawableHelper {
       Drawable drawable = getDefaultThemeDrawable(context);
       return setRadius(drawableDescriptionDict, drawable);
     } else if ("RippleAndroid".equals(type)) {
-      return getRippleDrawable(context, drawableDescriptionDict);
+      RippleDrawable rd = getRippleDrawable(context, drawableDescriptionDict);
+      return setRadius(drawableDescriptionDict, rd);
     } else {
       throw new JSApplicationIllegalArgumentException("Invalid type for android drawable: " + type);
     }
@@ -114,8 +115,8 @@ public class ReactDrawableHelper {
       return null;
     }
 
-    if (drawableDescriptionDict.hasKey("rippleRadius")) {
-      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("rippleRadius"));
+    if (drawableDescriptionDict.hasKey("cornerRippleRadius")) {
+      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("cornerRippleRadius"));
       return new ShapeDrawable(new RoundRectShape(new float[] {rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius}, null, null));
     }
 
