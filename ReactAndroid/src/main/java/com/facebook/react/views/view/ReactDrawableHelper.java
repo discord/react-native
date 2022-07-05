@@ -25,8 +25,6 @@ import com.facebook.react.bridge.SoftAssertions;
 import com.facebook.react.uimanager.PixelUtil;
 import com.facebook.react.uimanager.ViewProps;
 
-import java.util.Collections;
-
 /**
  * Utility class that helps with converting android drawable description used in JS to an actual
  * instance of {@link Drawable}.
