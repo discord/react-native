@@ -113,8 +113,8 @@ public class ReactDrawableHelper {
       return null;
     }
 
-    if (drawableDescriptionDict.hasKey("cornerRippleRadius")) {
-      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("cornerRippleRadius"));
+    if (drawableDescriptionDict.hasKey("rippleCornerRadius")) {
+      float rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("rippleCornerRadius"));
       return new ShapeDrawable(new RoundRectShape(new float[] {rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius, rippleRadius}, null, null));
     }
 
