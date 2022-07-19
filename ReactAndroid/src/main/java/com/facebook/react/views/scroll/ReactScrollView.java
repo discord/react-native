@@ -439,18 +439,7 @@ public class ReactScrollView extends ScrollView
 
   @Override
   public void fling(int velocityY) {
-    // Workaround.
-    // On Android P if a ScrollView is inverted, we will get a wrong sign for
-    // velocityY (see https://issuetracker.google.com/issues/112385925).
-    // At the same time, mOnScrollDispatchHelper tracks the correct velocity direction.
-    //
-    // Hence, we can use the absolute value from whatever the OS gives
-    // us and use the sign of what mOnScrollDispatchHelper has tracked.
-    float signum = Math.signum(mOnScrollDispatchHelper.getYFlingVelocity());
-    if (signum == 0) {
-      signum = Math.signum(velocityY);
-    }
-    final int correctedVelocityYOld = (int) (Math.abs(velocityY) * signum);
+    final int correctedVelocityYOld = adjustFlingVelocitySign(velocityY);
     final int correctedVelocityY;
     if (MAX_FLING_VELOCITY != null) {
       correctedVelocityY = (int) ((Math.min(Math.abs(correctedVelocityYOld), MAX_FLING_VELOCITY)) *
@@ -494,6 +483,25 @@ public class ReactScrollView extends ScrollView
       super.fling(correctedVelocityY);
     }
     handlePostTouchScrolling(0, correctedVelocityY);
+  }
+
+  private int adjustFlingVelocitySign(int velocityY) {
+    if (Build.VERSION.SDK_INT != Build.VERSION_CODES.P) {
+      return velocityY;
+    }
+
+    // Workaround.
+    // On Android P if a ScrollView is inverted, we will get a wrong sign for
+    // velocityY (see https://issuetracker.google.com/issues/112385925).
+    // At the same time, mOnScrollDispatchHelper tracks the correct velocity direction.
+    //
+    // Hence, we can use the absolute value from whatever the OS gives
+    // us and use the sign of what mOnScrollDispatchHelper has tracked.
+    float signum = Math.signum(mOnScrollDispatchHelper.getYFlingVelocity());
+    if (signum == 0) {
+      signum = Math.signum(velocityY);
+    }
+    return (int) (Math.abs(velocityY) * signum);
   }
 
   private void enableFpsListener() {
