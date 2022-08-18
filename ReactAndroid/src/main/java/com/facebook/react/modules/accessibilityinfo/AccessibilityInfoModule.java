@@ -110,8 +110,7 @@ public class AccessibilityInfoModule extends NativeAccessibilityInfoSpec
   private boolean getIsReduceMotionEnabledValue() {
     String rawValue =
         Settings.Global.getString(mContentResolver, Settings.Global.TRANSITION_ANIMATION_SCALE);
-    float floatValue = Float.parseFloat(rawValue);
-    return value != null && value == 0f;
+    return rawValue != null && Float.parseFloat(rawValue) == 0f;
   }
 
   @Override
