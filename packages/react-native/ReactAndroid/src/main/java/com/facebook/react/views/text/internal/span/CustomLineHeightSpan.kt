@@ -9,6 +9,7 @@ package com.facebook.react.views.text.internal.span
 
 import android.graphics.Paint.FontMetricsInt
 import android.text.style.LineHeightSpan
+import com.facebook.react.bridge.Callback
 import kotlin.math.ceil
 import kotlin.math.floor
 import kotlin.math.min
@@ -28,6 +29,11 @@ public class CustomLineHeightSpan(height: Float) : LineHeightSpan, ReactSpan {
       v: Int,
       fm: FontMetricsInt
   ) {
+    chooseHeightOverride?.let {
+      it.invoke(fm, lineHeight)
+      return
+    }
+
     // This is more complicated that I wanted it to be. You can find a good explanation of what the
     // FontMetrics mean here: http://stackoverflow.com/questions/27631736.
     // The general solution is that if there's not enough height to show the full line height, we
@@ -65,5 +71,9 @@ public class CustomLineHeightSpan(height: Float) : LineHeightSpan, ReactSpan {
       fm.descent = bottom
       fm.bottom = bottom
     }
+  }
+
+  public companion object {
+    public var chooseHeightOverride: Callback? = null
   }
 }
