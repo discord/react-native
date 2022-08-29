@@ -10,11 +10,16 @@ package com.facebook.react.views.text;
 import android.graphics.Paint;
 import android.text.style.LineHeightSpan;
 
+import com.facebook.react.bridge.Callback;
+
 /**
  * We use a custom {@link LineHeightSpan}, because `lineSpacingExtra` is broken. Details here:
  * https://github.com/facebook/react-native/issues/7546
  */
 public class CustomLineHeightSpan implements LineHeightSpan, ReactSpan {
+
+  public static Callback chooseHeightOverride = null;
+
   private final int mHeight;
 
   public CustomLineHeightSpan(float height) {
@@ -27,7 +32,13 @@ public class CustomLineHeightSpan implements LineHeightSpan, ReactSpan {
 
   @Override
   public void chooseHeight(
-      CharSequence text, int start, int end, int spanstartv, int v, Paint.FontMetricsInt fm) {
+    CharSequence text, int start, int end, int spanstartv, int v, Paint.FontMetricsInt fm) {
+
+    if (chooseHeightOverride != null) {
+      chooseHeightOverride.invoke(fm, mHeight);
+      return;
+    }
+
     // This is more complicated that I wanted it to be. You can find a good explanation of what the
     // FontMetrics mean here: http://stackoverflow.com/questions/27631736.
     // The general solution is that if there's not enough height to show the full line height, we
