@@ -23,7 +23,7 @@ public class CustomLineHeightSpan implements LineHeightSpan, ReactSpan {
 
   @Override
   public void chooseHeight(
-    CharSequence text, int start, int end, int spanstartv, int v, Paint.FontMetricsInt fm) {
+      CharSequence text, int start, int end, int spanstartv, int v, Paint.FontMetricsInt fm) {
 
     if (OVERRIDE_LINE_HEIGHT) {
       overrideLineHeight(fm);
