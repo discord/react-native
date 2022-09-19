@@ -549,6 +549,13 @@ RCT_NOT_IMPLEMENTED(- (instancetype)init)
   [_scheduledRunloops removeObject:@[aRunLoop, mode]];
 }
 
+- (void)flush
+{
+    // By queueing an empty block, all blocks queued before
+    // need to finish executing as this is a serial queue
+    dispatch_sync(_workQueue, ^{});
+}
+
 - (void)close
 {
   [self closeWithCode:RCTSRStatusCodeNormal reason:nil];
@@ -1389,7 +1396,7 @@ static const size_t RCTSRFrameHeaderOverhead = 32;
             // If we get closed in this state it's probably not clean because we should be sending this when we send messages
             [self _performDelegateBlock:^{
               if ([self.delegate respondsToSelector:@selector(webSocket:didCloseWithCode:reason:wasClean:)]) {
-                [self.delegate webSocket:self didCloseWithCode:RCTSRStatusCodeGoingAway reason:@"Stream end encountered" wasClean:NO];
+                [self.delegate webSocket:self didCloseWithCode:self->_closeCode reason:self->_closeReason wasClean:NO];
               }
             }];
           }
