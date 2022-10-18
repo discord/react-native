@@ -1448,6 +1448,7 @@ public class ReactInstanceManager {
         } finally {
           Systrace.endSection(TRACE_TAG_REACT_JAVA_BRIDGE);
         }
+        ReactMarker.logMarker(PROCESS_PACKAGES_END, reactPage.getClass().getName());
       }
     }
     ReactMarker.logMarker(PROCESS_PACKAGES_END);
