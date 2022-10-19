@@ -24,6 +24,8 @@ NS_ASSUME_NONNULL_BEGIN
 
 - (void)sendData:(NSData *)data forSocketID:(nonnull NSNumber *)socketID;
 
+- (void)sendEventWithName:(NSString *)name body:(NSDictionary *)body;
+
 // Blocking call that waits until there are no more remaining actions on the queue
 - (void)flush;
 

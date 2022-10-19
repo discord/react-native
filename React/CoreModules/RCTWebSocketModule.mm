@@ -16,6 +16,13 @@
 
 #import "CoreModulesPlugins.h"
 
+(NSNumber)currentJsDate
+{
+  double seconds = [NSDate timeIntervalSinceReferenceDate] + NSTimeIntervalSince1970;
+
+  return [NSNumber numberWithLong: seconds * 1000];
+}
+
 @implementation RCTSRWebSocket (React)
 
 - (NSNumber *)reactTag
@@ -200,6 +207,15 @@ RCT_EXPORT_METHOD(close : (double)code reason : (NSString *)reason socketID : (d
     (const facebook::react::ObjCTurboModule::InitParams &)params
 {
   return std::make_shared<facebook::react::NativeWebSocketModuleSpecJSI>(params);
+}
+
+- (void)sendEventWithName:(NSString *)name
+                     body:(NSDictionary *)body
+{
+  NSMutableDictionary *mutableBody = [body mutableCopy];
+  mutableBody["timestamp"] = currentJsDate();
+
+  [super sendEventWithName:name body:mutableBody]
 }
 
 @end

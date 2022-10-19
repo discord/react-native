@@ -69,6 +69,8 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
     ReactApplicationContext reactApplicationContext = getReactApplicationContextIfActiveOrWarn();
 
     if (reactApplicationContext != null) {
+      params.putDouble("timestamp", System.currentTimeMillis());
+
       reactApplicationContext
           .getJSModule(DeviceEventManagerModule.RCTDeviceEventEmitter.class)
           .emit(eventName, params);

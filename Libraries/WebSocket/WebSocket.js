@@ -239,7 +239,7 @@ class WebSocket extends (EventTarget(...WEBSOCKET_EVENTS): any) {
             data = BlobManager.createFromOptions(ev.data);
             break;
         }
-        this.dispatchEvent(new WebSocketEvent('message', {data}));
+        this.dispatchEvent(new WebSocketEvent('message', {data, timestamp: ev.timestamp}));
       }),
       this._eventEmitter.addListener('websocketOpen', ev => {
         if (ev.id !== this._socketId) {
@@ -247,7 +247,7 @@ class WebSocket extends (EventTarget(...WEBSOCKET_EVENTS): any) {
         }
         this.readyState = this.OPEN;
         this.protocol = ev.protocol;
-        this.dispatchEvent(new WebSocketEvent('open'));
+        this.dispatchEvent(new WebSocketEvent('open', {timestamp: ev.timestamp}));
       }),
       this._eventEmitter.addListener('websocketClosed', ev => {
         if (ev.id !== this._socketId) {
@@ -258,6 +258,7 @@ class WebSocket extends (EventTarget(...WEBSOCKET_EVENTS): any) {
           new WebSocketEvent('close', {
             code: ev.code,
             reason: ev.reason,
+            timestamp: ev.timestamp,
           }),
         );
         this._unregisterEvents();
@@ -271,11 +272,13 @@ class WebSocket extends (EventTarget(...WEBSOCKET_EVENTS): any) {
         this.dispatchEvent(
           new WebSocketEvent('error', {
             message: ev.message,
+            timestamp: ev.timestamp,
           }),
         );
         this.dispatchEvent(
           new WebSocketEvent('close', {
             message: ev.message,
+            timestamp: ev.timestamp,
           }),
         );
         this._unregisterEvents();
