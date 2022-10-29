@@ -65,7 +65,9 @@ task downloadHermes(type: Download) {
 }
 
 task installArchives {
-    dependsOn("publishAllPublicationsToNpmRepository")
+    // NOTE: Temporary fix to publish new RN artifacts to local maven.
+    // dependsOn("publishAllPublicationsToNpmRepository")
+    dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 task unzipHermes(dependsOn: downloadHermes, type: Copy) {

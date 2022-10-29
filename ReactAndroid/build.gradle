@@ -414,7 +414,8 @@ task packageReactNdkLibsForBuck(type: Copy) {
 }
 
 task installArchives {
-    dependsOn("publishAllPublicationsToNpmRepository")
+    // dependsOn("publishAllPublicationsToNpmRepository")
+    dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 android {
