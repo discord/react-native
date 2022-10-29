@@ -263,7 +263,8 @@ final def extractNativeDependencies = tasks.register('extractNativeDependencies'
 }
 
 task installArchives {
-    dependsOn("publishAllPublicationsToNpmRepository")
+    // dependsOn("publishAllPublicationsToNpmRepository")
+    dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 android {
