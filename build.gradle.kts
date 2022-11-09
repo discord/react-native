@@ -71,6 +71,10 @@ tasks.register("downloadAll") {
   dependsOn(":ReactAndroid:hermes-engine:androidDependencies")
 }
 
+tasks.register("buildHermes") {
+  dependsOn(":ReactAndroid:hermes-engine:buildHermes")
+}
+
 tasks.register("publishArtifactsForDiscord") {
   description = "Builds and publishes the artifacts we need for Discord."
   dependsOn(gradle.includedBuild("react-native-gradle-plugin").task(":build"))
