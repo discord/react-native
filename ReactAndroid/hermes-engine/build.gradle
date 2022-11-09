@@ -68,9 +68,9 @@ task downloadHermes(type: Download) {
 }
 
 task installArchives {
-    // NOTE: Temporary fix to publish new RN artifacts to local maven.
-    // dependsOn("publishAllPublicationsToNpmRepository")
-    dependsOn("publishReleasePublicationToMavenLocal")
+    dependsOn("publishAllPublicationsToDiscordRepository")
+    // Uncomment to publish to your local repository instead of Discord's maven repository.
+    // dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 task unzipHermes(dependsOn: downloadHermes, type: Copy) {
@@ -254,8 +254,8 @@ afterEvaluate {
         }
         repositories {
             maven {
-                name = "npm"
-                url = AAR_OUTPUT_URL
+                name = "discord"
+                url = uri("gcs://discord-maven")
             }
         }
     }

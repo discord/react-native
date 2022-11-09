@@ -263,8 +263,9 @@ final def extractNativeDependencies = tasks.register('extractNativeDependencies'
 }
 
 task installArchives {
-    // dependsOn("publishAllPublicationsToNpmRepository")
-    dependsOn("publishReleasePublicationToMavenLocal")
+    dependsOn("publishAllPublicationsToDiscordRepository")
+    // Uncomment to publish to your local repository instead of Discord's maven repository.
+    // dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 android {
