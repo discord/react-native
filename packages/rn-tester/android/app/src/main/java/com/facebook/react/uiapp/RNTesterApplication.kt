@@ -18,7 +18,6 @@ import com.facebook.react.TurboReactPackage
 import com.facebook.react.ViewManagerOnDemandReactPackage
 import com.facebook.react.bridge.NativeModule
 import com.facebook.react.bridge.ReactApplicationContext
-import com.facebook.react.common.assets.ReactFontManager
 import com.facebook.react.config.ReactFeatureFlags
 import com.facebook.react.defaults.DefaultNewArchitectureEntryPoint.load
 import com.facebook.react.defaults.DefaultReactHost
@@ -31,6 +30,7 @@ import com.facebook.react.uiapp.component.MyLegacyViewManager
 import com.facebook.react.uiapp.component.MyNativeViewManager
 import com.facebook.react.uimanager.ReactShadowNode
 import com.facebook.react.uimanager.ViewManager
+import com.facebook.react.views.text.ReactFontManager;
 import com.facebook.soloader.SoLoader
 
 class RNTesterApplication : Application(), ReactApplication {
