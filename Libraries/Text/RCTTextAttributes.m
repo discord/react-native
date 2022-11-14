@@ -216,14 +216,50 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
 
 - (UIFont *)effectiveFont
 {
-  // FIXME: RCTFont has thread-safety issues and must be rewritten.
-  return [RCTFont updateFont:nil
-                  withFamily:_fontFamily
-                        size:@(isnan(_fontSize) ? 0 : _fontSize)
-                      weight:_fontWeight
-                       style:_fontStyle
-                     variant:_fontVariant
-             scaleMultiplier:self.effectiveFontSizeMultiplier];
+  NSArray *rawFontFamilies = [_fontFamily componentsSeparatedByString:@","];
+
+  if (rawFontFamilies.count == 0) {
+    return [RCTFont updateFont:nil
+                    withFamily:_fontFamily
+                          size:@(isnan(_fontSize) ? 0 : _fontSize)
+                        weight:_fontWeight
+                         style:_fontStyle
+                       variant:_fontVariant
+               scaleMultiplier:self.effectiveFontSizeMultiplier];
+  }
+
+  NSMutableArray *fonts = [NSMutableArray new];
+  for (NSString *rawFontFamily in rawFontFamilies) {
+    NSString *fontFamily = [rawFontFamily stringByTrimmingCharactersInSet:[NSCharacterSet whitespaceCharacterSet]];
+    if (fontFamily.length == 0) {
+      continue;
+    }
+
+    UIFont *font = [RCTFont updateFont:nil
+                            withFamily:fontFamily
+                                  size:@(isnan(_fontSize) ? 0 : _fontSize)
+                                weight:_fontWeight
+                                 style:_fontStyle
+                               variant:_fontVariant
+                       scaleMultiplier:self.effectiveFontSizeMultiplier];
+
+    if (font) {
+      [fonts addObject:font];
+    }
+  }
+
+  UIFont *primaryFont = fonts[0];
+
+  NSMutableArray *fontDescriptors = [NSMutableArray new];
+  for (NSUInteger i = 1; i < fonts.count; i++) {
+    UIFont *font = fonts[i];
+    [fontDescriptors addObject:font.fontDescriptor];
+  }
+
+  UIFontDescriptor *fontDescriptor = [primaryFont.fontDescriptor fontDescriptorByAddingAttributes:
+                                      @{UIFontDescriptorCascadeListAttribute: fontDescriptors}];
+
+  return [UIFont fontWithDescriptor:fontDescriptor size:primaryFont.pointSize];
 }
 
 - (CGFloat)effectiveFontSizeMultiplier
