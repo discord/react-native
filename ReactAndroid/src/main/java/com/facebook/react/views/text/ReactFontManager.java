@@ -10,10 +10,14 @@ package com.facebook.react.views.text;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
+import android.graphics.fonts.Font;
+import android.graphics.fonts.FontFamily;
 import android.util.SparseArray;
 import androidx.annotation.Nullable;
 import androidx.core.content.res.ResourcesCompat;
 import com.facebook.infer.annotation.Nullsafe;
+
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -142,9 +146,24 @@ public class ReactFontManager {
               .append(fileExtension)
               .toString();
       try {
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+          Font font = new Font.Builder(assetManager, fileName).build();
+          FontFamily family = new FontFamily.Builder(font).build();
+
+          Typeface.CustomFallbackBuilder fallbackBuilder = new Typeface.CustomFallbackBuilder(family);
+          // TODO - just for testing
+          fallbackBuilder.setSystemFallback("serif");
+
+          return fallbackBuilder.build();
+        }
+
+        // Earlier versions of Android are unable to have fallbacks specified
         return Typeface.createFromAsset(assetManager, fileName);
       } catch (RuntimeException e) {
         // If the typeface asset does not exist, try another extension.
+        continue;
+      } catch (IOException e) {
+        // If the font asset does not exist, try another extension.
         continue;
       }
     }
