@@ -263,9 +263,18 @@ final def extractNativeDependencies = tasks.register('extractNativeDependencies'
 }
 
 task installArchives {
+    // This keeps the 'installArchives' naming of react-native upstream, but this publishes
+    // artifacts to the android/ directory of this project. Android uses this when building
+    // against the New Archie
+    dependsOn("publishAllPublicationsToNpmRepository")
+}
+
+task publishArchivesLocally {
+    dependsOn("publishReleasePublicationToMavenLocal")
+}
+
+task uploadArchivesToDiscord {
     dependsOn("publishAllPublicationsToDiscordRepository")
-    // Uncomment to publish to your local repository instead of Discord's maven repository.
-    // dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 android {
@@ -496,6 +505,10 @@ afterEvaluate {
         }
 
         repositories {
+            maven {
+                name = "npm"
+                url = AAR_OUTPUT_URL
+            }
             maven {
                 name = "discord"
                 url = uri("gcs://discord-maven")
