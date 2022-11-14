@@ -10,11 +10,19 @@ package com.facebook.react.views.text;
 import android.content.Context;
 import android.content.res.AssetManager;
 import android.graphics.Typeface;
+import android.graphics.fonts.Font;
+import android.graphics.fonts.FontFamily;
+import android.os.Build;
 import android.util.SparseArray;
 import androidx.annotation.Nullable;
+import androidx.annotation.RequiresApi;
 import androidx.core.content.res.ResourcesCompat;
 import com.facebook.infer.annotation.Nullsafe;
+
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -142,6 +150,28 @@ public class ReactFontManager {
 
   private static Typeface createAssetTypeface(
       String fontFamilyName, int style, AssetManager assetManager) {
+    // This logic attempts to safely check if the frontend code is attempting to use
+    // fallback fonts, and if it is, to use the fallback typeface creation logic.
+    String[] fontFamilyNames = fontFamilyName != null ? fontFamilyName.split(",") : null;
+    if (fontFamilyNames != null) {
+      for (int i = 0; i < fontFamilyNames.length; i++) {
+        fontFamilyNames[i] = fontFamilyNames[i].trim();
+      }
+    }
+
+    // If there are multiple font family names:
+    //   For newer versions of Android, construct a Typeface with fallbacks
+    //   For older versions of Android, ignore all the fallbacks and just use the first font family
+    if (fontFamilyNames != null && fontFamilyNames.length > 1) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+        return createAssetTypefaceWithFallbacks(fontFamilyNames, style, assetManager);
+      } else {
+        fontFamilyName = fontFamilyNames[0];
+      }
+    }
+
+    // Lastly, after all those checks above, this is the original RN logic for
+    // getting the typeface.
     String extension = EXTENSIONS[style];
     for (String fileExtension : FILE_EXTENSIONS) {
       String fileName =
@@ -159,6 +189,47 @@ public class ReactFontManager {
       }
     }
     return Typeface.create(fontFamilyName, style);
+  }
+
+  @RequiresApi(api = Build.VERSION_CODES.Q)
+  private static Typeface createAssetTypefaceWithFallbacks(
+    String[] fontFamilyNames, int style, AssetManager assetManager) {
+    List<FontFamily> fontFamilies = new ArrayList<>();
+
+    // Iterate over the list of fontFamilyNames, constructing new FontFamily objects
+    // for use in the CustomFallbackBuilder below.
+    for (String fontFamilyName : fontFamilyNames) {
+      for (String fileExtension : FILE_EXTENSIONS) {
+        String fileName =
+          new StringBuilder()
+            .append(FONTS_ASSET_PATH)
+            .append(fontFamilyName)
+            .append(fileExtension)
+            .toString();
+        try {
+          Font font = new Font.Builder(assetManager, fileName).build();
+          FontFamily family = new FontFamily.Builder(font).build();
+          fontFamilies.add(family);
+        } catch (RuntimeException e) {
+          // If the typeface asset does not exist, try another extension.
+          continue;
+        } catch (IOException e) {
+          // If the font asset does not exist, try another extension.
+          continue;
+        }
+      }
+    }
+
+    // If there's some problem constructing fonts, fall back to the default behavior.
+    if (fontFamilies.size() == 0) {
+      return createAssetTypeface(fontFamilyNames[0], style, assetManager);
+    }
+
+    Typeface.CustomFallbackBuilder fallbackBuilder = new Typeface.CustomFallbackBuilder(fontFamilies.get(0));
+    for (int i = 1; i < fontFamilies.size(); i++) {
+      fallbackBuilder.addCustomFallback(fontFamilies.get(i));
+    }
+    return fallbackBuilder.build();
   }
 
   /** Responsible for caching typefaces for each custom font family. */
