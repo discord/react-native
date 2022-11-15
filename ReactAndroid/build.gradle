@@ -449,4 +449,55 @@ afterEvaluate {
     // before configureNdkBuildDebug could be executed.
     configureNdkBuildDebug.dependsOn(preBuild)
     configureNdkBuildRelease.dependsOn(preBuild)
+
+    publishing {
+        publications {
+            release(MavenPublication) {
+                // Applies the component for the release build variant.
+                from components.release
+
+                // Add additional sourcesJar to artifacts
+                artifact(androidSourcesJar)
+
+                // You can then customize attributes of the publication as shown below.
+                artifactId = POM_ARTIFACT_ID
+                groupId = GROUP
+                version = VERSION_NAME
+
+                pom {
+                    name = POM_NAME
+                    description = "A framework for building native apps with React"
+                    url = "https://github.com/facebook/react-native"
+
+                    developers {
+                        developer {
+                            id = "facebook"
+                            name = "Facebook"
+                        }
+                    }
+
+                    licenses {
+                        license {
+                            name = "MIT License"
+                            url = "https://github.com/facebook/react-native/blob/HEAD/LICENSE"
+                            distribution = "repo"
+                        }
+                    }
+
+                    scm {
+                        url = "https://github.com/facebook/react-native.git"
+                        connection = "scm:git:https://github.com/facebook/react-native.git"
+                        developerConnection = "scm:git:git@github.com:facebook/react-native.git"
+                    }
+                }
+            }
+        }
+
+        repositories {
+            maven {
+                name = "discord"
+                url = uri("gcs://discord-maven")
+            }
+        }
+    }
 }
