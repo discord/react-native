@@ -140,12 +140,18 @@ public class ReactFontManager {
 
   private static Typeface createAssetTypeface(
       String fontFamilyName, int style, AssetManager assetManager) {
+    // This logic attempts to safely check if the frontend code is attempting to use
+    // fallback fonts, and if it is, to use the fallback typeface creation logic.
     String[] fontFamilyNames = fontFamilyName != null ? fontFamilyName.split(",") : null;
     if (fontFamilyNames != null) {
       for (int i = 0; i < fontFamilyNames.length; i++) {
         fontFamilyNames[i] = fontFamilyNames[i].trim();
       }
     }
+
+    // If there are multiple font family names:
+    //   For newer versions of Android, construct a Typeface with fallbacks
+    //   For older versions of Android, ignore all the fallbacks and just use the first font family
     if (fontFamilyNames != null && fontFamilyNames.length > 1) {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
         return createAssetTypefaceWithFallbacks(fontFamilyNames, style, assetManager);
@@ -154,6 +160,8 @@ public class ReactFontManager {
       }
     }
 
+    // Lastly, after all those checks above, this is the original RN logic for
+    // getting the typeface.
     String extension = EXTENSIONS[style];
     for (String fileExtension : FILE_EXTENSIONS) {
       String fileName =
@@ -176,10 +184,10 @@ public class ReactFontManager {
   @RequiresApi(api = Build.VERSION_CODES.Q)
   private static Typeface createAssetTypefaceWithFallbacks(
     String[] fontFamilyNames, int style, AssetManager assetManager) {
-    // Create a new list of fontFamilies
     List<FontFamily> fontFamilies = new ArrayList<>();
 
-    // For each font family name, create a new fontFamily and add it to the list
+    // Iterate over the list of fontFamilyNames, constructing new FontFamily objects
+    // for use in the CustomFallbackBuilder below.
     for (String fontFamilyName : fontFamilyNames) {
       String extension = EXTENSIONS[style];
       for (String fileExtension : FILE_EXTENSIONS) {
@@ -204,14 +212,10 @@ public class ReactFontManager {
       }
     }
 
-    // Using the first fontFamily, construct a new CustomFallbackBuilder typeface
     Typeface.CustomFallbackBuilder fallbackBuilder = new Typeface.CustomFallbackBuilder(fontFamilies.get(0));
-    // For each fontFamily, add it as a fallback
     for (int i = 1; i < fontFamilies.size(); i++) {
       fallbackBuilder.addCustomFallback(fontFamilies.get(i));
     }
-
-    // Return the built typeface
     return fallbackBuilder.build();
   }
 
