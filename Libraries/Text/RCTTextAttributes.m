@@ -194,7 +194,9 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
 {
   NSArray *rawFontFamilies = [_fontFamily componentsSeparatedByString:@","];
 
-  if (rawFontFamilies.count == 0) {
+  // If _fontFamily is nil or has a single fontFamily, then use the original RN logic.
+  if (rawFontFamilies.count <= 1) {
+    // FIXME: RCTFont has thread-safety issues and must be rewritten.
     return [RCTFont updateFont:nil
                     withFamily:_fontFamily
                           size:@(isnan(_fontSize) ? 0 : _fontSize)
