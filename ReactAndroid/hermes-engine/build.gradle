@@ -22,6 +22,11 @@ def cmakeVersion = "3.18.1"
  * users to install CMake externally.
  */
 def findCmakePath(cmakeVersion) {
+    if (System.getenv("USE_CLYDE_CMAKE")) {
+        // Clyde CI provides CMake via Nix, and breaks if it tries to install CMake externally,
+        // so make sure we're using the provided CMake here, and prefer it over ones provided by an Android SDK.
+        return "cmake"
+    }
     if (System.getenv("ANDROID_SDK_ROOT")) {
         return "${System.getenv("ANDROID_SDK_ROOT")}/cmake/${cmakeVersion}/bin/cmake"
     }
