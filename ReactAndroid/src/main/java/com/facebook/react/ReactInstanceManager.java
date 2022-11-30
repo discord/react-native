@@ -22,6 +22,8 @@ import static com.facebook.react.bridge.ReactMarkerConstants.PRE_SETUP_REACT_CON
 import static com.facebook.react.bridge.ReactMarkerConstants.PRE_SETUP_REACT_CONTEXT_START;
 import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGES_END;
 import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGES_START;
+import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGE_END;
+import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGE_START;
 import static com.facebook.react.bridge.ReactMarkerConstants.REACT_CONTEXT_THREAD_END;
 import static com.facebook.react.bridge.ReactMarkerConstants.REACT_CONTEXT_THREAD_START;
 import static com.facebook.react.bridge.ReactMarkerConstants.SETUP_REACT_CONTEXT_END;
@@ -1419,6 +1421,7 @@ public class ReactInstanceManager {
         if (checkAndUpdatePackageMembership && mPackages.contains(reactPackage)) {
           continue;
         }
+        ReactMarker.logMarker(PROCESS_PACKAGE_START, reactPackage.getClass().getCanonicalName());
         Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "createAndProcessCustomReactPackage");
         try {
           if (checkAndUpdatePackageMembership) {
@@ -1427,6 +1430,7 @@ public class ReactInstanceManager {
           processPackage(reactPackage, nativeModuleRegistryBuilder);
         } finally {
           Systrace.endSection(TRACE_TAG_REACT_JAVA_BRIDGE);
+          ReactMarker.logMarker(PROCESS_PACKAGE_END, reactPackage.getClass().getCanonicalName());
         }
       }
     }
