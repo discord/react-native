@@ -7,9 +7,14 @@
 
 package com.facebook.react;
 
+import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGE_MODULE_END;
+import static com.facebook.react.bridge.ReactMarkerConstants.PROCESS_PACKAGE_MODULE_START;
+
 import com.facebook.react.bridge.ModuleHolder;
 import com.facebook.react.bridge.NativeModuleRegistry;
 import com.facebook.react.bridge.ReactApplicationContext;
+import com.facebook.react.bridge.ReactMarker;
+
 import java.util.HashMap;
 import java.util.Map;
 
@@ -45,6 +50,7 @@ public class NativeModuleRegistryBuilder {
 
     for (ModuleHolder moduleHolder : moduleHolders) {
       String name = moduleHolder.getName();
+      ReactMarker.logMarker(PROCESS_PACKAGE_MODULE_START, name);
       if (mModules.containsKey(name)) {
         ModuleHolder existingNativeModule = mModules.get(name);
         if (!moduleHolder.getCanOverrideExistingModule()) {
@@ -59,6 +65,7 @@ public class NativeModuleRegistryBuilder {
         mModules.remove(existingNativeModule);
       }
       mModules.put(name, moduleHolder);
+      ReactMarker.logMarker(PROCESS_PACKAGE_MODULE_END, name);
     }
   }
 
