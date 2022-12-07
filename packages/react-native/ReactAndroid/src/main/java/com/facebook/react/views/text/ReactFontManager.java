@@ -199,13 +199,11 @@ public class ReactFontManager {
     // Iterate over the list of fontFamilyNames, constructing new FontFamily objects
     // for use in the CustomFallbackBuilder below.
     for (String fontFamilyName : fontFamilyNames) {
-      String extension = EXTENSIONS[style];
       for (String fileExtension : FILE_EXTENSIONS) {
         String fileName =
           new StringBuilder()
             .append(FONTS_ASSET_PATH)
             .append(fontFamilyName)
-            .append(extension)
             .append(fileExtension)
             .toString();
         try {
@@ -220,6 +218,11 @@ public class ReactFontManager {
           continue;
         }
       }
+    }
+
+    // If there's some problem constructing fonts, fall back to the default behavior.
+    if (fontFamilies.size() == 0) {
+      return createAssetTypeface(fontFamilyNames[0], style, assetManager);
     }
 
     Typeface.CustomFallbackBuilder fallbackBuilder = new Typeface.CustomFallbackBuilder(fontFamilies.get(0));
