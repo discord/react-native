@@ -376,7 +376,7 @@ public class ReactImageView extends GenericDraweeView {
           } else {
             height = 0;
           }
-          ImageSource imageSource =
+          imageSource =
               new ImageSource(
                   getContext(), uri, width, height, isForceCached);
           tmpSources.add(imageSource);
