@@ -36,7 +36,7 @@ public class ImageSource {
   }
 
   public ImageSource(Context context, String source, double width, double height) {
-    this(context, source, width, height, false)
+    this(context, source, width, height, false);
   }
 
   public static ImageSource getTransparentBitmapImageSource(Context context) {
