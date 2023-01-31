@@ -35,6 +35,10 @@ public class ImageSource {
     mUri = computeUri(context);
   }
 
+  public ImageSource(Context context, String source, double width, double height) {
+    this(context, source, width, height, false)
+  }
+
   public static ImageSource getTransparentBitmapImageSource(Context context) {
     return new ImageSource(context, TRANSPARENT_BITMAP_URI);
   }
