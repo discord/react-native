@@ -356,10 +356,7 @@ public class ReactImageView extends GenericDraweeView {
         if (Uri.EMPTY.equals(imageSource.getUri())) {
           warnImageSource(source.getString("uri"));
           imageSource = ImageSource.getTransparentBitmapImageSource(getContext());
-        }
-      } else {
-        for (int idx = 0; idx < sources.size(); idx++) {
-          ReadableMap source = sources.getMap(idx);
+        } else {
           String uri = source.getString("uri");
           boolean isForceCached;
           if (source.hasKey("isForceCached")) {
@@ -379,16 +376,11 @@ public class ReactImageView extends GenericDraweeView {
           } else {
             height = 0;
           }
-          ImageSource imageSource =
+          imageSource =
               new ImageSource(
                   getContext(), uri, width, height, isForceCached);
           tmpSources.add(imageSource);
-          if (Uri.EMPTY.equals(imageSource.getUri())) {
-            warnImageSource(source.getString("uri"));
-            imageSource = ImageSource.getTransparentBitmapImageSource(getContext());
-          }
         }
-        tmpSources.add(imageSource);
       }
     }
 
