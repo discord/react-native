@@ -15,6 +15,7 @@ plugins {
     id("com.android.library")
     id("com.facebook.react")
     id("de.undercouch.download")
+    id("maven-publish")
 }
 
 import com.facebook.react.tasks.internal.*
@@ -424,9 +425,15 @@ task packageReactNdkLibsForBuck(type: Copy) {
 }
 
 task installArchives {
+    dependsOn("publishAllPublicationsToNpmRepository")
+}
+
+task installArchivesToDiscord {
     dependsOn("publishAllPublicationsToDiscordRepository")
-    // Uncomment to publish to your local repository instead of Discord's maven repository.
-    // dependsOn("publishReleasePublicationToMavenLocal")
+}
+
+task installArchivesToMavenLocal {
+    dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 android {

@@ -66,9 +66,15 @@ task downloadHermes(type: Download) {
 }
 
 task installArchives {
+    dependsOn("publishAllPublicationsToNpmRepository")
+}
+
+task installArchivesToDiscord {
     dependsOn("publishAllPublicationsToDiscordRepository")
-    // Uncomment to publish to your local repository instead of Discord's maven repository.
-    // dependsOn("publishReleasePublicationToMavenLocal")
+}
+
+task installArchivesToMavenLocal {
+    dependsOn("publishReleasePublicationToMavenLocal")
 }
 
 task unzipHermes(dependsOn: downloadHermes, type: Copy) {
