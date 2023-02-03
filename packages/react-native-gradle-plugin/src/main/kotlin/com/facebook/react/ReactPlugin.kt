@@ -11,6 +11,7 @@ import com.android.build.gradle.AppExtension
 import com.android.build.gradle.BaseExtension
 import com.android.build.gradle.LibraryExtension
 import com.android.build.gradle.internal.tasks.factory.dependsOn
+import com.facebook.react.model.ModelPackageJson
 import com.facebook.react.tasks.BuildCodegenCLITask
 import com.facebook.react.tasks.GenerateCodegenArtifactsTask
 import com.facebook.react.tasks.GenerateCodegenSchemaTask
@@ -36,14 +37,14 @@ class ReactPlugin : Plugin<Project> {
     if ((jvmVersion?.toIntOrNull() ?: 0) <= 8) {
       project.logger.error(
           """
-      
+
       ********************************************************************************
-      
+
       ERROR: requires JDK11 or higher.
       Incompatible major version detected: '$jvmVersion'
-      
+
       ********************************************************************************
-      
+
       """.trimIndent())
       exitProcess(1)
     }
@@ -103,6 +104,8 @@ class ReactPlugin : Plugin<Project> {
           } else {
             it.jsRootDir.set(extension.jsRootDir)
           }
+
+          it.onlyIf { project.needsCodegenFromPackageJson(parsedPackageJson) }
         }
 
     // We create the task to generate Java code from schema.
@@ -118,12 +121,19 @@ class ReactPlugin : Plugin<Project> {
           it.packageJsonFile.set(findPackageJsonFile(project, extension))
           it.codegenJavaPackageName.set(extension.codegenJavaPackageName)
           it.libraryName.set(extension.libraryName)
+
+          // We're reading the package.json at configuration time to properly feed
+          // the `jsRootDir` @Input property of this task. Therefore, the
+          // parsePackageJson should be invoked inside this lambda.
+          val packageJson = findPackageJsonFile(project, extension)
+          val parsedPackageJson = packageJson?.let { JsonUtils.fromCodegenJson(it) }
+
+          it.onlyIf { project.needsCodegenFromPackageJson(parsedPackageJson) }
         }
 
     // We add dependencies & generated sources to the project.
     // Note: This last step needs to happen after the project has been evaluated.
     project.afterEvaluate {
-
       // `preBuild` is one of the base tasks automatically registered by Gradle.
       // This will invoke the codegen before compiling the entire project.
       project.tasks.named("preBuild", Task::class.java).dependsOn(generateCodegenArtifactsTask)
@@ -141,5 +151,29 @@ class ReactPlugin : Plugin<Project> {
 
       android.sourceSets.getByName("main").java.srcDir(File(generatedSrcDir, "java"))
     }
+  }
+
+  internal fun Project.needsCodegenFromPackageJson(model: ModelPackageJson?): Boolean {
+    /**
+    This flag allows us to codegen TurboModule bindings for only Discord modules. We need this differentiation because
+    React Native tooling only allows us to run TurboModule codegen if newArchEnabled=true, but the newArchEnabled flag
+    assumes a complete migration to the New Architecture. Third party libraries make codegen assumptions that
+    then break the build if we codegen, then build with newArchEnabled=false (things like codegen-ing TurboModule
+    classes that then share the same name as legacy module classes used when newArchEnabled=false).
+
+    The goal of this is to get us in a state where we can consume both TurboModules and legacy modules without having
+    to fully migrate to the new architecture.
+    */
+    var discordApproved = true
+    if (project.hasProperty("onlyDiscordTurboModulesEnabled")) {
+      discordApproved = model?.codegenConfig?.android?.javaPackageName?.startsWith("com.discord") == true
+    }
+
+    // Adding a log to see what packages are getting codegen'd
+    val willCodegen = discordApproved && model?.codegenConfig != null
+    if (willCodegen) {
+      println("Running codegen for package ${model?.codegenConfig?.android?.javaPackageName?.toString()}")
+    }
+    return willCodegen
   }
 }
