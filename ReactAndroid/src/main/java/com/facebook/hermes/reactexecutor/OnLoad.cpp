@@ -17,6 +17,7 @@
 #include <react/jni/JSLogging.h>
 #include <react/jni/JavaScriptExecutorHolder.h>
 #include <react/jni/NativeTime.h>
+#include <react/jni/NativeTrace.h>
 
 #include <memory>
 
@@ -60,6 +61,15 @@ static void installBindings(jsi::Runtime &runtime) {
   react::PerformanceNow androidNativePerformanceNow =
       static_cast<double (*)()>(&reactAndroidNativePerformanceNowHook);
   react::bindNativePerformanceNow(runtime, androidNativePerformanceNow);
+
+  react::TraceBeginSection androidNativeTraceBeginSection =
+      static_cast<void (*)(const std::string &sectionName)>(
+          &reactAndroidNativeBeginTraceSectionHook);
+  react::bindNativeTraceBeginSection(runtime, androidNativeTraceBeginSection);
+
+  react::TraceEndSection androidNativeTraceEndSection =
+      static_cast<void (*)(void)>(&reactAndroidNativeEndTraceSectionHook);
+  react::bindNativeTraceEndSection(runtime, androidNativeTraceEndSection);
 }
 
 class HermesExecutorHolder

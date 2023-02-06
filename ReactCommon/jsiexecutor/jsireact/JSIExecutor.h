@@ -142,5 +142,12 @@ using PerformanceNow = std::function<double()>;
 void bindNativePerformanceNow(
     jsi::Runtime &runtime,
     PerformanceNow performanceNow);
+
+using TraceBeginSection = std::function<void(const std::string& sectionName)>;
+using TraceEndSection = std::function<void()>;
+void bindNativeTraceBeginSection(jsi::Runtime &runtime, TraceBeginSection traceBeginSection);
+void bindNativeTraceEndSection(jsi::Runtime &runtime, TraceEndSection traceEndSection);
+
+
 } // namespace react
 } // namespace facebook

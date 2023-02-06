@@ -16,6 +16,7 @@ EXPORTED_HEADERS = [
     "NativeArray.h",
     "NativeCommon.h",
     "NativeMap.h",
+    "NativeTrace.h",
     "ReadableNativeArray.h",
     "ReadableNativeMap.h",
     "JRuntimeExecutor.h",

@@ -583,5 +583,49 @@ void bindNativePerformanceNow(Runtime &runtime, PerformanceNow performanceNow) {
               size_t count) { return Value(performanceNow()); }));
 }
 
+void bindNativeTraceBeginSection(
+    Runtime &runtime,
+    TraceBeginSection traceBeginSection) {
+  runtime.global().setProperty(
+      runtime,
+      "nativeTraceBeginSection",
+      Function::createFromHostFunction(
+          runtime,
+          PropNameID::forAscii(runtime, "nativeTraceBeginSection"),
+          1,
+          [traceBeginSection = std::move(traceBeginSection)](
+              jsi::Runtime &runtime,
+              const jsi::Value &,
+              const jsi::Value *args,
+              size_t count) {
+            if (count != 1) {
+              throw std::invalid_argument(
+                  "nativeTraceBeginSection takes 1 argument");
+            }
+            traceBeginSection(args[0].asString(runtime).utf8(runtime));
+            return Value::undefined();
+          }));
+}
+
+void bindNativeTraceEndSection(
+    Runtime &runtime,
+    TraceEndSection traceEndSection) {
+  runtime.global().setProperty(
+      runtime,
+      "nativeTraceEndSection",
+      Function::createFromHostFunction(
+          runtime,
+          PropNameID::forAscii(runtime, "nativeTraceEndSection"),
+          0,
+          [traceEndSection = std::move(traceEndSection)](
+              jsi::Runtime &runtime,
+              const jsi::Value &,
+              const jsi::Value *args,
+              size_t count) {
+            traceEndSection();
+            return Value::undefined();
+          }));
+}
+
 } // namespace react
 } // namespace facebook
