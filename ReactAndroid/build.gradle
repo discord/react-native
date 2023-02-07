@@ -315,7 +315,8 @@ android {
                         "-DREACT_BUILD_DIR=$buildDir",
                         "-DANDROID_STL=c++_shared",
                         "-DANDROID_TOOLCHAIN=clang",
-                        "-DANDROID_PLATFORM=android-21"
+                        "-DANDROID_PLATFORM=android-21",
+                        "-DWITH_CHONKER=ON"
 
                 targets "reactnativejni",
                     "jscexecutor",

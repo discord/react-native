@@ -8,9 +8,16 @@ set(CMAKE_VERBOSE_MAKEFILE on)
 
 project(ReactAndroid)
 
+option(WITH_CHONKER "Enable Chonker asset loading")
+
 # Make sure every shared lib includes a .note.gnu.build-id header
 add_link_options(-Wl,--build-id)
-add_compile_options(-Wall -Werror -std=c++1y)
+add_compile_options(-Wall -Werror)
+add_compile_options($<$<COMPILE_LANGUAGE:CXX>:-std=c++1y>)
+
+if(WITH_CHONKER)
+  add_compile_options(-DWITH_CHONKER=1)
+endif()
 
 function(add_react_android_subdir relative_path)
   add_subdirectory(${REACT_ANDROID_DIR}/${relative_path} ReactAndroid/${relative_path})

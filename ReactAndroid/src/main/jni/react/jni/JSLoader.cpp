@@ -8,14 +8,20 @@
 #include "JSLoader.h"
 
 #include <android/asset_manager_jni.h>
+#include <android/trace.h>
 #include <cxxreact/JSBigString.h>
 #include <cxxreact/JSBundleType.h>
+#include <dlfcn.h>
 #include <fbjni/fbjni.h>
 #include <folly/Conv.h>
 
 #ifdef WITH_FBSYSTRACE
 #include <fbsystrace.h>
 using fbsystrace::FbSystraceSection;
+#endif
+
+#ifdef WITH_CHONKER
+#include "chonker.h"
 #endif
 
 using namespace facebook::jni;
@@ -25,7 +31,20 @@ namespace react {
 
 class AssetManagerString : public JSBigString {
  public:
-  AssetManagerString(AAsset *asset) : asset_(asset){};
+  AssetManagerString(AAsset *asset) : asset_(asset) {
+#ifdef WITH_CHONKER
+    if (discord::chonker::ChonkyFile::IsChonkyBuffer(
+            AAsset_getBuffer(asset), AAsset_getLength(asset))) {
+      chonky_ = discord::chonker::ChonkyFile::OpenBuffer(
+          AAsset_getBuffer(asset), AAsset_getLength(asset));
+
+      if (!chonky_) {
+        throw std::runtime_error(
+            "Unable to chonker bundle due to an internal error.");
+      }
+    }
+#endif
+  }
 
   virtual ~AssetManagerString() {
     AAsset_close(asset_);
@@ -36,15 +55,28 @@ class AssetManagerString : public JSBigString {
   }
 
   const char *c_str() const override {
+#ifdef WITH_CHONKER
+    if (chonky_) {
+      return reinterpret_cast<const char *>(chonky_->GetBuffer());
+    }
+#endif
     return (const char *)AAsset_getBuffer(asset_);
   }
 
   // Length of the c_str without the NULL byte.
   size_t size() const override {
+#ifdef WITH_CHONKER
+    if (chonky_) {
+      return chonky_->GetUncompressedSize();
+    }
+#endif
     return AAsset_getLength(asset_);
   }
 
  private:
+#ifdef WITH_CHONKER
+  std::unique_ptr<discord::chonker::ChonkyFile> chonky_;
+#endif
   AAsset *asset_;
 };
 
