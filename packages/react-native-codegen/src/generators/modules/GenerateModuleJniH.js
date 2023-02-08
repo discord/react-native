@@ -125,7 +125,15 @@ add_library(
   \${react_codegen_SRCS}
 )
 
-target_include_directories(react_codegen_${libraryName} PUBLIC . react/renderer/components/${libraryName})
+# ADDED STUFF FOR DISCORD THINGS (See GenerateModuleJniH.js in the react-native repo)
+
+if(DEFINED PREBUILT_CMAKE)
+    include(\${PREBUILT_CMAKE})
+endif()
+
+target_include_directories(react_codegen_RTNTurboModuleTest PUBLIC . react/renderer/components/${libraryName} \${EXTRA_INCLUDE_DIRECTORIES})
+
+# END ADDED STUFF FOR DISCORD THINGS
 
 target_link_libraries(
   react_codegen_${libraryName}
