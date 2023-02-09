@@ -10,6 +10,8 @@ package com.facebook.react.views.imagehelper;
 import android.content.Context;
 import android.net.Uri;
 import androidx.annotation.Nullable;
+import androidx.arch.core.util.Function;
+
 import com.facebook.infer.annotation.Assertions;
 import java.util.Objects;
 
@@ -17,6 +19,8 @@ import java.util.Objects;
 
 /** Class describing an image source (network URI or resource) and size. */
 public class ImageSource {
+
+  public static Function<String, String> mSourceOverride = null;
 
   private @Nullable Uri mUri;
   private String mSource;
@@ -80,6 +84,9 @@ public class ImageSource {
 
   private Uri computeUri(Context context) {
     try {
+      if (mSourceOverride != null) {
+        mSource = mSourceOverride.apply(mSource);
+      }
       Uri uri = Uri.parse(mSource);
       // Verify scheme is set, so that relative uri (used by static resources) are not handled.
       return uri.getScheme() == null ? computeLocalUri(context) : uri;
