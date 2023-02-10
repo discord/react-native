@@ -113,7 +113,7 @@ class ReactPlugin : Plugin<Project> {
         project.tasks.register(
             "generateCodegenArtifactsFromSchema", GenerateCodegenArtifactsTask::class.java) {
           it.dependsOn(generateCodegenSchemaTask)
-          it.reactNativeDir.set(extension.reactNativeDir)
+          it.reactNativeDir.set(project.getReactNativeDir(extension))
           it.deprecatedReactRoot.set(extension.reactRoot)
           it.nodeExecutableAndArgs.set(extension.nodeExecutableAndArgs)
           it.codegenDir.set(project.getCodegenDir(extension))
@@ -206,6 +206,21 @@ class ReactPlugin : Plugin<Project> {
       project.rootProject.layout.projectDirectory.dir("../../discord_app/node_modules/react-native/packages/react-native-codegen")
     )
     else extension.codegenDir
+
+  /**
+  NOTE(flewp): The `reactNativeDir` is part of a newer way of configuring the React Native build via a `react {}` gradle
+  object placed at the app/build.gradle level (vs the old `project.ext.react = []` way). Its default value points to
+  "../node_modules/react-native", which is incorrect because of our monorepo.
+
+  Currently, setting the `react { reactNativeDir = "" }` in our Android app is, for an unknown reason, not affecting the
+  `reactNativeDir` property here in this plugin file, so this forces the property to be set in the correct place if
+  we're trying to codegen Discord TurboModules.
+   */
+  internal fun Project.getReactNativeDir(extension: ReactExtension) = if(project.onlyDiscordTurboModuleCodegen())
+    project.objects.directoryProperty().convention(
+      project.rootProject.layout.projectDirectory.dir("../../discord_app/node_modules/react-native")
+    )
+    else extension.reactNativeDir
 
   internal fun Project.onlyDiscordTurboModuleCodegen() = project.hasProperty("onlyDiscordTurboModulesEnabled")
 }
