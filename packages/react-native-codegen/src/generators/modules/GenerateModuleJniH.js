@@ -131,7 +131,7 @@ if(DEFINED PREBUILT_CMAKE)
     include(\${PREBUILT_CMAKE})
 endif()
 
-target_include_directories(react_codegen_RTNTurboModuleTest PUBLIC . react/renderer/components/${libraryName} \${EXTRA_INCLUDE_DIRECTORIES})
+target_include_directories(react_codegen_${libraryName} PUBLIC . react/renderer/components/${libraryName} \${EXTRA_INCLUDE_DIRECTORIES})
 
 # END ADDED STUFF FOR DISCORD THINGS
 
