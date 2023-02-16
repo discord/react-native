@@ -173,18 +173,22 @@ class ReactPlugin : Plugin<Project> {
 
   internal fun Project.needsCodegenFromPackageJson(model: ModelPackageJson?): Boolean {
     /**
-    This flag allows us to codegen TurboModule bindings for only Discord modules. We need this differentiation because
-    React Native tooling only allows us to run TurboModule codegen if newArchEnabled=true, but the newArchEnabled flag
-    assumes a complete migration to the New Architecture. Third party libraries make codegen assumptions that
-    then break the build if we codegen, then build with newArchEnabled=false (things like codegen-ing TurboModule
-    classes that then share the same name as legacy module classes used when newArchEnabled=false).
+    This flag allows us to codegen TurboModule bindings for only Discord modules and core React Native modules.
+    We need this differentiation because React Native tooling only allows us to run TurboModule codegen for non-core
+    modules if newArchEnabled=true, but the newArchEnabled flag assumes a complete migration to the New Architecture.
+    Other non-core third party libraries make codegen assumptions that then break the build if we codegen, then build
+    with newArchEnabled=false (things like codegen-ing TurboModule classes that then share the same name as legacy
+    module classes used when newArchEnabled=false).
 
     The goal of this is to get us in a state where we can consume both TurboModules and legacy modules without having
     to fully migrate to the new architecture.
     */
     var discordApproved = true
     if (onlyDiscordTurboModuleCodegen()) {
-      discordApproved = model?.codegenConfig?.android?.javaPackageName?.startsWith("com.discord") == true
+      // "ReactAndroid" tasks generate core React Native modules, and we can't build without these. Otherwise look for
+      // modules that begin with "com.discord", those are Discord's TurboModules.
+      discordApproved = this.name == "ReactAndroid" ||
+        model?.codegenConfig?.android?.javaPackageName?.startsWith("com.discord") == true
     }
 
     // Adding a log to see what packages are getting codegen'd
