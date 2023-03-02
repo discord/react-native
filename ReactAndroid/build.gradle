@@ -256,10 +256,64 @@ tasks.register("packageReactNdkReleaseLibsForBuck", Copy) {
     into("src/main/jni/prebuilt/lib")
 }
 
+// Derivative of the packageReactNdkDebugLibsForBuck task, appends "debug" to the "into" dir
+tasks.register("packageReactNdkDebugLibsForDiscord", Copy) {
+    dependsOn("mergeDebugNativeLibs")
+    // Shared libraries (.so) are copied from the merged_native_libs folder instead
+    from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+    exclude("**/libjsc.so")
+    exclude("**/libhermes.so")
+    into("src/main/jni/prebuilt/lib/debug")
+}
+
+// Derivative of the packageReactNdkReleaseLibsForBuck task, appends "release" to the "into" dir
+tasks.register("packageReactNdkReleaseLibsForDiscord", Copy) {
+    dependsOn("mergeReleaseNativeLibs")
+    // Shared libraries (.so) are copied from the merged_native_libs folder instead
+    from("$buildDir/intermediates/merged_native_libs/release/out/lib/")
+    exclude("**/libjsc.so")
+    exclude("**/libhermes.so")
+    into("src/main/jni/prebuilt/lib/release")
+}
+
 final def extractNativeDependencies = tasks.register('extractNativeDependencies', ExtractJniAndHeadersTask) {
     it.extractHeadersConfiguration.setFrom(configurations.extractHeaders)
     it.extractJniConfiguration.setFrom(configurations.extractJNI)
     it.baseOutputDir = project.file("src/main/jni/first-party/")
+}
+
+/**
+* By default, the published React Native artifact omits the *.so files needed to compile JSI-related modules/components.
+* Meta's recommended strategy is, when building for "The New Architecture", to build React Native from source,
+* which'll recreate these *.so files for the JSI (i.e. TurboModule/Fabric) modules/components build to consume.
+*
+* Since Discord publishes its own version of React Native internally, we can modify the build process here to produce
+* a .zip that gives us the *.so files we need to build modules/compoents for The New Architecture.
+*
+* MAYBE TODO?: Maybe include the relevant headers for these libraries,
+* right now we can get away with just using our react-native node package.
+*/
+task createReactNdkLibraryZipArchiveForDiscord(type: Zip) {
+    // This dependsOn tasks gets all our *.so files into the src/main/jni/prebuilt/lib directory
+    dependsOn("packageReactNdkDebugLibsForDiscord")
+    dependsOn("packageReactNdkReleaseLibsForDiscord")
+
+    // A searchable self-documenting name for the build process, but its final packaged name will end up being react-native-{version}.zip
+    archiveFileName = "ReactNativeLibrariesForDiscord.zip"
+    from(layout.projectDirectory.dir("src/main/jni/prebuilt")) {
+        // Get all *.so files in the prebuilt directory
+        include "**/*.so"
+        eachFile { fcd ->
+            // Trim down each file's directory to just include the "lib/{debug/release}/{architecture}" part
+            def relativeFileName = new RelativePath(true, fcd.relativePath.segments[-4..-1].join("/"))
+            fcd.relativePath = relativeFileName
+        }
+        // Removes empty dirs resulting from the eachFile directory remapping above
+        includeEmptyDirs = false
+    }
+
+    // Place this .zip right into our ReactAndroid directory
+    destinationDirectory = layout.projectDirectory
 }
 
 task installArchives {
@@ -270,7 +324,7 @@ task installArchives {
 }
 
 task publishArchivesLocally {
-    dependsOn("publishReleasePublicationToMavenLocal")
+    dependsOn("publishAllPublicationsToMavenLocal")
 }
 
 task uploadArchivesToDiscord {
@@ -501,6 +555,7 @@ afterEvaluate {
                         developerConnection = "scm:git:git@github.com:facebook/react-native.git"
                     }
                 }
+                artifact(createReactNdkLibraryZipArchiveForDiscord)
             }
         }
 
