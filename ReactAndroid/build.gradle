@@ -520,6 +520,12 @@ afterEvaluate {
 
     publishing {
         publications {
+            libZip(MavenPublication) {
+                group = "com.facebook.react"
+                version = VERSION_NAME
+                artifactId = "discord-rn-libs"
+                artifact (createReactNdkLibraryZipArchiveForDiscord)
+            }
             release(MavenPublication) {
                 // We do a multi variant release
                 from components.default
@@ -555,7 +561,6 @@ afterEvaluate {
                         developerConnection = "scm:git:git@github.com:facebook/react-native.git"
                     }
                 }
-                artifact(createReactNdkLibraryZipArchiveForDiscord)
             }
         }
 
