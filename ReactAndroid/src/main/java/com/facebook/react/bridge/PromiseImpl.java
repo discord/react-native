@@ -165,7 +165,7 @@ public class PromiseImpl implements Promise {
    * @param userInfo WritableMap
    */
   @Override
-  public void reject(
+  public synchronized void reject(
       @Nullable String code,
       @Nullable String message,
       @Nullable Throwable throwable,
