@@ -151,6 +151,8 @@ android {
     }
     if (rootProject.hasProperty("ndkVersion")) {
         ndkVersion rootProject.ext.ndkVersion
+    } else {
+        ndkVersion "24.0.8215888"
     }
 
     flavorDimensions "vm"
