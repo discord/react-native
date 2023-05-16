@@ -22,6 +22,9 @@ public class ImageSource {
 
   public static Function<String, String> mSourceOverride = null;
 
+  private static final String TRANSPARENT_BITMAP_URI =
+    "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNkYAAAAAYAAjCB0C8AAAAASUVORK5CYII=";
+
   private @Nullable Uri mUri;
   private String mSource;
   private double mSize;
