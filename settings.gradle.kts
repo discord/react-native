@@ -5,6 +5,12 @@
  * LICENSE file in the root directory of this source tree.
  */
 
+// This is the settings.gradle.kts file used when the users
+// is doing a build from source. It's triggered as the user
+// will add an `includeBuild(../node_modules/react-native)` in
+// their settings.gradle.kts file.
+// More on this here: https://reactnative.dev/contributing/how-to-build-from-source
+
 pluginManagement {
   repositories {
     mavenCentral()
@@ -13,25 +19,13 @@ pluginManagement {
   }
 }
 
-include(
-    ":packages:react-native:ReactAndroid",
-    ":packages:react-native:ReactAndroid:hermes-engine",
-    ":packages:react-native:ReactAndroid:external-artifacts")
-
-// If the ./packages folder exists, then we're inside the React Native repository.
-// If not, a users is consuming this project for a build from source.
-if (File("${rootDir}/packages").exists()) {
-  include(":packages:rn-tester:android:app")
-  // Include this to enable codegen Gradle plugin.
-  includeBuild("packages/react-native-gradle-plugin/")
-}
-
 rootProject.name = "react-native-github"
 
-plugins { id("com.gradle.enterprise").version("3.7.1") }
+include(":packages:react-native:ReactAndroid")
 
-// If you specify a file inside gradle/gradle-enterprise.gradle.kts
-// you can configure your custom Gradle Enterprise instance
-if (File("./gradle/gradle-enterprise.gradle.kts").exists()) {
-  apply(from = "./gradle/gradle-enterprise.gradle.kts")
-}
+project(":packages:react-native:ReactAndroid").projectDir = file("ReactAndroid/")
+
+include(":packages:react-native:ReactAndroid:hermes-engine")
+
+project(":packages:react-native:ReactAndroid:hermes-engine").projectDir =
+    file("ReactAndroid/hermes-engine/")
