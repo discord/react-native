@@ -791,6 +791,21 @@ react {
     jsRootDir = file("../Libraries")
 }
 
+/**
+ * NOTE(flewp): This 'privateReact' config is an undocumented feature of the react-native-gradle-plugin.
+ * It matches the same structure as the 'react' config, but the plugin only considers the root project's
+ * privateReact config during a build, so it's kinda react native's way of providing a project wide config.
+ *
+ * This ReactAndroid directory is technically the root project when we do a standalone react native build on CI,
+ * so we can get away with using this as a way to set the proper directories for the codegen plugin and react-native
+ * root. We have to do this because we're breaking RN 72's monorepo structure in order to consume this as a github
+ * tarball.
+ */
+privateReact {
+    codegenDir = file("../packages/react-native-codegen")
+    reactNativeDir = file("..")
+}
+
 tasks.withType(Test).all {
     // We add --add-opens flags to make sure we can run PowerMock tests on JDK >= 17
     if (JavaVersion.current().isCompatibleWith(JavaVersion.VERSION_17)) {
