@@ -29,3 +29,6 @@ include(":packages:react-native:ReactAndroid:hermes-engine")
 
 project(":packages:react-native:ReactAndroid:hermes-engine").projectDir =
     file("ReactAndroid/hermes-engine/")
+
+// Include this so the build can recognize plugins {id("com.facebook.react")}
+includeBuild("packages/react-native-gradle-plugin/")
