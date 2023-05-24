@@ -250,8 +250,16 @@ task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
     dest(new File(downloadsDir, "boost_${BOOST_VERSION}.tar.gz"))
 }
 
+task checkBoostDownload {
+    it.dependsOn(downloadBoost)
+    doFirst {
+        def file = file("${downloadsDir}/boost_${BOOST_VERSION}.tar.gz")
+        println ("DOES THIS TAR FILE EXIST? ${file.exists()}, IT IS ${file.size()} BIG")
+    }
+}
+
 final def prepareBoost = tasks.register("prepareBoost", PrepareBoostTask) {
-    it.dependsOn(boostPath ? [] : [downloadBoost])
+    it.dependsOn(boostPath ? [] : [checkBoostDownload])
     it.boostPath.setFrom(boostPath ?: tarTree(downloadBoost.dest))
     it.boostVersion.set(BOOST_VERSION)
     it.outputDir.set(new File(thirdPartyNdkDir, "boost"))
