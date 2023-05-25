@@ -22,6 +22,8 @@ import kotlin.Pair
 
 import de.undercouch.gradle.tasks.download.Download
 
+import org.apache.tools.ant.taskdefs.condition.Os
+
 version = VERSION_NAME
 group = "com.facebook.react"
 
@@ -33,6 +35,9 @@ def customDownloadsDir = System.getenv("REACT_NATIVE_DOWNLOADS_DIR")
 def downloadsDir = customDownloadsDir ? new File(customDownloadsDir) : new File("$buildDir/downloads")
 def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
 def reactNativeRootDir = projectDir.parent
+
+def needsBoostTar = Os.isFamily(Os.FAMILY_MAC)
+def boostExtension = needsBoostTar ? ".tar.gz" : ".zip"
 
 // We put the publishing version from gradle.properties inside ext. so other
 // subprojects can access it as well.
@@ -243,24 +248,16 @@ task createNativeDepsDirectories {
 }
 
 task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
-    src("https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION.replace("_", ".")}/source/boost_${BOOST_VERSION}.zip")
+    src("https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION.replace("_", ".")}/source/boost_${BOOST_VERSION}${boostExtension}")
     onlyIfModified(true)
     overwrite(false)
     retries(5)
-    dest(new File(downloadsDir, "boost_${BOOST_VERSION}.zip"))
-}
-
-task checkBoostDownload {
-    it.dependsOn(downloadBoost)
-    doFirst {
-        def file = file("${downloadsDir}/boost_${BOOST_VERSION}.zip")
-        println ("DOES THIS TAR FILE EXIST? ${file.exists()}, IT IS ${file.size()} BIG")
-    }
+    dest(new File(downloadsDir, "boost_${BOOST_VERSION}${boostExtension}"))
 }
 
 final def prepareBoost = tasks.register("prepareBoost", PrepareBoostTask) {
-    it.dependsOn(boostPath ? [] : [checkBoostDownload])
-    it.boostPath.setFrom(boostPath ?: zipTree("${downloadsDir}/boost_${BOOST_VERSION}.zip"))
+    it.dependsOn(boostPath ? [] : [downloadBoost])
+    it.boostPath.setFrom(boostPath ?: (needsBoostTar ? tarTree("${downloadsDir}/boost_${BOOST_VERSION}.tar.gz") : zipTree("${downloadsDir}/boost_${BOOST_VERSION}.zip")))
     it.boostVersion.set(BOOST_VERSION)
     it.outputDir.set(new File(thirdPartyNdkDir, "boost"))
 }
