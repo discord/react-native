@@ -27,19 +27,9 @@ protected constructor(
 ) : ReactNativeHost(application) {
 
   override fun getReactPackageTurboModuleManagerDelegateBuilder():
-      ReactPackageTurboModuleManagerDelegate.Builder? =
-      if (isNewArchEnabled) {
-        DefaultTurboModuleManagerDelegate.Builder()
-      } else {
-        null
-      }
+      ReactPackageTurboModuleManagerDelegate.Builder? = DefaultTurboModuleManagerDelegate.Builder()
 
-  override fun getJSIModulePackage(): JSIModulePackage? =
-      if (isNewArchEnabled) {
-        DefaultJSIModulePackage(this)
-      } else {
-        null
-      }
+  override fun getJSIModulePackage(): JSIModulePackage? = DefaultJSIModulePackage(this)
 
   override fun getJSEngineResolutionAlgorithm(): JSEngineResolutionAlgorithm? =
       when (isHermesEnabled) {
