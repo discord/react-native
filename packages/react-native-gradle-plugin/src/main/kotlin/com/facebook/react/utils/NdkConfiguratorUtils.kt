@@ -11,7 +11,6 @@ import com.android.build.api.variant.AndroidComponentsExtension
 import com.android.build.api.variant.Variant
 import com.facebook.react.ReactExtension
 import com.facebook.react.utils.ProjectUtils.getReactNativeArchitectures
-import com.facebook.react.utils.ProjectUtils.isNewArchEnabled
 import java.io.File
 import org.gradle.api.Project
 
@@ -20,10 +19,6 @@ internal object NdkConfiguratorUtils {
   fun configureReactNativeNdk(project: Project, extension: ReactExtension) {
     project.pluginManager.withPlugin("com.android.application") {
       project.extensions.getByType(AndroidComponentsExtension::class.java).finalizeDsl { ext ->
-        if (!project.isNewArchEnabled) {
-          // For Old Arch, we don't need to setup the NDK
-          return@finalizeDsl
-        }
         // We enable prefab so users can consume .so/headers from ReactAndroid and hermes-engine
         // .aar
         ext.buildFeatures.prefab = true
@@ -76,47 +71,37 @@ internal object NdkConfiguratorUtils {
       project: Project,
       variant: Variant,
   ) {
-    if (!project.isNewArchEnabled) {
-      // For Old Arch, we set a pickFirst only on libraries that we know are
-      // clashing with our direct dependencies (FBJNI, Flipper and Hermes).
-      variant.packaging.jniLibs.pickFirsts.addAll(
-          listOf(
-              "**/libfbjni.so",
-              "**/libc++_shared.so",
-          ))
-    } else {
-      // We set some packagingOptions { pickFirst ... } for our users for libraries we own.
-      variant.packaging.jniLibs.pickFirsts.addAll(
-          listOf(
-              // This is the .so provided by FBJNI via prefab
-              "**/libfbjni.so",
-              // Those are prefab libraries we distribute via ReactAndroid
-              // Due to a bug in AGP, they fire a warning on console as both the JNI
-              // and the prefab .so files gets considered. See more on:
-              "**/libfabricjni.so",
-              "**/libfolly_runtime.so",
-              "**/libglog.so",
-              "**/libjsi.so",
-              "**/libreact_codegen_rncore.so",
-              "**/libreact_debug.so",
-              "**/libreact_nativemodule_core.so",
-              "**/libreact_newarchdefaults.so",
-              "**/libreact_render_componentregistry.so",
-              "**/libreact_render_core.so",
-              "**/libreact_render_debug.so",
-              "**/libreact_render_graphics.so",
-              "**/libreact_render_imagemanager.so",
-              "**/libreact_render_mapbuffer.so",
-              "**/librrc_image.so",
-              "**/librrc_legacyviewmanagerinterop.so",
-              "**/librrc_view.so",
-              "**/libruntimeexecutor.so",
-              "**/libturbomodulejsijni.so",
-              "**/libyoga.so",
-              // AGP will give priority of libc++_shared coming from App modules.
-              "**/libc++_shared.so",
-          ))
-    }
+    // We set some packagingOptions { pickFirst ... } for our users for libraries we own.
+    variant.packaging.jniLibs.pickFirsts.addAll(
+        listOf(
+            // This is the .so provided by FBJNI via prefab
+            "**/libfbjni.so",
+            // Those are prefab libraries we distribute via ReactAndroid
+            // Due to a bug in AGP, they fire a warning on console as both the JNI
+            // and the prefab .so files gets considered. See more on:
+            "**/libfabricjni.so",
+            "**/libfolly_runtime.so",
+            "**/libglog.so",
+            "**/libjsi.so",
+            "**/libreact_codegen_rncore.so",
+            "**/libreact_debug.so",
+            "**/libreact_nativemodule_core.so",
+            "**/libreact_newarchdefaults.so",
+            "**/libreact_render_componentregistry.so",
+            "**/libreact_render_core.so",
+            "**/libreact_render_debug.so",
+            "**/libreact_render_graphics.so",
+            "**/libreact_render_imagemanager.so",
+            "**/libreact_render_mapbuffer.so",
+            "**/librrc_image.so",
+            "**/librrc_legacyviewmanagerinterop.so",
+            "**/librrc_view.so",
+            "**/libruntimeexecutor.so",
+            "**/libturbomodulejsijni.so",
+            "**/libyoga.so",
+            // AGP will give priority of libc++_shared coming from App modules.
+            "**/libc++_shared.so",
+        ))
   }
 
   /**
