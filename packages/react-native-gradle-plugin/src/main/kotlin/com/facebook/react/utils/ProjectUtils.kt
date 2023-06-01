@@ -62,7 +62,7 @@ internal object ProjectUtils {
     if (project.hasProperty("onlyDiscordTurboModulesEnabled") && (project.property("onlyDiscordTurboModulesEnabled").toString().lowercaseCompat().toBooleanStrictOrNullCompat() ?: false)) {
       // "ReactAndroid" tasks generate core React Native modules, and we can't build without these. Otherwise look for
       // modules that begin with "com.discord", those are Discord's TurboModules.
-      discordApproved = this.name == "ReactAndroid" ||
+      discordApproved = this.name == "ReactNativeSource" ||
         model?.codegenConfig?.android?.javaPackageName?.startsWith("com.discord") == true
     }
 
