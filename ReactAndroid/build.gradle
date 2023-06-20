@@ -653,6 +653,7 @@ android {
     buildFeatures {
         prefab true
         prefabPublishing !skipPrefabPublishing
+        buildConfig true
     }
 
     prefab {
@@ -813,6 +814,8 @@ react {
 }
 
 kotlin {
+    // We intentionally don't build on JDK 17 as our tests are broken due to Mockito/PowerMock
+    // not running well on JDK 17.
     jvmToolchain(11)
 }
 
