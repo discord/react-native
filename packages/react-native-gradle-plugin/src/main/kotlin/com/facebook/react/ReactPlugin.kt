@@ -78,7 +78,7 @@ class ReactPlugin : Plugin<Project> {
 
     val buildCodegenTask =
         project.tasks.register("buildCodegenCLI", BuildCodegenCLITask::class.java) {
-          it.codegenDir.set(project.getCodegenDir(extension))
+          it.codegenDir.set(extension.codegenDir)
           val bashWindowsHome = project.findProperty("REACT_WINDOWS_BASH") as String?
           it.bashWindowsHome.set(bashWindowsHome)
         }
@@ -89,7 +89,7 @@ class ReactPlugin : Plugin<Project> {
             "generateCodegenSchemaFromJavaScript", GenerateCodegenSchemaTask::class.java) { it ->
           it.dependsOn(buildCodegenTask)
           it.nodeExecutableAndArgs.set(extension.nodeExecutableAndArgs)
-          it.codegenDir.set(project.getCodegenDir(extension))
+          it.codegenDir.set(extension.codegenDir)
           it.generatedSrcDir.set(generatedSrcDir)
 
           // We're reading the package.json at configuration time to properly feed
@@ -116,7 +116,7 @@ class ReactPlugin : Plugin<Project> {
           it.reactNativeDir.set(project.getReactNativeDir(extension))
           it.deprecatedReactRoot.set(extension.reactRoot)
           it.nodeExecutableAndArgs.set(extension.nodeExecutableAndArgs)
-          it.codegenDir.set(project.getCodegenDir(extension))
+          it.codegenDir.set(extension.codegenDir)
           it.generatedSrcDir.set(generatedSrcDir)
           it.packageJsonFile.set(findPackageJsonFile(project, extension))
           it.codegenJavaPackageName.set(extension.codegenJavaPackageName)
@@ -153,24 +153,6 @@ class ReactPlugin : Plugin<Project> {
     }
   }
 
-  /**
-  * Function to look for the `package.json` and parse it. It returns a [ModelPackageJson] if found or
-  * null others.
-  *
-  * Please note that this function access the [ReactExtension] field properties and calls .get() on
-  * them, so calling this during apply() of the ReactPlugin is not recommended. It should be invoked
-  * inside lazy lambdas or at execution time.
-  */
-  internal fun readPackageJsonFile(project: Project, extension: ReactExtension): ModelPackageJson? {
-    val packageJson = findPackageJsonFile(project, extension)
-    return packageJson?.let { JsonUtils.fromCodegenJson(it) }
-  }
-
-  internal fun Project.needsCodegenFromPackageJson(extension: ReactExtension): Boolean {
-    val parsedPackageJson = readPackageJsonFile(this, extension)
-    return needsCodegenFromPackageJson(parsedPackageJson)
-  }
-
   internal fun Project.needsCodegenFromPackageJson(model: ModelPackageJson?): Boolean {
     /**
     This flag allows us to codegen TurboModule bindings for only Discord modules and core React Native modules.
@@ -198,18 +180,6 @@ class ReactPlugin : Plugin<Project> {
     }
     return willCodegen
   }
-
-  /**
-  NOTE(flewp): The react-native repository has two "react-native-codegen" projects, one in packages/, and one provided
-  as a node module by yarn (eventually existing in node_modules). When we build React Native from source, we do not yarn
-  the react-native project, so we're forcing the codegenDir to point to the packages version if we're in our
-  Discord-only-TurboModule-codegen build state.
-   */
-  internal fun Project.getCodegenDir(extension: ReactExtension) = if(project.onlyDiscordTurboModuleCodegen())
-    project.objects.directoryProperty().convention(
-      project.rootProject.layout.projectDirectory.dir("../../discord_app/node_modules/react-native/packages/react-native-codegen")
-    )
-    else extension.codegenDir
 
   /**
   NOTE(flewp): The `reactNativeDir` is part of a newer way of configuring the React Native build via a `react {}` gradle
