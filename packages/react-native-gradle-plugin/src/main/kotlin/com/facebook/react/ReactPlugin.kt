@@ -201,13 +201,13 @@ class ReactPlugin : Plugin<Project> {
 
   /**
   NOTE(flewp): The react-native repository has two "react-native-codegen" projects, one in packages/, and one provided
-  as a node module by yarn (eventually existing in node_modules). When we build React Native from source, we do not yarn
-  the react-native project, so we're forcing the codegenDir to point to the packages version if we're in our
-  Discord-only-TurboModule-codegen build state.
+  as a node module by yarn (eventually existing in node_modules). Point to the one in the app's node_modules to allow
+  for specifying different versions of react-native-codegen from the app
+  (since 'codegenDir' property in library is not supported in this RN version: https://github.com/facebook/react-native/issues/35495)
    */
   internal fun Project.getCodegenDir(extension: ReactExtension) = if(project.onlyDiscordTurboModuleCodegen())
     project.objects.directoryProperty().convention(
-      project.rootProject.layout.projectDirectory.dir("../../discord_app/node_modules/react-native/packages/react-native-codegen")
+      project.rootProject.layout.projectDirectory.dir("../../discord_app/node_modules/react-native-codegen")
     )
     else extension.codegenDir
 
