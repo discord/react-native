@@ -36,7 +36,8 @@ def downloadsDir = customDownloadsDir ? new File(customDownloadsDir) : new File(
 def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
 def reactNativeRootDir = projectDir.parent
 
-def needsBoostTar = Os.isFamily(Os.FAMILY_MAC)
+// NOTE(flewp): We want CI machines to also expand a tarball instead of a zip.
+def needsBoostTar = Os.isFamily(Os.FAMILY_MAC) || System.getenv("CI")
 def boostExtension = needsBoostTar ? ".tar.gz" : ".zip"
 
 // We put the publishing version from gradle.properties inside ext. so other
