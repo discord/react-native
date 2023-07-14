@@ -42,6 +42,7 @@ def downloadsDir = customDownloadDir ? new File(customDownloadDir) : new File(re
 def overrideHermesDir = System.getenv("REACT_NATIVE_OVERRIDE_HERMES_DIR") != null
 def hermesDir = System.getenv("REACT_NATIVE_OVERRIDE_HERMES_DIR") ?: new File(reactNativeRootDir, "sdks/hermes")
 def hermesBuildDir = new File("$buildDir/hermes")
+def hermesLinuxBuildDir = new File("$buildDir/linux-hermes")
 
 def hermesVersion = "main"
 def hermesVersionFile = new File(reactNativeRootDir, "sdks/.hermesversion")
@@ -92,6 +93,30 @@ task configureBuildForHermes(type: Exec) {
 task buildHermes(dependsOn: configureBuildForHermes, type: Exec) {
     workingDir(hermesDir)
     commandLine(windowsAwareCommandLine(findCmakePath(cmakeVersion), "--build", hermesBuildDir.toString(), "--target", "hermesc", "-j", ndkBuildJobs))
+}
+
+/**
+NOTE(Flewp): Taken from https://github.com/facebook/hermes/blob/9f8603b9886c957e0ccead61fe4380616188bbb4/.circleci/config.yml#L115-L123
+The idea here is to replicate building the hermesc binary historically provided by the hermes-engine-cli package.
+
+Config Step
+cmake -S hermes -B build -DHERMES_STATIC_LINK=ON -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=True -DCMAKE_CXX_FLAGS=-s -DCMAKE_C_FLAGS=-s \
+              -DCMAKE_EXE_LINKER_FLAGS="-Wl,--whole-archive -lpthread -Wl,--no-whole-archive" \
+              -DHERMES_ENABLE_DEBUGGER=False
+
+Build Step
+cmake --build build --target check-hermes hermes hvm hbcdump hermesc
+*/
+
+task configureBuildForLinuxHermes(dependsOn: unzipHermes, type: Exec) {
+    workingDir(hermesDir)
+    commandLine(windowsAwareCommandLine(findCmakePath(cmakeVersion), "-S", ".", "-B", hermesLinuxBuildDir.toString(), "-DHERMES_STATIC_LINK=ON", "-DCMAKE_BUILD_TYPE=Release", "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=True", "-DCMAKE_CXX_FLAGS=-s", "-DCMAKE_C_FLAGS=-s", "-DHERMES_ENABLE_DEBUGGER=False", "-DJSI_DIR=" + jsiDir.absolutePath, "-DICU_FOUND=1"))
+}
+
+task buildLinuxHermes(dependsOn: configureBuildForLinuxHermes, type: Exec) {
+    workingDir(hermesDir)
+    commandLine(windowsAwareCommandLine(findCmakePath(cmakeVersion), "--build", hermesLinuxBuildDir.toString(), "--target", "hermesc", "-j", ndkBuildJobs))
 }
 
 task prepareHeadersForPrefab(type: Copy) {

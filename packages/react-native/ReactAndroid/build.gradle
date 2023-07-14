@@ -491,8 +491,23 @@ task createReactNdkLibraryZipArchiveForDiscord(type: Zip) {
     destinationDirectory = layout.projectDirectory
 }
 
+// This is the task to run to create a .zip of hermesc for linux CI machines
+task createLinuxHermescZipArchiveForDiscord(type: Zip) {
+    dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildLinuxHermes")
+
+    archiveFileName = "hermescForDiscord.zip"
+    from(layout.projectDirectory.dir("hermes-engine/build/linux-hermes/bin"))
+
+    // Place this .zip right into our ReactAndroid directory
+    destinationDirectory = layout.projectDirectory
+}
+
 task installArchives {
     dependsOn("publishAllPublicationsToNpmRepository")
+}
+
+task buildHermes {
+    dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermes")
 }
 
 repositories {
