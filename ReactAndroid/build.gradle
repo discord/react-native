@@ -869,7 +869,7 @@ publishing {
             artifactId = "discord-rn-libs"
             artifact (createReactNdkLibraryZipArchiveForDiscord)
         }
-        libZip(MavenPublication) {
+        hermescZip(MavenPublication) {
             group = "com.facebook.react"
             version = VERSION_NAME
             artifactId = "discord-clyde-linux-hermesc"
