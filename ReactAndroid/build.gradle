@@ -872,7 +872,7 @@ publishing {
         libZip(MavenPublication) {
             group = "com.facebook.react"
             version = VERSION_NAME
-            artifactId = "discord-clyde-hermesc"
+            artifactId = "discord-clyde-linux-hermesc"
             artifact (createHermescZipArchiveForDiscord)
         }
     }
