@@ -491,11 +491,11 @@ task createReactNdkLibraryZipArchiveForDiscord(type: Zip) {
     destinationDirectory = layout.projectDirectory
 }
 
-task createHermescZipArchiveForDiscord(type: Zip) {
-    dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermes")
+task createLinuxHermescZipArchiveForDiscord(type: Zip) {
+    dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildLinuxHermes")
 
     archiveFileName = "hermescForDiscord.zip"
-    from(layout.projectDirectory.dir("hermes-engine/build/hermes/bin"))
+    from(layout.projectDirectory.dir("hermes-engine/build/linux-hermes/bin"))
 
     // Place this .zip right into our ReactAndroid directory
     destinationDirectory = layout.projectDirectory
@@ -873,7 +873,7 @@ publishing {
             group = "com.facebook.react"
             version = VERSION_NAME
             artifactId = "discord-clyde-linux-hermesc"
-            artifact (createHermescZipArchiveForDiscord)
+            artifact (createLinuxHermescZipArchiveForDiscord)
         }
     }
 }
