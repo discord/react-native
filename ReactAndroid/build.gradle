@@ -491,6 +491,7 @@ task createReactNdkLibraryZipArchiveForDiscord(type: Zip) {
     destinationDirectory = layout.projectDirectory
 }
 
+// This is the task to run to create a .zip of hermesc for linux CI machines
 task createLinuxHermescZipArchiveForDiscord(type: Zip) {
     dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildLinuxHermes")
 
@@ -868,12 +869,6 @@ publishing {
             version = VERSION_NAME
             artifactId = "discord-rn-libs"
             artifact (createReactNdkLibraryZipArchiveForDiscord)
-        }
-        hermescZip(MavenPublication) {
-            group = "com.facebook.react"
-            version = VERSION_NAME
-            artifactId = "discord-clyde-linux-hermesc"
-            artifact (createLinuxHermescZipArchiveForDiscord)
         }
     }
 }
