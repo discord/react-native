@@ -49,7 +49,7 @@ set_target_properties(folly_runtime
         ${REACT_NDK_EXPORT_DIR}/${ANDROID_ABI}/libfolly_runtime.so)
 target_include_directories(folly_runtime
         INTERFACE
-        ${THIRD_PARTY_NDK_DIR}/boost/boost_1_76_0
+        ${THIRD_PARTY_NDK_DIR}/boost/boost_1_81_0
         ${THIRD_PARTY_NDK_DIR}/double-conversion
         ${THIRD_PARTY_NDK_DIR}/folly)
 target_compile_options(folly_runtime

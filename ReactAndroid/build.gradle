@@ -37,7 +37,7 @@ def thirdPartyNdkDir = new File("$buildDir/third-party-ndk")
 def reactNativeRootDir = projectDir.parent
 
 // You need to have following folders in this directory:
-//   - boost_1_76_0
+//   - boost_1_81_0
 //   - double-conversion-1.1.6
 //   - folly-deprecate-dynamic-initializer
 //   - glog-0.3.5
