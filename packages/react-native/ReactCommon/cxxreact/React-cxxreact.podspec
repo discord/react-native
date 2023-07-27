@@ -37,7 +37,7 @@ Pod::Spec.new do |s|
                                "CLANG_CXX_LANGUAGE_STANDARD" => "c++17" }
   s.header_dir             = "cxxreact"
 
-  s.dependency "boost", "1.76.0"
+  s.dependency "boost", "1.81.0"
   s.dependency "DoubleConversion"
   s.dependency "RCT-Folly", folly_version
   s.dependency "glog"

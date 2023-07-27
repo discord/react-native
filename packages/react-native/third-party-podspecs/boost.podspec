@@ -5,14 +5,14 @@
 
 Pod::Spec.new do |spec|
   spec.name = 'boost'
-  spec.version = '1.76.0'
+  spec.version = '1.81.0'
   spec.license = { :type => 'Boost Software License', :file => "LICENSE_1_0.txt" }
   spec.homepage = 'http://www.boost.org'
   spec.summary = 'Boost provides free peer-reviewed portable C++ source libraries.'
   spec.authors = 'Rene Rivera'
   # PodToBuild does not support tar bz2 compression so we use tar.gz instead.
-  spec.source = { :http => 'https://boostorg.jfrog.io/artifactory/main/release/1.76.0/source/boost_1_76_0.tar.gz',
-                  :sha256 => '7bd7ddceec1a1dfdcbdb3e609b60d01739c38390a5f956385a12f3122049f0ca' } # jhgg was here
+  spec.source = { :http => 'https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz',
+                  :sha256 => '205666dea9f6a7cfed87c7a6dfbeb52a2c1b9de55712c9c1a87735d7181452b6' }
 
   # Pinning to the same version as React.podspec.
   spec.platforms = { :ios => '11.0' }
