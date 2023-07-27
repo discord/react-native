@@ -5,7 +5,7 @@
 
 Pod::Spec.new do |spec|
   spec.name = 'boost'
-  spec.version = '1.76.0'
+  spec.version = '1.81.0'
   spec.license = { :type => 'Boost Software License', :file => "LICENSE_1_0.txt" }
   spec.homepage = 'http://www.boost.org'
   spec.summary = 'Boost provides free peer-reviewed portable C++ source libraries.'
