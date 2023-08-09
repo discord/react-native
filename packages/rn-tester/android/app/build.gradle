@@ -8,6 +8,7 @@
 plugins {
     id("com.android.application")
     id("com.facebook.react")
+    id("org.jetbrains.kotlin.android")
 }
 
 /**
@@ -94,7 +95,7 @@ android {
     namespace "com.facebook.react.uiapp"
 
     // Used to override the NDK path/version on internal CI or by allowing
-    // users to customize the NDK path/version from their root project (e.g. for M1 support)
+    // users to customize the NDK path/version from their root project (e.g. for Apple Silicon support)
     if (rootProject.hasProperty("ndkPath")) {
         ndkPath rootProject.ext.ndkPath
     }
@@ -116,8 +117,8 @@ android {
 
     defaultConfig {
         applicationId "com.facebook.react.uiapp"
-        minSdkVersion 21
-        targetSdkVersion 33
+        minSdk = 21
+        targetSdk = 33
         versionCode 1
         versionName "1.0"
         testBuildType System.getProperty('testBuildType', 'debug')  // This will later be used to control the test apk build type
@@ -188,4 +189,8 @@ afterEvaluate {
     mergeHermesReleaseNativeLibs.mustRunAfter(externalNativeBuildJscRelease)
     mergeJscDebugNativeLibs.mustRunAfter(externalNativeBuildHermesDebug)
     mergeJscReleaseNativeLibs.mustRunAfter(externalNativeBuildHermesRelease)
+
+    // As RN-Tester consumes the codegen from source, we need to make sure the codegen exists before
+    // we can actually invoke it. It's built by the ReactAndroid:buildCodegenCLI task.
+    generateCodegenSchemaFromJavaScript.dependsOn(":packages:react-native:ReactAndroid:buildCodegenCLI")
 }
