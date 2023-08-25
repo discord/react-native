@@ -101,7 +101,7 @@ public class FabricUIManager implements UIManager, LifecycleEventListener {
 
   // The IS_DEVELOPMENT_ENVIRONMENT variable is used to log extra data when running fabric in a
   // development environment. DO NOT ENABLE THIS ON PRODUCTION OR YOU WILL BE FIRED!
-  public static final boolean IS_DEVELOPMENT_ENVIRONMENT = false && ReactBuildConfig.DEBUG;
+  public static final boolean IS_DEVELOPMENT_ENVIRONMENT = ReactFeatureFlags.enableFabricLogs;
   public static final boolean ENABLE_FABRIC_LOGS =
       ReactFeatureFlags.enableFabricLogs
           || PrinterHolder.getPrinter()
