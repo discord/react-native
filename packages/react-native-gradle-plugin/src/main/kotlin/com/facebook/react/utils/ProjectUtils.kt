@@ -44,7 +44,24 @@ internal object ProjectUtils {
 
   internal fun Project.needsCodegenFromPackageJson(rootProperty: DirectoryProperty): Boolean {
     val parsedPackageJson = readPackageJsonFile(this, rootProperty)
-    return needsCodegenFromPackageJson(parsedPackageJson)
+
+    val needsCodegen = needsCodegenFromPackageJson(parsedPackageJson)
+    if (needsCodegen) {
+        val codegenNameString = parsedPackageJson?.codegenConfig?.name?.let { "name: $it"} ?: ""
+        val codegenPackageString = parsedPackageJson?.codegenConfig?.android?.javaPackageName?.let { " - package: $it"} ?: ""
+        val codegenTypeString = parsedPackageJson?.codegenConfig?.type?.let {
+            when(it) {
+                "all" -> "both TurboModules and Fabric Components"
+                "modules" -> "TurboModules"
+                "components" -> "Fabric Components"
+                else -> "unknown"
+            }
+        } ?: "nothing"
+
+        val codegenMetaString = if(codegenNameString.isBlank() && codegenPackageString.isBlank()) "no metadata" else "$codegenNameString$codegenPackageString"
+        println("CODEGEN: Project $name ($codegenMetaString) - Generating ${codegenTypeString}.")
+    }
+    return needsCodegen
   }
 
   internal fun Project.needsCodegenFromPackageJson(model: ModelPackageJson?): Boolean {
@@ -59,19 +76,16 @@ internal object ProjectUtils {
     to fully migrate to the new architecture.
     */
     var discordApproved = true
-    if (project.hasProperty("onlyDiscordTurboModulesEnabled") && (project.property("onlyDiscordTurboModulesEnabled").toString().lowercaseCompat().toBooleanStrictOrNullCompat() ?: false)) {
+    val onlyDiscordTurboModulesEnabled = project.hasProperty("onlyDiscordTurboModulesEnabled") && (project.property("onlyDiscordTurboModulesEnabled").toString().lowercaseCompat().toBooleanStrictOrNullCompat() ?: false)
+    // If newArchEnabled is set to true, we need to codegen all things, not just Discord things.
+    if (onlyDiscordTurboModulesEnabled && !project.isNewArchEnabled()) {
       // "ReactAndroid" tasks generate core React Native modules, and we can't build without these. Otherwise look for
       // modules that begin with "com.discord", those are Discord's TurboModules.
       discordApproved = this.name == "ReactNativeSource" ||
         model?.codegenConfig?.android?.javaPackageName?.startsWith("com.discord") == true
     }
 
-    // Adding a log to see what packages are getting codegen'd
-    val willCodegen = discordApproved && model?.codegenConfig != null
-    if (willCodegen) {
-      println("Running codegen for package ${model?.codegenConfig?.android?.javaPackageName?.toString()}")
-    }
-    return willCodegen
+    return discordApproved && model?.codegenConfig != null
   }
 
   internal fun Project.getReactNativeArchitectures(): List<String> {
