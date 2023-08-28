@@ -78,7 +78,7 @@ internal object ProjectUtils {
     var discordApproved = true
     val onlyDiscordTurboModulesEnabled = project.hasProperty("onlyDiscordTurboModulesEnabled") && (project.property("onlyDiscordTurboModulesEnabled").toString().lowercaseCompat().toBooleanStrictOrNullCompat() ?: false)
     // If newArchEnabled is set to true, we need to codegen all things, not just Discord things.
-    if (onlyDiscordTurboModulesEnabled && !project.isNewArchEnabled()) {
+    if (onlyDiscordTurboModulesEnabled && !project.isNewArchEnabled) {
       // "ReactAndroid" tasks generate core React Native modules, and we can't build without these. Otherwise look for
       // modules that begin with "com.discord", those are Discord's TurboModules.
       discordApproved = this.name == "ReactNativeSource" ||
