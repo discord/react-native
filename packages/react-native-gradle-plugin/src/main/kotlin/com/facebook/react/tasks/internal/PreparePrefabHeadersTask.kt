@@ -50,10 +50,20 @@ abstract class PreparePrefabHeadersTask : DefaultTask() {
           // We don't want to copy all the boost headers as they are 250Mb+
           it.include("boost/config.hpp")
           it.include("boost/config/**/*.hpp")
-          it.include("boost/core/*.hpp")
+          it.include("boost/core/**/*.hpp")
           it.include("boost/detail/workaround.hpp")
           it.include("boost/operators.hpp")
           it.include("boost/preprocessor/**/*.hpp")
+
+          // Extra files for kv-storage
+          it.include("boost/*.hpp")
+          it.include("boost/container/**/*.hpp")
+          it.include("boost/intrusive/**/*.hpp")
+          it.include("boost/lockfree/**/*.hpp")
+          it.include("boost/move/**/*.hpp")
+          it.include("boost/type_traits/**/*.hpp")
+          it.include("boost/utility/**/*.hpp")
+
           it.into(File(outputFolder.asFile, headerPrefix))
         }
       }
