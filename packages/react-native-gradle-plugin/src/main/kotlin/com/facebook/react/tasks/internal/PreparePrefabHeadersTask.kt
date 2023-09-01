@@ -57,12 +57,14 @@ abstract class PreparePrefabHeadersTask : DefaultTask() {
 
           // Extra files for kv-storage
           it.include("boost/*.hpp")
+          it.include("boost/align/**/*.hpp")
           it.include("boost/container/**/*.hpp")
           it.include("boost/intrusive/**/*.hpp")
           it.include("boost/iterator/**/*.hpp")
           it.include("boost/lockfree/**/*.hpp")
           it.include("boost/move/**/*.hpp")
           it.include("boost/mpl/**/*.hpp")
+          it.include("boost/parameter/**/*.hpp")
           it.include("boost/type_traits/**/*.hpp")
           it.include("boost/utility/**/*.hpp")
 
