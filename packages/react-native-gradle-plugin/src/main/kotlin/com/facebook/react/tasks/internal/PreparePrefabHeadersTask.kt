@@ -51,7 +51,7 @@ abstract class PreparePrefabHeadersTask : DefaultTask() {
           it.include("boost/config.hpp")
           it.include("boost/config/**/*.hpp")
           it.include("boost/core/**/*.hpp")
-          it.include("boost/detail/workaround.hpp")
+          it.include("boost/detail/**/*.hpp")
           it.include("boost/operators.hpp")
           it.include("boost/preprocessor/**/*.hpp")
 
