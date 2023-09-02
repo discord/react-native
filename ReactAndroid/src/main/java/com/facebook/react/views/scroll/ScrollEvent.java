@@ -136,7 +136,7 @@ public class ScrollEvent extends Event<ScrollEvent> {
   public boolean canCoalesce() {
     // Only SCROLL events can be coalesced, all others can not be
     if (mScrollEventType == ScrollEventType.SCROLL) {
-      return true;
+      return false;
     }
     return false;
   }
