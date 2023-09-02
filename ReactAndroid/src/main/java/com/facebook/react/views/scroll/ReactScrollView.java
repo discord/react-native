@@ -385,7 +385,7 @@ public class ReactScrollView extends ScrollView
       ReactScrollViewHelper.updateStateOnScrollChanged(
           this,
           mOnScrollDispatchHelper.getXFlingVelocity(),
-          mOnScrollDispatchHelper.getYFlingVelocity());
+          mOnScrollDispatchHelper.getYFlingVelocity(), x, y);
     }
   }
 

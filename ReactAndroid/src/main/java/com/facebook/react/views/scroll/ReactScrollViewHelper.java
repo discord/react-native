@@ -138,6 +138,46 @@ public class ReactScrollViewHelper {
     }
   }
 
+  private static <T extends ViewGroup & HasScrollEventThrottle> void emitScrollEvent(
+      T scrollView, ScrollEventType scrollEventType, float xVelocity, float yVelocity, final x, final y) {
+    long now = System.currentTimeMillis();
+    View contentView = scrollView.getChildAt(0);
+
+    if (contentView == null) {
+      return;
+    }
+
+    for (ScrollListener scrollListener : sScrollListeners) {
+      scrollListener.onScroll(scrollView, scrollEventType, xVelocity, yVelocity);
+    }
+
+    ReactContext reactContext = (ReactContext) scrollView.getContext();
+    int surfaceId = UIManagerHelper.getSurfaceId(reactContext);
+
+    // It's possible for the EventDispatcher to go away - for example,
+    // if there's a crash initiated from JS and we tap on a ScrollView
+    // around teardown of RN, this will cause a NPE. We can safely ignore
+    // this since the crash is usually a red herring.
+    EventDispatcher eventDispatcher =
+        UIManagerHelper.getEventDispatcherForReactTag(reactContext, scrollView.getId());
+    if (eventDispatcher != null) {
+      eventDispatcher.dispatchEvent(
+          ScrollEvent.obtain(
+              surfaceId,
+              scrollView.getId(),
+              scrollEventType,
+              x,
+              y,
+              xVelocity,
+              yVelocity,
+              contentView.getWidth(),
+              contentView.getHeight(),
+              scrollView.getWidth(),
+              scrollView.getHeight()));
+      scrollView.setLastScrollDispatchTime(now);
+    }
+  }
+
   /** This is only for Java listeners. onLayout events emitted to JS are handled elsewhere. */
   public static void emitLayoutEvent(ViewGroup scrollView) {
     for (ScrollListener scrollListener : sScrollListeners) {
@@ -486,6 +526,20 @@ public class ReactScrollViewHelper {
     // the error as much as possible.
     updateFabricScrollState(scrollView);
     emitScrollEvent(scrollView, xVelocity, yVelocity);
+  }
+
+  public static <
+          T extends
+              ViewGroup & FabricViewStateManager.HasFabricViewStateManager & HasScrollState
+                  & HasFlingAnimator & HasScrollEventThrottle>
+      void updateStateOnScrollChanged(
+          final T scrollView, final float xVelocity, final float yVelocity, final float x, final float y) {
+    // Race an UpdateState with every onScroll. This makes it more likely that, in Fabric,
+    // when JS processes the scroll event, the C++ ShadowNode representation will have a
+    // "more correct" scroll position. It will frequently be /incorrect/ but this decreases
+    // the error as much as possible.
+    updateFabricScrollState(scrollView);
+    emitScrollEvent(scrollView, xVelocity, yVelocity, x, y);
   }
 
   public static <
