@@ -63,6 +63,7 @@ abstract class PreparePrefabHeadersTask : DefaultTask() {
           it.include("boost/iterator/**/*.hpp")
           it.include("boost/lockfree/**/*.hpp")
           it.include("boost/move/**/*.hpp")
+          it.include("boost/mp11/**/*.hpp")
           it.include("boost/mpl/**/*.hpp")
           it.include("boost/parameter/**/*.hpp")
           it.include("boost/type_traits/**/*.hpp")
