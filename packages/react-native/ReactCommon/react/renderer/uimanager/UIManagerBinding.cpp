@@ -576,6 +576,22 @@ jsi::Value UIManagerBinding::get(
             jsi::Value const *arguments,
             size_t /*count*/) noexcept -> jsi::Value {
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
+          bool turboModuleCalled = false;
+          auto nativeMeasurerValue = runtime.global().getProperty(runtime, "__turboModuleProxy")
+                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");
+
+          if (nativeMeasurerValue.isObject()) {
+              // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
+              // The return value doesn't matter here because the measure values will be passed through the callback.
+              jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureNatively")
+                      .call(runtime, shadowNode.get()->getTag(), arguments[1].getObject(runtime).getFunction(runtime));
+              turboModuleCalled = true;
+          }
+
+          if (turboModuleCalled) {
+              return jsi::Value::undefined();
+          }
+          
           auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
               *shadowNode, nullptr, {/* .includeTransform = */ true});
           auto onSuccessFunction =
@@ -617,8 +633,25 @@ jsi::Value UIManagerBinding::get(
             jsi::Value const & /*thisValue*/,
             jsi::Value const *arguments,
             size_t /*count*/) noexcept -> jsi::Value {
+          auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
+          bool turboModuleCalled = false;
+          auto nativeMeasurerValue = runtime.global().getProperty(runtime, "__turboModuleProxy")
+                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");
+
+          if (nativeMeasurerValue.isObject()) {
+              // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
+              // The return value doesn't matter here because the measure values will be passed through the callback.
+              jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureInWindowNatively")
+                      .call(runtime, shadowNode.get()->getTag(), arguments[1].getObject(runtime).getFunction(runtime));
+              turboModuleCalled = true;
+          }
+
+          if (turboModuleCalled) {
+              return jsi::Value::undefined();
+          }
+            
           auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
-              *shadowNodeFromValue(runtime, arguments[0]),
+              *shadowNode,
               nullptr,
               {/* .includeTransform = */ true,
                /* .includeViewportOffset = */ true});

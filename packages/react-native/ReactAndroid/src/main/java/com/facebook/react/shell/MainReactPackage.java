@@ -11,6 +11,7 @@ import androidx.annotation.Nullable;
 import com.facebook.react.TurboReactPackage;
 import com.facebook.react.ViewManagerOnDemandReactPackage;
 import com.facebook.react.animated.NativeAnimatedModule;
+import com.facebook.react.animated.NativeFabricMeasurerModule;
 import com.facebook.react.bridge.ModuleSpec;
 import com.facebook.react.bridge.NativeModule;
 import com.facebook.react.bridge.ReactApplicationContext;
@@ -135,6 +136,8 @@ public class MainReactPackage extends TurboReactPackage implements ViewManagerOn
         return new IntentModule(context);
       case NativeAnimatedModule.NAME:
         return new NativeAnimatedModule(context);
+      case NativeFabricMeasurerModule.NAME:
+        return new NativeFabricMeasurerModule(context);
       case NetworkingModule.NAME:
         return new NetworkingModule(context);
       case PermissionsModule.NAME:
@@ -385,6 +388,7 @@ public class MainReactPackage extends TurboReactPackage implements ViewManagerOn
             ImageStoreManager.class,
             IntentModule.class,
             NativeAnimatedModule.class,
+            NativeFabricMeasurerModule.class,
             NetworkingModule.class,
             PermissionsModule.class,
             DevToolsSettingsManagerModule.class,
