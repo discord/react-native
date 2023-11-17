@@ -154,3 +154,36 @@ package-lock.json
 
 # CircleCI
 .circleci/generated_config.yml
+
+# Additional ignores for sandbox support
+/ReactAndroid/build/
+/ReactAndroid/.cxx/
+/ReactAndroid/gradle/
+/ReactAndroid/gradlew
+/ReactAndroid/gradlew.bat
+/ReactAndroid/external-artifacts/build/
+/ReactAndroid/external-artifacts/artifacts/
+/ReactAndroid/hermes-engine/build/
+/ReactAndroid/hermes-engine/.cxx/
+/template/android/app/build/
+/template/android/build/
+/ReactAndroid/src/main/jni/prebuilt/lib/
+/ReactAndroid/src/main/gen
+/android/*
+/ReactAndroid/src/androidTest/assets/AndroidTestBundle.js
+/ReactCommon/**/*.xcodeproj
+/Libraries/FBLazyVector/**/*.xcodeproj
+/Libraries/RCTRequired/**/*.xcodeproj
+/React/CoreModules/**/*.xcodeproj
+/React/FBReactNativeSpec/**/*.xcodeproj
+/codegen/**/*.xcodeproj
+/vendor
+/template/vendor
+/template/ios/build/
+/template/ios/Pods/
+/template/ios/Podfile.lock
+/React/FBReactNativeSpec/FBReactNativeSpec
+/ReactCommon/react/renderer/components/rncore/
+/sdks/download
+/sdks/hermes
+/sdks/hermesc
