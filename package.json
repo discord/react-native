@@ -10,7 +10,8 @@
     "outputDirectory": "reports/junit",
     "outputName": "js-test-results.xml"
   },
-    "files": [
+  "main": "packages/react-native/index.js",
+  "files": [
     "packages/react-native/android",
     "packages/react-native/build.gradle.kts",
     "packages/react-native/cli.js",
