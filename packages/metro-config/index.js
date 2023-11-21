@@ -68,7 +68,7 @@ function getDefaultConfig(
     },
     transformer: {
       allowOptionalDependencies: true,
-      assetRegistryPath: 'react-native/Libraries/Image/AssetRegistry',
+      assetRegistryPath: 'react-native/packages/react-native/Libraries/Image/AssetRegistry',
       asyncRequireModulePath: require.resolve(
         'metro-runtime/src/modules/asyncRequire',
       ),
