@@ -16,6 +16,7 @@
 #include <react/renderer/runtimescheduler/RuntimeSchedulerBinding.h>
 #include <react/renderer/uimanager/primitives.h>
 
+#include <algorithm>
 #include <utility>
 
 #include "bindingUtils.h"
@@ -578,47 +579,56 @@ jsi::Value UIManagerBinding::get(
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
           bool turboModuleCalled = false;
           auto nativeMeasurerValue = runtime.global().getProperty(runtime, "__turboModuleProxy")
-                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");
+                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");     
+          auto onSuccessFunction = arguments[1].getObject(runtime).getFunction(runtime);
+
+          void measureFromShadowTree() {
+            auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
+              *shadowNode, nullptr, {/* .includeTransform = */ true});
+
+            if (layoutMetrics == EmptyLayoutMetrics) {
+              onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
+              return jsi::Value::undefined();
+            }
+            auto newestCloneOfShadowNode =
+                uiManager->getNewestCloneOfShadowNode(*shadowNode);
+
+            auto layoutableShadowNode = traitCast<LayoutableShadowNode const *>(
+                newestCloneOfShadowNode.get());
+            Point originRelativeToParent = layoutableShadowNode != nullptr
+                ? layoutableShadowNode->getLayoutMetrics().frame.origin
+                : Point();
+
+            auto frame = layoutMetrics.frame;
+            onSuccessFunction.call(
+                runtime,
+                {jsi::Value{runtime, (double)originRelativeToParent.x},
+                jsi::Value{runtime, (double)originRelativeToParent.y},
+                jsi::Value{runtime, (double)frame.size.width},
+                jsi::Value{runtime, (double)frame.size.height},
+                jsi::Value{runtime, (double)frame.origin.x},
+                jsi::Value{runtime, (double)frame.origin.y}});
+          }
 
           if (nativeMeasurerValue.isObject()) {
               // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
               // The return value doesn't matter here because the measure values will be passed through the callback.
               jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureNatively")
-                      .call(runtime, shadowNode.get()->getTag(), arguments[1].getObject(runtime).getFunction(runtime));
+                      .call(runtime, shadowNode.get()->getTag(), [](double arr[6]) {
+                        if (std::all_of(arr, arr+6, [](int x) {return x==0;})) {
+                          measureFromShadowTree();
+                        }
+                        onSuccessFunction(arr);
+                      });
               turboModuleCalled = true;
           }
 
           if (turboModuleCalled) {
               return jsi::Value::undefined();
           }
+
+          measureFromShadowTree();
           
-          auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
-              *shadowNode, nullptr, {/* .includeTransform = */ true});
-          auto onSuccessFunction =
-              arguments[1].getObject(runtime).getFunction(runtime);
-
-          if (layoutMetrics == EmptyLayoutMetrics) {
-            onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
-            return jsi::Value::undefined();
-          }
-          auto newestCloneOfShadowNode =
-              uiManager->getNewestCloneOfShadowNode(*shadowNode);
-
-          auto layoutableShadowNode = traitCast<LayoutableShadowNode const *>(
-              newestCloneOfShadowNode.get());
-          Point originRelativeToParent = layoutableShadowNode != nullptr
-              ? layoutableShadowNode->getLayoutMetrics().frame.origin
-              : Point();
-
-          auto frame = layoutMetrics.frame;
-          onSuccessFunction.call(
-              runtime,
-              {jsi::Value{runtime, (double)originRelativeToParent.x},
-               jsi::Value{runtime, (double)originRelativeToParent.y},
-               jsi::Value{runtime, (double)frame.size.width},
-               jsi::Value{runtime, (double)frame.size.height},
-               jsi::Value{runtime, (double)frame.origin.x},
-               jsi::Value{runtime, (double)frame.origin.y}});
           return jsi::Value::undefined();
         });
   }
