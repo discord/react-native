@@ -618,7 +618,7 @@ jsi::Value UIManagerBinding::get(
                         if (std::all_of(arr, arr+6, [](int x) {return x==0;})) {
                           measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, runtime);
                         }
-                        onSuccessFunction.call(runtime, arr);
+                        onSuccessFunction.call(runtime, *arr);
                       });
               turboModuleCalled = true;
           }
