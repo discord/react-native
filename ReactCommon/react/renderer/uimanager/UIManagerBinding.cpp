@@ -141,6 +141,34 @@ void UIManagerBinding::invalidate() const {
   uiManager_->setDelegate(nullptr);
 }
 
+void measureFromShadowTree(UIManager* uiManager, ShadowNode::Shared shadowNode, jsi::Function &onSuccessFunction, jsi::Runtime &runtime) {
+    auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
+            *shadowNode, nullptr, {/* .includeTransform = */ true});
+
+    if (layoutMetrics == EmptyLayoutMetrics) {
+        onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
+        return;
+    }
+    auto newestCloneOfShadowNode =
+            uiManager->getNewestCloneOfShadowNode(*shadowNode);
+
+    auto layoutableShadowNode = traitCast<LayoutableShadowNode const *>(
+            newestCloneOfShadowNode.get());
+    Point originRelativeToParent = layoutableShadowNode != nullptr
+                                   ? layoutableShadowNode->getLayoutMetrics().frame.origin
+                                   : Point();
+
+    auto frame = layoutMetrics.frame;
+    onSuccessFunction.call(
+            runtime,
+            {jsi::Value{runtime, (double)originRelativeToParent.x},
+             jsi::Value{runtime, (double)originRelativeToParent.y},
+             jsi::Value{runtime, (double)frame.size.width},
+             jsi::Value{runtime, (double)frame.size.height},
+             jsi::Value{runtime, (double)frame.origin.x},
+             jsi::Value{runtime, (double)frame.origin.y}});
+}
+
 jsi::Value UIManagerBinding::get(
     jsi::Runtime &runtime,
     jsi::PropNameID const &name) {
@@ -582,43 +610,15 @@ jsi::Value UIManagerBinding::get(
                   .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");     
           auto onSuccessFunction = arguments[1].getObject(runtime).getFunction(runtime);
 
-          void measureFromShadowTree() {
-            auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
-              *shadowNode, nullptr, {/* .includeTransform = */ true});
-
-            if (layoutMetrics == EmptyLayoutMetrics) {
-              onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
-              return jsi::Value::undefined();
-            }
-            auto newestCloneOfShadowNode =
-                uiManager->getNewestCloneOfShadowNode(*shadowNode);
-
-            auto layoutableShadowNode = traitCast<LayoutableShadowNode const *>(
-                newestCloneOfShadowNode.get());
-            Point originRelativeToParent = layoutableShadowNode != nullptr
-                ? layoutableShadowNode->getLayoutMetrics().frame.origin
-                : Point();
-
-            auto frame = layoutMetrics.frame;
-            onSuccessFunction.call(
-                runtime,
-                {jsi::Value{runtime, (double)originRelativeToParent.x},
-                jsi::Value{runtime, (double)originRelativeToParent.y},
-                jsi::Value{runtime, (double)frame.size.width},
-                jsi::Value{runtime, (double)frame.size.height},
-                jsi::Value{runtime, (double)frame.origin.x},
-                jsi::Value{runtime, (double)frame.origin.y}});
-          }
-
           if (nativeMeasurerValue.isObject()) {
               // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
               // The return value doesn't matter here because the measure values will be passed through the callback.
               jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureNatively")
-                      .call(runtime, shadowNode.get()->getTag(), [](double arr[6]) {
+                      .call(runtime, shadowNode.get()->getTag(), [uiManager, &onSuccessFunction, shadowNode, &runtime](double arr[6]) {
                         if (std::all_of(arr, arr+6, [](int x) {return x==0;})) {
-                          measureFromShadowTree();
+                          measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, runtime);
                         }
-                        onSuccessFunction(arr);
+                        onSuccessFunction.call(runtime, arr);
                       });
               turboModuleCalled = true;
           }
@@ -627,7 +627,7 @@ jsi::Value UIManagerBinding::get(
               return jsi::Value::undefined();
           }
 
-          measureFromShadowTree();
+          measureFromShadowTree(uiManager, shadowNode, onSuccessFunction, runtime);
           
           return jsi::Value::undefined();
         });
