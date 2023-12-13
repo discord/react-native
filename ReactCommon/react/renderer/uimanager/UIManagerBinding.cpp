@@ -614,12 +614,20 @@ jsi::Value UIManagerBinding::get(
               // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
               // The return value doesn't matter here because the measure values will be passed through the callback.
               jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureNatively")
-                      .call(runtime, shadowNode.get()->getTag(), [uiManager, &onSuccessFunction, shadowNode, &runtime](double arr[6]) {
-                        if (std::all_of(arr, arr+6, [](int x) {return x==0;})) {
-                          measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, runtime);
-                        }
-                        onSuccessFunction.call(runtime, *arr);
-                      });
+                      .call(runtime, shadowNode.get()->getTag(), jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forAscii(runtime, "pleaseRenameThisFunction"), 2,[uiManager, shadowNode, &onSuccessFunction](jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
+                          auto isAllZeros = true;
+                          for (int i = 0; i < 6; ++i) {
+                              if (args[0].asObject(rt).asArray(rt).getValueAtIndex(rt, i).asNumber() != 0) {
+                                  isAllZeros = false;
+                              }
+                          }
+                          if (isAllZeros) {
+                              measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
+                              return jsi::Value::undefined();
+                          }
+                          onSuccessFunction.call(rt, args[0].asObject(rt).asArray(rt));
+                          return jsi::Value::undefined();
+                      }));
               turboModuleCalled = true;
           }
 
