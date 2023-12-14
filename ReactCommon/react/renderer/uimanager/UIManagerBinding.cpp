@@ -20,6 +20,7 @@
 #include <utility>
 
 #include "bindingUtils.h"
+#include <logger/react_native_log.h>
 
 namespace facebook::react {
 
@@ -611,24 +612,40 @@ jsi::Value UIManagerBinding::get(
           auto onSuccessFunction = arguments[1].getObject(runtime).getFunction(runtime);
 
           if (nativeMeasurerValue.isObject()) {
-              // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
-              // The return value doesn't matter here because the measure values will be passed through the callback.
-              jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureNatively")
-                      .call(runtime, shadowNode.get()->getTag(), jsi::Function::createFromHostFunction(runtime, jsi::PropNameID::forAscii(runtime, "pleaseRenameThisFunction"), 2,[uiManager, shadowNode, &onSuccessFunction](jsi::Runtime& rt, const jsi::Value& thisVal, const jsi::Value* args, size_t count) {
-                          auto isAllZeros = true;
-                          for (int i = 0; i < 6; ++i) {
-                              if (args[0].asObject(rt).asArray(rt).getValueAtIndex(rt, i).asNumber() != 0) {
-                                  isAllZeros = false;
-                              }
-                          }
-                          if (isAllZeros) {
-                              measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
-                              return jsi::Value::undefined();
-                          }
-                          onSuccessFunction.call(rt, args[0].asObject(rt).asArray(rt));
-                          return jsi::Value::undefined();
-                      }));
-              turboModuleCalled = true;
+            // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
+            // The return value doesn't matter here because the measure values will be passed through the callback.
+            jsi::Value returnValue = nativeMeasurerValue
+              .asObject(runtime)
+              .getPropertyAsFunction(runtime, "measureNatively")
+              .call(
+                runtime, 
+                shadowNode.get()->getTag(), 
+                jsi::Function::createFromHostFunction(
+                  runtime, 
+                  jsi::PropNameID::forAscii(runtime, "pleaseRenameThisFunction"), 
+                  6,
+                  [uiManager, shadowNode, &onSuccessFunction](
+                      jsi::Runtime& rt, 
+                      const jsi::Value& thisVal, 
+                      const jsi::Value* args, 
+                      size_t count) {
+                    auto isAllZeros = true;
+                    for (int i = 0; i < 6; ++i) {
+                        if (args[i].asNumber() != 0) {
+                            isAllZeros = false;
+                            break;
+                        }
+                    }
+                    if (isAllZeros) {
+                        measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
+                        return jsi::Value::undefined();
+                    }
+                    onSuccessFunction.call(rt, args, (size_t)6);
+                    return jsi::Value::undefined();
+                  }
+                )
+              );
+            turboModuleCalled = true;
           }
 
           if (turboModuleCalled) {
