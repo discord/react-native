@@ -160,6 +160,7 @@ void measureFromShadowTree(UIManager* uiManager, ShadowNode::Shared shadowNode, 
                                    : Point();
 
     auto frame = layoutMetrics.frame;
+    react_native_log_info("garf measureFromShadowTree about to onSuccessFunction");
     onSuccessFunction.call(
             runtime,
             {jsi::Value{runtime, (double)originRelativeToParent.x},
@@ -620,27 +621,18 @@ jsi::Value UIManagerBinding::get(
               .call(
                 runtime, 
                 shadowNode.get()->getTag(), 
+                onSuccessFunction,
                 jsi::Function::createFromHostFunction(
                   runtime, 
                   jsi::PropNameID::forAscii(runtime, "pleaseRenameThisFunction"), 
-                  6,
-                  [uiManager, shadowNode, &onSuccessFunction](
+                  1,
+                  [uiManager, shadowNode](
                       jsi::Runtime& rt, 
                       const jsi::Value& thisVal, 
                       const jsi::Value* args, 
                       size_t count) {
-                    auto isAllZeros = true;
-                    for (int i = 0; i < 6; ++i) {
-                        if (args[i].asNumber() != 0) {
-                            isAllZeros = false;
-                            break;
-                        }
-                    }
-                    if (isAllZeros) {
-                        measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
-                        return jsi::Value::undefined();
-                    }
-                    onSuccessFunction.call(rt, args, (size_t)6);
+                    auto onSuccessFunction = args[0].getObject(rt).getFunction(rt);
+                    measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
                     return jsi::Value::undefined();
                   }
                 )

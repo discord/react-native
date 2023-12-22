@@ -25,7 +25,7 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
   }
 
   @Override
-  public void measureNatively(double viewTag, Callback callback) {
+  public void measureNatively(double viewTag, Callback successCallback, Callback failCallback) {
     getReactApplicationContext().runOnUiQueueThread(() -> {
       try {
         int[] output = measurer.measure((int) viewTag);
@@ -33,10 +33,10 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
         float y = PixelUtil.toDIPFromPixel(output[1]);
         float width = PixelUtil.toDIPFromPixel(output[2]);
         float height = PixelUtil.toDIPFromPixel(output[3]);
-        callback.invoke(0, 0, width, height, x, y);
+        successCallback.invoke(0, 0, width, height, x, y);
       }
       catch(IllegalViewOperationException e) {
-        callback.invoke(0, 0, 0, 0, 0, 0);
+        failCallback.invoke(successCallback);
       }
     });
   }
