@@ -16,10 +16,8 @@
 #include <react/renderer/runtimescheduler/RuntimeSchedulerBinding.h>
 #include <react/renderer/uimanager/primitives.h>
 
-#include <algorithm>
 #include <utility>
 
-#include <logger/react_native_log.h>
 #include "bindingUtils.h"
 
 namespace facebook::react {
