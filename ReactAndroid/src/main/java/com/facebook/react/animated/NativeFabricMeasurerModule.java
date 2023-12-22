@@ -25,7 +25,7 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
   }
 
   @Override
-  public void measureNatively(double viewTag, Callback successCallback, Callback failCallback) {
+  public void measureNatively(double viewTag, Callback onSuccess, Callback onFail) {
     getReactApplicationContext().runOnUiQueueThread(() -> {
       try {
         int[] output = measurer.measure((int) viewTag);
@@ -33,16 +33,17 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
         float y = PixelUtil.toDIPFromPixel(output[1]);
         float width = PixelUtil.toDIPFromPixel(output[2]);
         float height = PixelUtil.toDIPFromPixel(output[3]);
-        successCallback.invoke(0, 0, width, height, x, y);
+        onSuccess.invoke(0, 0, width, height, x, y);
       }
       catch(IllegalViewOperationException e) {
-        failCallback.invoke(successCallback);
+        // To avoid a scoping bug in UIManagerBinding.cpp, we need to pass the successCallback back here. 
+        onFail.invoke(onSuccess);
       }
     });
   }
 
   @Override
-  public void measureInWindowNatively(double viewTag, Callback callback) {
+  public void measureInWindowNatively(double viewTag, Callback onSuccess, Callback onFail) {
     getReactApplicationContext().runOnUiQueueThread(() -> {
       try {
         int[] output = measurer.measureInWindow((int) viewTag);
@@ -50,10 +51,10 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
         float y = PixelUtil.toDIPFromPixel(output[1]);
         float width = PixelUtil.toDIPFromPixel(output[2]);
         float height = PixelUtil.toDIPFromPixel(output[3]);
-        callback.invoke(x, y, width, height);
+        onSuccess.invoke(x, y, width, height);
       }
       catch (IllegalViewOperationException e) {
-        callback.invoke(0,0,0,0);
+        onFail.invoke(onSuccess);
       }
     });
   }

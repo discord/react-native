@@ -19,8 +19,8 @@
 #include <algorithm>
 #include <utility>
 
-#include "bindingUtils.h"
 #include <logger/react_native_log.h>
+#include "bindingUtils.h"
 
 namespace facebook::react {
 
@@ -105,22 +105,23 @@ void UIManagerBinding::dispatchEvent(
     return;
   }
 
-  auto instanceHandle = eventTarget != nullptr
-    ? [&]() {
-      auto instanceHandle = eventTarget->getInstanceHandle(runtime);
-      if (instanceHandle.isUndefined()) {
-        return jsi::Value::null();
-      }
+  auto instanceHandle = eventTarget != nullptr ? [&]() {
+    auto instanceHandle = eventTarget->getInstanceHandle(runtime);
+    if (instanceHandle.isUndefined()) {
+      return jsi::Value::null();
+    }
 
-      // Mixing `target` into `payload`.
-      if (!payload.isObject()) {
-        LOG(ERROR) << "payload for dispatchEvent is not an object: " << eventTarget->getTag();
-      }
-      react_native_assert(payload.isObject());
-      payload.asObject(runtime).setProperty(runtime, "target", eventTarget->getTag());
-      return instanceHandle;
-    }()
-    : jsi::Value::null();
+    // Mixing `target` into `payload`.
+    if (!payload.isObject()) {
+      LOG(ERROR) << "payload for dispatchEvent is not an object: "
+                 << eventTarget->getTag();
+    }
+    react_native_assert(payload.isObject());
+    payload.asObject(runtime).setProperty(
+        runtime, "target", eventTarget->getTag());
+    return instanceHandle;
+  }()
+                                               : jsi::Value::null();
 
   if (instanceHandle.isNull()) {
     LOG(WARNING) << "instanceHandle is null, event will be dropped";
@@ -142,33 +143,61 @@ void UIManagerBinding::invalidate() const {
   uiManager_->setDelegate(nullptr);
 }
 
-void measureFromShadowTree(UIManager* uiManager, ShadowNode::Shared shadowNode, jsi::Function &onSuccessFunction, jsi::Runtime &runtime) {
-    auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
-            *shadowNode, nullptr, {/* .includeTransform = */ true});
+void measureFromShadowTree(
+    UIManager *uiManager,
+    ShadowNode::Shared shadowNode,
+    jsi::Function &onSuccessFunction,
+    jsi::Runtime &runtime) {
+  auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
+      *shadowNode, nullptr, {/* .includeTransform = */ true});
 
-    if (layoutMetrics == EmptyLayoutMetrics) {
-        onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
-        return;
-    }
-    auto newestCloneOfShadowNode =
-            uiManager->getNewestCloneOfShadowNode(*shadowNode);
+  if (layoutMetrics == EmptyLayoutMetrics) {
+    onSuccessFunction.call(runtime, {0, 0, 0, 0, 0, 0});
+    return;
+  }
+  auto newestCloneOfShadowNode =
+      uiManager->getNewestCloneOfShadowNode(*shadowNode);
 
-    auto layoutableShadowNode = traitCast<LayoutableShadowNode const *>(
-            newestCloneOfShadowNode.get());
-    Point originRelativeToParent = layoutableShadowNode != nullptr
-                                   ? layoutableShadowNode->getLayoutMetrics().frame.origin
-                                   : Point();
+  auto layoutableShadowNode =
+      traitCast<LayoutableShadowNode const *>(newestCloneOfShadowNode.get());
+  Point originRelativeToParent = layoutableShadowNode != nullptr
+      ? layoutableShadowNode->getLayoutMetrics().frame.origin
+      : Point();
 
-    auto frame = layoutMetrics.frame;
-    react_native_log_info("garf measureFromShadowTree about to onSuccessFunction");
-    onSuccessFunction.call(
-            runtime,
-            {jsi::Value{runtime, (double)originRelativeToParent.x},
-             jsi::Value{runtime, (double)originRelativeToParent.y},
-             jsi::Value{runtime, (double)frame.size.width},
-             jsi::Value{runtime, (double)frame.size.height},
-             jsi::Value{runtime, (double)frame.origin.x},
-             jsi::Value{runtime, (double)frame.origin.y}});
+  auto frame = layoutMetrics.frame;
+  onSuccessFunction.call(
+      runtime,
+      {jsi::Value{runtime, (double)originRelativeToParent.x},
+       jsi::Value{runtime, (double)originRelativeToParent.y},
+       jsi::Value{runtime, (double)frame.size.width},
+       jsi::Value{runtime, (double)frame.size.height},
+       jsi::Value{runtime, (double)frame.origin.x},
+       jsi::Value{runtime, (double)frame.origin.y}});
+}
+
+void measureInWindowFromShadowTree(
+    UIManager *uiManager,
+    ShadowNode::Shared shadowNode,
+    jsi::Function &onSuccessFunction,
+    jsi::Runtime &runtime) {
+  auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
+      *shadowNode,
+      nullptr,
+      {/* .includeTransform = */ true,
+       /* .includeViewportOffset = */ true});
+
+  if (layoutMetrics == EmptyLayoutMetrics) {
+    onSuccessFunction.call(runtime, {0, 0, 0, 0});
+    return;
+  }
+
+  auto frame = layoutMetrics.frame;
+  onSuccessFunction.call(
+      runtime,
+      {jsi::Value{runtime, (double)frame.origin.x},
+       jsi::Value{runtime, (double)frame.origin.y},
+       jsi::Value{runtime, (double)frame.size.width},
+       jsi::Value{runtime, (double)frame.size.height}});
 }
 
 jsi::Value UIManagerBinding::get(
@@ -608,44 +637,59 @@ jsi::Value UIManagerBinding::get(
             size_t /*count*/) noexcept -> jsi::Value {
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
           bool turboModuleCalled = false;
-          auto nativeMeasurerValue = runtime.global().getProperty(runtime, "__turboModuleProxy")
-                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");     
-          auto onSuccessFunction = arguments[1].getObject(runtime).getFunction(runtime);
+          auto nativeMeasurerValue =
+              runtime.global()
+                  .getProperty(runtime, "__turboModuleProxy")
+                  .asObject(runtime)
+                  .asFunction(runtime)
+                  .call(runtime, "NativeFabricMeasurerTurboModule");
+          auto onSuccessFunction =
+              arguments[1].getObject(runtime).getFunction(runtime);
 
           if (nativeMeasurerValue.isObject()) {
-            // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
-            // The return value doesn't matter here because the measure values will be passed through the callback.
-            jsi::Value returnValue = nativeMeasurerValue
-              .asObject(runtime)
-              .getPropertyAsFunction(runtime, "measureNatively")
-              .call(
-                runtime, 
-                shadowNode.get()->getTag(), 
-                onSuccessFunction,
-                jsi::Function::createFromHostFunction(
-                  runtime, 
-                  jsi::PropNameID::forAscii(runtime, "pleaseRenameThisFunction"), 
-                  1,
-                  [uiManager, shadowNode](
-                      jsi::Runtime& rt, 
-                      const jsi::Value& thisVal, 
-                      const jsi::Value* args, 
-                      size_t count) {
-                    auto onSuccessFunction = args[0].getObject(rt).getFunction(rt);
-                    measureFromShadowTree(uiManager,shadowNode, onSuccessFunction, rt);
-                    return jsi::Value::undefined();
-                  }
-                )
-              );
+            // This calls measureNatively if the NativeFabricMeasurerTurboModule
+            // is found. The return value doesn't matter here because the
+            // measure values will be passed through the callback.
+            jsi::Value returnValue =
+                nativeMeasurerValue.asObject(runtime)
+                    .getPropertyAsFunction(runtime, "measureNatively")
+                    .call(
+                        runtime,
+                        shadowNode.get()->getTag(),
+                        // measureNatively takes two callbacks, one for if the
+                        // layout is found and one for if an error occurs so we
+                        // can gracefully fallback to measuring out of the
+                        // shadow tree.
+                        onSuccessFunction,
+                        jsi::Function::createFromHostFunction(
+                            runtime,
+                            jsi::PropNameID::forAscii(
+                                runtime, "onNativeMeasureFail"),
+                            1,
+                            [uiManager, shadowNode](
+                                jsi::Runtime &rt,
+                                const jsi::Value &thisVal,
+                                const jsi::Value *args,
+                                size_t count) {
+                              // We return onSuccessFunction out of the onFail
+                              // instead of using the one defined above to avoid
+                              // a scoping bug.
+                              auto onSuccessFunction =
+                                  args[0].getObject(rt).getFunction(rt);
+                              measureFromShadowTree(
+                                  uiManager, shadowNode, onSuccessFunction, rt);
+                              return jsi::Value::undefined();
+                            }));
             turboModuleCalled = true;
           }
 
           if (turboModuleCalled) {
-              return jsi::Value::undefined();
+            return jsi::Value::undefined();
           }
 
-          measureFromShadowTree(uiManager, shadowNode, onSuccessFunction, runtime);
-          
+          measureFromShadowTree(
+              uiManager, shadowNode, onSuccessFunction, runtime);
+
           return jsi::Value::undefined();
         });
   }
@@ -662,42 +706,55 @@ jsi::Value UIManagerBinding::get(
             size_t /*count*/) noexcept -> jsi::Value {
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
           bool turboModuleCalled = false;
-          auto nativeMeasurerValue = runtime.global().getProperty(runtime, "__turboModuleProxy")
-                  .asObject(runtime).asFunction(runtime).call(runtime, "NativeFabricMeasurerTurboModule");
-
-          if (nativeMeasurerValue.isObject()) {
-              // This calls measureNatively if the NativeFabricMeasurerTurboModule is found.
-              // The return value doesn't matter here because the measure values will be passed through the callback.
-              jsi::Value returnValue = nativeMeasurerValue.asObject(runtime).getPropertyAsFunction(runtime, "measureInWindowNatively")
-                      .call(runtime, shadowNode.get()->getTag(), arguments[1].getObject(runtime).getFunction(runtime));
-              turboModuleCalled = true;
-          }
-
-          if (turboModuleCalled) {
-              return jsi::Value::undefined();
-          }
-            
-          auto layoutMetrics = uiManager->getRelativeLayoutMetrics(
-              *shadowNode,
-              nullptr,
-              {/* .includeTransform = */ true,
-               /* .includeViewportOffset = */ true});
-
+          auto nativeMeasurerValue =
+              runtime.global()
+                  .getProperty(runtime, "__turboModuleProxy")
+                  .asObject(runtime)
+                  .asFunction(runtime)
+                  .call(runtime, "NativeFabricMeasurerTurboModule");
           auto onSuccessFunction =
               arguments[1].getObject(runtime).getFunction(runtime);
 
-          if (layoutMetrics == EmptyLayoutMetrics) {
-            onSuccessFunction.call(runtime, {0, 0, 0, 0});
+          if (nativeMeasurerValue.isObject()) {
+            // This calls measureNatively if the NativeFabricMeasurerTurboModule
+            // is found. The return value doesn't matter here because the
+            // measure values will be passed through the callback.
+            jsi::Value returnValue =
+                nativeMeasurerValue.asObject(runtime)
+                    .getPropertyAsFunction(runtime, "measureInWindowNatively")
+                    .call(
+                        runtime,
+                        shadowNode.get()->getTag(),
+                        onSuccessFunction,
+                        jsi::Function::createFromHostFunction(
+                            runtime,
+                            jsi::PropNameID::forAscii(
+                                runtime, "onNativeMeasureFail"),
+                            1,
+                            [uiManager, shadowNode](
+                                jsi::Runtime &rt,
+                                const jsi::Value &thisVal,
+                                const jsi::Value *args,
+                                size_t count) {
+                              // We return onSuccessFunction out of the onFail
+                              // instead of using the one defined above to avoid
+                              // a scoping bug.
+                              auto onSuccessFunction =
+                                  args[0].getObject(rt).getFunction(rt);
+                              measureInWindowFromShadowTree(
+                                  uiManager, shadowNode, onSuccessFunction, rt);
+                              return jsi::Value::undefined();
+                            }));
+            turboModuleCalled = true;
+          }
+
+          if (turboModuleCalled) {
             return jsi::Value::undefined();
           }
 
-          auto frame = layoutMetrics.frame;
-          onSuccessFunction.call(
-              runtime,
-              {jsi::Value{runtime, (double)frame.origin.x},
-               jsi::Value{runtime, (double)frame.origin.y},
-               jsi::Value{runtime, (double)frame.size.width},
-               jsi::Value{runtime, (double)frame.size.height}});
+          measureInWindowFromShadowTree(
+              uiManager, shadowNode, onSuccessFunction, runtime);
+
           return jsi::Value::undefined();
         });
   }

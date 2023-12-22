@@ -18,10 +18,11 @@ type MeasureInWindowOnSuccessCallback = (
 ) => void;
 
 export interface Spec extends TurboModule {
-  +measureNatively: (viewTag: number, successCallback: MeasureOnSuccessCallback, failCallback: (successCallback: MeasureInWindowOnSuccessCallback) => void) => void,
+  +measureNatively: (viewTag: number, successCallback: MeasureOnSuccessCallback, failCallback: (successCallback: MeasureOnSuccessCallback) => void) => void,
   +measureInWindowNatively: (
     viewTag: number,
-    callback: MeasureInWindowOnSuccessCallback,
+    successCallback: MeasureInWindowOnSuccessCallback,
+    failCallback: (successCallback: MeasureInWindowOnSuccessCallback) => void
   ) => void,
 }
 
