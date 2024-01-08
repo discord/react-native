@@ -249,7 +249,7 @@ task createNativeDepsDirectories {
 }
 
 task downloadBoost(dependsOn: createNativeDepsDirectories, type: Download) {
-    src("https://boostorg.jfrog.io/artifactory/main/release/${BOOST_VERSION.replace("_", ".")}/source/boost_${BOOST_VERSION}${boostExtension}")
+    src("https://archives.boost.io/release/${BOOST_VERSION.replace("_", ".")}/source/boost_${BOOST_VERSION}${boostExtension}")
     onlyIfModified(true)
     overwrite(false)
     retries(5)
