@@ -11,7 +11,7 @@ Pod::Spec.new do |spec|
   spec.summary = 'Boost provides free peer-reviewed portable C++ source libraries.'
   spec.authors = 'Rene Rivera'
   # PodToBuild does not support tar bz2 compression so we use tar.gz instead.
-  spec.source = { :http => 'https://boostorg.jfrog.io/artifactory/main/release/1.81.0/source/boost_1_81_0.tar.gz',
+  spec.source = { :http => 'https://archives.boost.io/release/1.81.0/source/boost_1_81_0.tar.gz',
                   :sha256 => '205666dea9f6a7cfed87c7a6dfbeb52a2c1b9de55712c9c1a87735d7181452b6' }
 
   # Pinning to the same version as React.podspec.
