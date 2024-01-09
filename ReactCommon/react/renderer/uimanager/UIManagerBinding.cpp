@@ -633,7 +633,6 @@ jsi::Value UIManagerBinding::get(
             jsi::Value const *arguments,
             size_t /*count*/) noexcept -> jsi::Value {
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
-          bool turboModuleCalled = false;
           auto nativeMeasurerValue =
               runtime.global()
                   .getProperty(runtime, "__turboModuleProxy")
@@ -677,10 +676,6 @@ jsi::Value UIManagerBinding::get(
                                   uiManager, shadowNode, onSuccessFunction, rt);
                               return jsi::Value::undefined();
                             }));
-            turboModuleCalled = true;
-          }
-
-          if (turboModuleCalled) {
             return jsi::Value::undefined();
           }
 
@@ -702,7 +697,6 @@ jsi::Value UIManagerBinding::get(
             jsi::Value const *arguments,
             size_t /*count*/) noexcept -> jsi::Value {
           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
-          bool turboModuleCalled = false;
           auto nativeMeasurerValue =
               runtime.global()
                   .getProperty(runtime, "__turboModuleProxy")
@@ -742,10 +736,6 @@ jsi::Value UIManagerBinding::get(
                                   uiManager, shadowNode, onSuccessFunction, rt);
                               return jsi::Value::undefined();
                             }));
-            turboModuleCalled = true;
-          }
-
-          if (turboModuleCalled) {
             return jsi::Value::undefined();
           }
 
