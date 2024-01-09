@@ -667,9 +667,16 @@ jsi::Value UIManagerBinding::get(
                                 const jsi::Value &thisVal,
                                 const jsi::Value *args,
                                 size_t count) {
-                              // We return onSuccessFunction out of the onFail
-                              // instead of using the one defined above to avoid
-                              // a scoping bug.
+                              // There's a bug that occurs if, below, we try to
+                              // call the onSuccessFunction we extracted
+                              // earlier. It seems that JSIFunctions can't be
+                              // passed into capture clauses for c++ anonymous
+                              // functions, because they lack the appropriate
+                              // copy constructor. Since we do definitely need
+                              // access to the onSuccessFunction, we obtain that
+                              // access by passing it into the .call() above and
+                              // then passing it BACK OUT in native land, so we
+                              // can extract it from args and use it right here.
                               auto onSuccessFunction =
                                   args[0].getObject(rt).getFunction(rt);
                               measureFromShadowTree(
@@ -727,9 +734,16 @@ jsi::Value UIManagerBinding::get(
                                 const jsi::Value &thisVal,
                                 const jsi::Value *args,
                                 size_t count) {
-                              // We return onSuccessFunction out of the onFail
-                              // instead of using the one defined above to avoid
-                              // a scoping bug.
+                              // There's a bug that occurs if, below, we try to
+                              // call the onSuccessFunction we extracted
+                              // earlier. It seems that JSIFunctions can't be
+                              // passed into capture clauses for c++ anonymous
+                              // functions, because they lack the appropriate
+                              // copy constructor. Since we do definitely need
+                              // access to the onSuccessFunction, we obtain that
+                              // access by passing it into the .call() above and
+                              // then passing it BACK OUT in native land, so we
+                              // can extract it from args and use it right here.
                               auto onSuccessFunction =
                                   args[0].getObject(rt).getFunction(rt);
                               measureInWindowFromShadowTree(
