@@ -87,7 +87,6 @@ package-lock.json
 .DS_Store
 
 # Test generated files
-/packages/react-native/ReactAndroid/src/androidTest/assets/AndroidTestBundle.js
 *.js.meta
 
 /coverage
