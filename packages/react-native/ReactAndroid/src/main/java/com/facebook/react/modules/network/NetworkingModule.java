@@ -93,7 +93,11 @@ public final class NetworkingModule extends NativeNetworkingAndroidSpec {
   private static final int CHUNK_TIMEOUT_NS = 100 * 1000000; // 100ms
   private static final int MAX_CHUNK_SIZE_BETWEEN_FLUSHES = 8 * 1024; // 8K
 
+<<<<<<< HEAD
   private static @Nullable com.facebook.react.modules.network.CustomClientBuilder
+=======
+ private static @Nullable com.facebook.react.modules.network.CustomClientBuilder
+>>>>>>> 15ac303081 ([Discord] Add Websocket Module setCustomClientBuilder)
       customClientBuilder = null;
 
   private final OkHttpClient mClient;
@@ -173,7 +177,7 @@ public final class NetworkingModule extends NativeNetworkingAndroidSpec {
    *     https://github.com/facebook/react-native/pull/37798#pullrequestreview-1518338914
    */
   @Deprecated
-  public interface CustomClientBuilder
+  public static interface CustomClientBuilder
       extends com.facebook.react.modules.network.CustomClientBuilder {}
 
   private static void applyCustomBuilder(OkHttpClient.Builder builder) {
