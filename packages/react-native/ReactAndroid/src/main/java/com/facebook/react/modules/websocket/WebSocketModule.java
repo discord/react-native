@@ -109,7 +109,7 @@ public final class WebSocketModule extends NativeWebSocketModuleSpec {
             .connectTimeout(10, TimeUnit.SECONDS)
             .writeTimeout(10, TimeUnit.SECONDS)
             .readTimeout(0, TimeUnit.MINUTES); // Disable timeouts for read
-
+    
     applyCustomBuilder(okHttpBuilder);
 
     OkHttpClient client = okHttpBuilder.build();
