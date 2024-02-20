@@ -159,9 +159,7 @@ android {
     if (rootProject.hasProperty("ndkPath")) {
         ndkPath rootProject.ext.ndkPath
     }
-    if (rootProject.hasProperty("ndkVersion")) {
-        ndkVersion rootProject.ext.ndkVersion
-    }
+    ndkVersion = "24.0.8215888"
 
     defaultConfig {
         minSdkVersion 21
