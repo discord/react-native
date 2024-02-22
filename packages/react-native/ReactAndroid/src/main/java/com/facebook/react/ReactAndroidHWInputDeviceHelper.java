@@ -64,6 +64,10 @@ class ReactAndroidHWInputDeviceHelper {
 
   /** Called from {@link ReactRootView} when focused view changes. */
   public void onFocusChanged(View newFocusedView) {
+    if (newFocusedView == null) {
+      return;
+    }
+
     if (mLastFocusedViewId == newFocusedView.getId()) {
       return;
     }
