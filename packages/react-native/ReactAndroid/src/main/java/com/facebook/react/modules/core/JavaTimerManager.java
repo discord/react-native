@@ -98,12 +98,14 @@ public class JavaTimerManager {
       }
 
       // If the JS thread is busy for multiple frames we cancel any other pending runnable.
-      if (mCurrentIdleCallbackRunnable != null) {
-        mCurrentIdleCallbackRunnable.cancel();
-      }
+      synchronized (mIdleRunnableGuard) {
+        if (mCurrentIdleCallbackRunnable != null) {
+          mCurrentIdleCallbackRunnable.cancel();
+        }
 
-      mCurrentIdleCallbackRunnable = new IdleCallbackRunnable(frameTimeNanos);
-      mReactApplicationContext.runOnJSQueueThread(mCurrentIdleCallbackRunnable);
+        mCurrentIdleCallbackRunnable = new IdleCallbackRunnable(frameTimeNanos);
+        mReactApplicationContext.runOnJSQueueThread(mCurrentIdleCallbackRunnable);
+      }
 
       mReactChoreographer.postFrameCallback(ReactChoreographer.CallbackType.IDLE_EVENT, this);
     }
@@ -142,7 +144,9 @@ public class JavaTimerManager {
         mJavaScriptTimerExecutor.callIdleCallbacks(absoluteFrameStartTime);
       }
 
-      mCurrentIdleCallbackRunnable = null;
+      synchronized (mIdleRunnableGuard) {
+        mCurrentIdleCallbackRunnable = null;
+      }
     }
 
     public void cancel() {
@@ -156,6 +160,7 @@ public class JavaTimerManager {
   private final DevSupportManager mDevSupportManager;
   private final Object mTimerGuard = new Object();
   private final Object mIdleCallbackGuard = new Object();
+  private final Object mIdleRunnableGuard = new Object();
   private final PriorityQueue<Timer> mTimers;
   private final SparseArray<Timer> mTimerIdsToTimers;
   private final AtomicBoolean isPaused = new AtomicBoolean(true);
