@@ -282,11 +282,24 @@ task downloadFolly(dependsOn: createNativeDepsDirectories, type: Download) {
     dest(new File(downloadsDir, "folly-${FOLLY_VERSION}.tar.gz"))
 }
 
+// A temporary workaround for build failing on some machines.
+// See: https://github.com/facebook/react-native/issues/28298
+def follyReplaceContent = '''
+  ssize_t r;
+  do {
+    r = open(name, flags, mode);
+  } while (r == -1 && errno == EINTR);
+  return r;
+'''
+
 task prepareFolly(dependsOn: dependenciesPath ? [] : [downloadFolly], type: Copy) {
     from(dependenciesPath ?: tarTree(downloadFolly.dest))
     from("src/main/jni/third-party/folly/")
     include("folly-${FOLLY_VERSION}/folly/**/*", "CMakeLists.txt")
     eachFile { fname -> fname.path = (fname.path - "folly-${FOLLY_VERSION}/") }
+    // Fixes problem with Folly failing to build on certain systems.
+    // See https://github.com/facebook/react-native/issues/28298
+    filter { line -> line.replaceAll('return int\\(wrapNoInt\\(open, name, flags, mode\\)\\);', follyReplaceContent) }
     includeEmptyDirs = false
     into("$thirdPartyNdkDir/folly")
 }
@@ -416,6 +429,60 @@ task packageReactNdkLibsForBuck(type: Copy) {
     exclude("**/libjsc.so")
     exclude("**/libhermes.so")
     into("src/main/jni/prebuilt/lib")
+}
+
+// Derivative of the packageReactNdkDebugLibsForBuck task, appends "debug" to the "into" dir
+task packageReactNdkDebugLibsForDiscord(type: Copy) {
+    dependsOn("mergeDebugNativeLibs")
+    // Shared libraries (.so) are copied from the merged_native_libs folder instead
+    from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+    exclude("**/libjsc.so")
+    exclude("**/libhermes.so")
+    into("src/main/jni/prebuilt/lib/debug")
+}
+
+// Derivative of the packageReactNdkReleaseLibsForBuck task, appends "release" to the "into" dir
+task packageReactNdkReleaseLibsForDiscord(type: Copy) {
+    dependsOn("mergeReleaseNativeLibs")
+    // Shared libraries (.so) are copied from the merged_native_libs folder instead
+    from("$buildDir/intermediates/merged_native_libs/release/out/lib/")
+    exclude("**/libjsc.so")
+    exclude("**/libhermes.so")
+    into("src/main/jni/prebuilt/lib/release")
+}
+
+/**
+* By default, the published React Native artifact omits the *.so files needed to compile JSI-related modules/components.
+* Meta's recommended strategy is, when building for "The New Architecture", to build React Native from source,
+* which'll recreate these *.so files for the JSI (i.e. TurboModule/Fabric) modules/components build to consume.
+*
+* Since Discord publishes its own version of React Native internally, we can modify the build process here to produce
+* a .zip that gives us the *.so files we need to build modules/compoents for The New Architecture.
+*
+* MAYBE TODO?: Maybe include the relevant headers for these libraries,
+* right now we can get away with just using our react-native node package.
+*/
+task createReactNdkLibraryZipArchiveForDiscord(type: Zip) {
+    // This dependsOn tasks gets all our *.so files into the src/main/jni/prebuilt/lib directory
+    dependsOn("packageReactNdkDebugLibsForDiscord")
+    dependsOn("packageReactNdkReleaseLibsForDiscord")
+
+    // A searchable self-documenting name for the build process, but its final packaged name will end up being react-native-{version}.zip
+    archiveFileName = "ReactNativeLibrariesForDiscord.zip"
+    from(layout.projectDirectory.dir("src/main/jni/prebuilt")) {
+        // Get all *.so files in the prebuilt directory
+        include "**/*.so"
+        eachFile { fcd ->
+            // Trim down each file's directory to just include the "lib/{debug/release}/{architecture}" part
+            def relativeFileName = new RelativePath(true, fcd.relativePath.segments[-4..-1].join("/"))
+            fcd.relativePath = relativeFileName
+        }
+        // Removes empty dirs resulting from the eachFile directory remapping above
+        includeEmptyDirs = false
+    }
+
+    // Place this .zip right into our ReactAndroid directory
+    destinationDirectory = layout.projectDirectory
 }
 
 task installArchives {
@@ -760,6 +827,12 @@ publishing {
     publications {
         getByName("release") {
             artifactId 'react-android'
+        }
+        libZip(MavenPublication) {
+            group = "com.facebook.react"
+            version = VERSION_NAME
+            artifactId = "discord-rn-libs"
+            artifact (createReactNdkLibraryZipArchiveForDiscord)
         }
     }
 }
