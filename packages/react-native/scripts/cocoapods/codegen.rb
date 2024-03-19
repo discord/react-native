@@ -11,8 +11,8 @@
 # - dir_manager: a class that implements the `Dir` interface. Defaults to `Dir`, the Dependency can be injected for testing purposes.
 # @throws an error if it could not find the codegen folder.
 def build_codegen!(react_native_path, relative_installation_root, dir_manager: Dir)
-    codegen_repo_path = "#{relative_installation_root}/#{react_native_path}/../react-native-codegen";
-    codegen_npm_path = "#{relative_installation_root}/#{react_native_path}/../@react-native/codegen";
+    codegen_repo_path = Pathname.new("#{relative_installation_root}/#{react_native_path}/../react-native-codegen").cleanpath
+    codegen_npm_path = Pathname.new("#{relative_installation_root}/#{react_native_path}/../@react-native/codegen").cleanpath
     codegen_cli_path = ""
 
     if dir_manager.exist?(codegen_repo_path)
