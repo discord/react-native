@@ -13,7 +13,7 @@ build_type = ENV['PRODUCTION'] == "1" ? :release : :debug
 
 # package.json
 package = JSON.parse(File.read(File.join(react_native_path, "package.json")))
-version = package['version']
+version = '0.72.3'
 
 # sdks/.hermesversion
 hermestag_file = File.join(react_native_path, "sdks", ".hermesversion")
