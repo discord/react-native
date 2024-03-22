@@ -10,7 +10,7 @@ react_native_path = File.join(__dir__, "..", "..")
 
 # package.json
 package = JSON.parse(File.read(File.join(react_native_path, "package.json")))
-version = package['version']
+version = '0.72.3'
 
 source_type = hermes_source_type(version, react_native_path)
 source = podspec_source(source_type, version, react_native_path)
