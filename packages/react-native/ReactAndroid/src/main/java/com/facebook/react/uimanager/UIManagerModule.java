@@ -148,6 +148,8 @@ public class UIManagerModule extends ReactContextBaseJavaModule
             minTimeLeftInFrameForNonBatchedOperationMs);
 
     reactContext.addLifecycleEventListener(this);
+    mEventDispatcher.registerEventEmitter(
+        DEFAULT, getReactApplicationContext().getJSModule(RCTEventEmitter.class));
   }
 
   /**
@@ -175,8 +177,6 @@ public class UIManagerModule extends ReactContextBaseJavaModule
   public void initialize() {
     getReactApplicationContext().registerComponentCallbacks(mMemoryTrimCallback);
     getReactApplicationContext().registerComponentCallbacks(mViewManagerRegistry);
-    mEventDispatcher.registerEventEmitter(
-        DEFAULT, getReactApplicationContext().getJSModule(RCTEventEmitter.class));
   }
 
   @Override
