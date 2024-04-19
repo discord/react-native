@@ -356,7 +356,7 @@ class JavaMethodWrapper implements JavaModuleWrapper.NativeMethod {
               mArgumentExtractors[i].extractArgument(jsInstance, parameters, jsArgumentsConsumed);
           jsArgumentsConsumed += mArgumentExtractors[i].getJSArgumentsNeeded();
         }
-      } catch (UnexpectedNativeTypeException | NullPointerException e) {
+      } catch (UnexpectedNativeTypeException | NullPointerException | ClassCastException e) {
         throw new NativeArgumentsParseException(
             e.getMessage()
                 + " (constructing arguments for "
