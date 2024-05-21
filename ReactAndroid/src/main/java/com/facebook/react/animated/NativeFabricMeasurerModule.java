@@ -10,6 +10,7 @@ import com.facebook.react.bridge.UIManager;
 import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.bridge.WritableNativeMap;
 import com.facebook.react.module.annotations.ReactModule;
+import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.facebook.react.uimanager.NativeViewMeasurer;
 import com.facebook.react.uimanager.PixelUtil;
 import com.facebook.react.uimanager.UIManagerHelper;
@@ -24,26 +25,37 @@ public class NativeFabricMeasurerModule extends NativeFabricMeasurerTurboModuleS
   }
 
   @Override
-  public void measureNatively(double viewTag, Callback callback) {
+  public void measureNatively(double viewTag, Callback onSuccess, Callback onFail) {
     getReactApplicationContext().runOnUiQueueThread(() -> {
-      int[] output = measurer.measure((int) viewTag);
-      float x = PixelUtil.toDIPFromPixel(output[0]);
-      float y = PixelUtil.toDIPFromPixel(output[1]);
-      float width = PixelUtil.toDIPFromPixel(output[2]);
-      float height = PixelUtil.toDIPFromPixel(output[3]);
-      callback.invoke(0, 0, width, height, x, y);
+      try {
+        int[] output = measurer.measure((int) viewTag);
+        float x = PixelUtil.toDIPFromPixel(output[0]);
+        float y = PixelUtil.toDIPFromPixel(output[1]);
+        float width = PixelUtil.toDIPFromPixel(output[2]);
+        float height = PixelUtil.toDIPFromPixel(output[3]);
+        onSuccess.invoke(0, 0, width, height, x, y);
+      }
+      catch(IllegalViewOperationException e) {
+        // To avoid a scoping bug in UIManagerBinding.cpp, we need to pass the successCallback back here. 
+        onFail.invoke(onSuccess);
+      }
     });
   }
 
   @Override
-  public void measureInWindowNatively(double viewTag, Callback callback) {
+  public void measureInWindowNatively(double viewTag, Callback onSuccess, Callback onFail) {
     getReactApplicationContext().runOnUiQueueThread(() -> {
-      int[] output = measurer.measureInWindow((int) viewTag);
-      float x = PixelUtil.toDIPFromPixel(output[0]);
-      float y = PixelUtil.toDIPFromPixel(output[1]);
-      float width = PixelUtil.toDIPFromPixel(output[2]);
-      float height = PixelUtil.toDIPFromPixel(output[3]);
-      callback.invoke(x, y, width, height);
+      try {
+        int[] output = measurer.measureInWindow((int) viewTag);
+        float x = PixelUtil.toDIPFromPixel(output[0]);
+        float y = PixelUtil.toDIPFromPixel(output[1]);
+        float width = PixelUtil.toDIPFromPixel(output[2]);
+        float height = PixelUtil.toDIPFromPixel(output[3]);
+        onSuccess.invoke(x, y, width, height);
+      }
+      catch (IllegalViewOperationException e) {
+        onFail.invoke(onSuccess);
+      }
     });
   }
 
