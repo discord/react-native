@@ -24,7 +24,7 @@ import type {
 import {PressabilityDebugView} from '../../Pressability/PressabilityDebug';
 import usePressability from '../../Pressability/usePressability';
 import {type RectOrSize} from '../../StyleSheet/Rect';
-import View from '../View/View';
+import View from '../View/ViewNativeComponent';
 import useAndroidRippleForView, {
   type RippleConfig,
 } from './useAndroidRippleForView';
