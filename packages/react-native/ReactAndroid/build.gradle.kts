@@ -15,9 +15,9 @@ import java.nio.file.Paths
 plugins {
   id("maven-publish")
   id("com.facebook.react")
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.download)
-  alias(libs.plugins.kotlin.android)
+  id(libs.plugins.android.library.get().pluginId)
+  id(libs.plugins.download.get().pluginId)
+  id(libs.plugins.kotlin.android.get().pluginId)
 }
 
 version = project.findProperty("VERSION_NAME")?.toString()!!
