@@ -67,6 +67,7 @@ internal object NdkConfiguratorUtils {
    * sure we specify the correct .pickFirsts for all the .so files we are producing or that we're
    * aware of as some of our dependencies are pulling them in.
    */
+  @Suppress("UNUSED_PARAMETER")
   fun configureNewArchPackagingOptions(
       project: Project,
       extension: ReactExtension,
