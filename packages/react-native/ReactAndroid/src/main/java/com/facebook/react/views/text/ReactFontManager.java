@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.res.ResourcesCompat;
 import com.facebook.infer.annotation.Nullsafe;
+import com.facebook.react.common.ReactConstants;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -53,7 +54,7 @@ public class ReactFontManager {
   public static ReactFontManager getInstance() {
     if (sReactFontManagerInstance == null) {
       sReactFontManagerInstance =
-          new ReactFontManager(com.facebook.react.common.assets.ReactFontManager.getInstance());
+          new ReactFontManager();
     }
     return sReactFontManagerInstance;
   }
