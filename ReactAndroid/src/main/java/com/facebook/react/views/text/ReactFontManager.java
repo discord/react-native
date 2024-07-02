@@ -18,6 +18,7 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.res.ResourcesCompat;
 import com.facebook.infer.annotation.Nullsafe;
+import com.facebook.react.bridge.Callback;
 
 import java.io.IOException;
 import java.util.ArrayList;
