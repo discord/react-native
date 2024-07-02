@@ -42,6 +42,7 @@ import java.util.Map;
  */
 @Nullsafe(Nullsafe.Mode.LOCAL)
 public class ReactFontManager {
+  public static Callback chooseHeightOverride = null;
 
   // NOTE: Indices in `EXTENSIONS` correspond to the `TypeFace` style constants.
   private static final String[] EXTENSIONS = {"", "_bold", "_italic", "_bold_italic"};
@@ -150,28 +151,11 @@ public class ReactFontManager {
 
   private static Typeface createAssetTypeface(
       String fontFamilyName, int style, AssetManager assetManager) {
-    // This logic attempts to safely check if the frontend code is attempting to use
-    // fallback fonts, and if it is, to use the fallback typeface creation logic.
-    String[] fontFamilyNames = fontFamilyName != null ? fontFamilyName.split(",") : null;
-    if (fontFamilyNames != null) {
-      for (int i = 0; i < fontFamilyNames.length; i++) {
-        fontFamilyNames[i] = fontFamilyNames[i].trim();
-      }
+
+    if (createAssetTypefaceOverride != null) {
+      return createAssetTypefaceOverride.invoke(fontFamilyName, style, assetManager);
     }
 
-    // If there are multiple font family names:
-    //   For newer versions of Android, construct a Typeface with fallbacks
-    //   For older versions of Android, ignore all the fallbacks and just use the first font family
-    if (fontFamilyNames != null && fontFamilyNames.length > 1) {
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-        return createAssetTypefaceWithFallbacks(fontFamilyNames, style, assetManager);
-      } else {
-        fontFamilyName = fontFamilyNames[0];
-      }
-    }
-
-    // Lastly, after all those checks above, this is the original RN logic for
-    // getting the typeface.
     String extension = EXTENSIONS[style];
     for (String fileExtension : FILE_EXTENSIONS) {
       String fileName =
