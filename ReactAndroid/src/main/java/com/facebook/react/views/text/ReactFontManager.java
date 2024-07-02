@@ -42,7 +42,7 @@ import java.util.Map;
  */
 @Nullsafe(Nullsafe.Mode.LOCAL)
 public class ReactFontManager {
-  public static Callback chooseHeightOverride = null;
+  public static Callback createAssetTypefaceOverride = null;
 
   // NOTE: Indices in `EXTENSIONS` correspond to the `TypeFace` style constants.
   private static final String[] EXTENSIONS = {"", "_bold", "_italic", "_bold_italic"};
