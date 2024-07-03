@@ -26,19 +26,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-class CreateTypefaceObject {
-  public String fontFamilyName;
-  public int style;
-  public AssetManager assetManager;
-
-  public CreateTypefaceObject(
-      String fontFamilyName, int style, AssetManager assetManager) {
-    this.fontFamilyName = fontFamilyName;
-    this.style = style;
-    this.assetManager = assetManager;
-  }
-}
-
 /**
  * Responsible for loading and caching Typeface objects.
  *
