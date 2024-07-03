@@ -18,13 +18,26 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.core.content.res.ResourcesCompat;
 import com.facebook.infer.annotation.Nullsafe;
-import com.facebook.react.bridge.Callback;
+import androidx.arch.core.util.Function;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+class CreateTypefaceObject {
+  public String fontFamilyName;
+  public int style;
+  public AssetManager assetManager;
+
+  public CreateTypefaceObject(
+      String fontFamilyName, int style, AssetManager assetManager) {
+    this.fontFamilyName = fontFamilyName;
+    this.style = style;
+    this.assetManager = assetManager;
+  }
+}
 
 /**
  * Responsible for loading and caching Typeface objects.
@@ -43,7 +56,7 @@ import java.util.Map;
  */
 @Nullsafe(Nullsafe.Mode.LOCAL)
 public class ReactFontManager {
-  public static Callback createAssetTypefaceOverride = null;
+  public static Function<CreateTypefaceObject, Typeface> createAssetTypefaceOverride = null;
 
   // NOTE: Indices in `EXTENSIONS` correspond to the `TypeFace` style constants.
   private static final String[] EXTENSIONS = {"", "_bold", "_italic", "_bold_italic"};
@@ -153,7 +166,9 @@ public class ReactFontManager {
   private static Typeface createAssetTypeface(
       String fontFamilyName, int style, AssetManager assetManager) {
     if (createAssetTypefaceOverride != null) {
-      return createAssetTypefaceOverride.invoke(fontFamilyName, style, assetManager);
+      return createAssetTypefaceOverride.apply(
+          new CreateTypefaceObject(fontFamilyName, style, assetManager)
+      );
     }
 
     String extension = EXTENSIONS[style];
