@@ -14,7 +14,7 @@ import androidx.annotation.Nullable;
 import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.common.ReactConstants;
-import com.facebook.react.common.assets.ReactFontManager;
+import com.facebook.react.views.text.ReactFontManager;
 import java.util.ArrayList;
 import java.util.List;
 
