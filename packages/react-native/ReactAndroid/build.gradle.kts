@@ -401,7 +401,7 @@ val prepareGlog by
 // Create Android native library module based on jsc from npm
 val prepareJSC by
     tasks.registering(PrepareJSCTask::class) {
-      jscPackagePath.set("$rootDir/../../discord_app/node_modules/jsc-android")
+      jscPackagePath.set(project.findProperty("JSC_ANDROID_PATH_OVERRIDE")?.toString() ?: findNodeModulePath(projectDir, "jsc-android"))
       outputDir = project.layout.buildDirectory.dir("third-party-ndk/jsc")
     }
 
@@ -445,7 +445,6 @@ fun findNodeModulePath(baseDir: File, packageName: String): String? {
   while (basePath != null) {
     val candidatePath = Paths.get(basePath.toString(), "node_modules", packageName)
     if (candidatePath.toFile().exists()) {
-        println("NODEMODULES " + candidatePath.toString())
       return candidatePath.toString()
     }
     basePath = basePath.parent
