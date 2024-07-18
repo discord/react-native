@@ -15,7 +15,7 @@ import android.text.style.MetricAffectingSpan;
 import androidx.annotation.Nullable;
 import com.facebook.infer.annotation.Nullsafe;
 import com.facebook.react.common.ReactConstants;
-import com.facebook.react.common.assets.ReactFontManager;
+import com.facebook.react.views.text.ReactFontManager;
 import com.facebook.react.views.text.ReactTypefaceUtils;
 
 /**
