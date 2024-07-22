@@ -531,7 +531,7 @@ val createHermescReleaseZipArchiveForDiscord by
     tasks.registering(Zip::class) {
         dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermesC")
             archiveFileName = "hermescForDiscord.zip"
-            from(layout.projectDirectory.dir("hermes-engine/build/hermes/bin/hermesc"))
+            from(layout.projectDirectory.dir("hermes-engine/build/hermes/bin"))
 
             // Place this .zip right into our ReactAndroid directory
             destinationDirectory = layout.projectDirectory
