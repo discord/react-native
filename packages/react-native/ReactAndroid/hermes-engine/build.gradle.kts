@@ -147,6 +147,7 @@ val configureBuildForHermes by
               "-B",
               hermesBuildDir.toString(),
               "-DJSI_DIR=" + jsiDir.absolutePath,
+              "-DICU_FOUND=1",
           ))
       standardOutput = FileOutputStream("$buildDir/configure-hermesc.log")
     }
