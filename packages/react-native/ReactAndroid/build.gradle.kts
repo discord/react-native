@@ -529,9 +529,9 @@ val createReactNdkLibraryZipArchiveForDiscord by
 // This is the task to run to create a .zip of hermesc for CI machines
 val createHermescReleaseZipArchiveForDiscord by
     tasks.registering(Zip::class) {
-        dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermescReleaseBinary")
+        dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermesC")
             archiveFileName = "hermescForDiscord.zip"
-            from(layout.projectDirectory.dir("hermes-engine/build/hermesc-release/bin"))
+            from(layout.projectDirectory.dir("hermes-engine/build/hermes/bin/hermesc"))
 
             // Place this .zip right into our ReactAndroid directory
             destinationDirectory = layout.projectDirectory
