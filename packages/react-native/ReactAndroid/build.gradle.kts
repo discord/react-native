@@ -526,6 +526,17 @@ val createReactNdkLibraryZipArchiveForDiscord by
         destinationDirectory.set(layout.projectDirectory)
     }
 
+// This is the task to run to create a .zip of hermesc for CI machines
+val createHermescReleaseZipArchiveForDiscord by
+    tasks.registering(Zip::class) {
+        dependsOn(":packages:react-native:ReactAndroid:hermes-engine:buildHermescReleaseBinary")
+            archiveFileName = "hermescForDiscord.zip"
+            from(layout.projectDirectory.dir("hermes-engine/build/hermesc-release/bin"))
+
+            // Place this .zip right into our ReactAndroid directory
+            destinationDirectory = layout.projectDirectory
+    }
+
 repositories {
   // Normally RNGP will set repositories for all modules,
   // but when consumed from source, we need to re-declare
@@ -867,6 +878,12 @@ publishing {
       version = "test"
       artifactId = "discord-rn-libs"
       artifact(tasks.named("createReactNdkLibraryZipArchiveForDiscord").get())
+    }
+    create<MavenPublication>("hermescReleaseZip") {
+        groupId = "com.facebook.react"
+        version = "test"
+        artifactId = "discord-hermesc-release"
+        artifact(tasks.named("createHermescReleaseZipArchiveForDiscord").get())
     }
   }
 }
