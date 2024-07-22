@@ -82,6 +82,19 @@ val hermesBuildOutputFileTree =
             "**/Makefile",
             "**/link.txt")
 
+// NOTE(flewp): These are separate build directories for configuring/building a release version of hermesc
+val hermescReleaseBuildDir = File("$buildDir/hermesc-release")
+val hermescReleaseOutputBinary = File("$buildDir/hermesc-release/bin/hermesc")
+val hermescReleaseBuildOutputFileTree =
+    fileTree(hermescReleaseBuildDir.toString())
+        .include(
+            "**/*.make",
+            "**/*.cmake",
+            "**/*.marks",
+            "**/compiler_depends.ts",
+            "**/Makefile",
+            "**/link.txt")
+
 var hermesVersion = "main"
 val hermesVersionFile = File(reactNativeRootDir, "sdks/.hermesversion")
 
@@ -147,7 +160,8 @@ val configureBuildForHermes by
               ".",
               "-B",
               hermesBuildDir.toString(),
-              "-DJSI_DIR=" + jsiDir.absolutePath))
+              "-DJSI_DIR=" + jsiDir.absolutePath,
+              "-DICU_FOUND=1"))
     }
 
 val buildHermesC by
@@ -176,6 +190,63 @@ val prepareHeadersForPrefab by
       include("**/*.h")
       exclude("jsi/**")
       into(prefabHeadersDir)
+    }
+
+/**
+NOTE(Flewp): Taken from https://github.com/facebook/hermes/blob/9f8603b9886c957e0ccead61fe4380616188bbb4/.circleci/config.yml#L115-L123
+The idea here is to replicate building the hermesc binary historically provided by the hermes-engine-cli package.
+
+Config Step
+cmake -S hermes -B build -DHERMES_STATIC_LINK=ON -DCMAKE_BUILD_TYPE=Release \
+              -DCMAKE_INTERPROCEDURAL_OPTIMIZATION=True -DCMAKE_CXX_FLAGS=-s -DCMAKE_C_FLAGS=-s \
+              -DCMAKE_EXE_LINKER_FLAGS="-Wl,--whole-archive -lpthread -Wl,--no-whole-archive" \
+              -DHERMES_ENABLE_DEBUGGER=False
+
+Build Step
+cmake --build build --target check-hermes hermes hvm hbcdump hermesc
+*/
+val configureBuildForHermescReleaseBinary by
+    tasks.registering(Exec::class) {
+        dependsOn(unzipHermes)
+        workingDir(hermesDir)
+        inputs.dir(hermesDir)
+        outputs.files(hermescReleaseBuildOutputFileTree)
+        commandLine(
+            windowsAwareCommandLine(
+                cmakeBinaryPath,
+                "-S",
+                ".",
+                "-B",
+                hermescReleaseBuildDir.toString(),
+                "-DHERMES_STATIC_LINK=ON",
+                "-DCMAKE_BUILD_TYPE=Release",
+                "-DCMAKE_INTERPROCEDURAL_OPTIMIZATION=True",
+                "-DCMAKE_CXX_FLAGS=-s",
+                "-DCMAKE_C_FLAGS=-s",
+                "-DHERMES_ENABLE_DEBUGGER=False",
+                "-DJSI_DIR=" + jsiDir.absolutePath,
+                "-DICU_FOUND=1"
+            )
+        )
+    }
+
+val buildHermescReleaseBinary by
+    tasks.registering(Exec::class) {
+        dependsOn(configureBuildForHermescReleaseBinary)
+        workingDir(hermesDir)
+        inputs.files(hermescReleaseBuildOutputFileTree)
+        outputs.file(hermescReleaseOutputBinary)
+        commandLine(
+            windowsAwareCommandLine(
+                cmakeBinaryPath,
+                "--build",
+                hermescReleaseBuildDir.toString(),
+                "--target",
+                "hermesc",
+                "-j",
+                ndkBuildJobs
+            )
+        )
     }
 
 fun windowsAwareCommandLine(vararg commands: String): List<String> {
