@@ -106,7 +106,7 @@ class GetDescAdapter : public JSExecutorFactory {
   std::shared_ptr<JSExecutorFactory> factory_;
 };
 
-}
+} // namespace
 
 static void mapReactMarkerToPerformanceLogger(
     const ReactMarker::ReactMarkerId markerId,
@@ -1084,6 +1084,8 @@ struct RCTInstanceCallback : public InstanceCallback {
   // In state 3: do nothing.
 
   if (self->_valid && !self->_loading) {
+    NSLog(@"CRASHINGHERE : %@", [error localizedDescription]);
+
     if ([error userInfo][RCTJSRawStackTraceKey]) {
       [self.redBox showErrorMessage:[error localizedDescription] withRawStack:[error userInfo][RCTJSRawStackTraceKey]];
     }
