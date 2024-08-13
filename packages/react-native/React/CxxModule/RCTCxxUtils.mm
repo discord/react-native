@@ -81,8 +81,17 @@ NSError *tryAndReturnError(const std::function<void()> &func)
   } catch (const std::exception &ex) {
     return errorWithException(ex);
   } catch (...) {
-    // On a 64-bit platform, this would catch ObjC exceptions, too, but not on
-    // 32-bit platforms, so we catch those with id exceptions above.
+    // Log the raw bytes of the exception
+    const void *rawException =
+        __builtin_return_address(0); // You can use a different approach depending on your platform/toolchain
+    size_t rawSize = sizeof(rawException); // The size could vary depending on the type of exception
+    NSMutableString *rawBytesLog = [NSMutableString stringWithString:@"Caught non-std C++ exception. Raw bytes: "];
+    const unsigned char *bytePtr = static_cast<const unsigned char *>(rawException);
+    for (size_t i = 0; i < rawSize; ++i) {
+      [rawBytesLog appendFormat:@"%02x ", bytePtr[i]];
+    }
+    NSLog(@"CRASHINGHERETOO");
+    NSLog(@"%@", rawBytesLog);
     return RCTErrorWithMessage(@"non-std C++ exception");
   }
 }
