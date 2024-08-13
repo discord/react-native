@@ -80,6 +80,12 @@ NSError *tryAndReturnError(const std::function<void()> &func)
     }
   } catch (const std::exception &ex) {
     return errorWithException(ex);
+  } catch (id ex) {
+    NSLog(@"Caught an exception: %@", ex);
+    NSLog(@"is at an objc exception: %d", [ex isKindOfClass:[NSException class]]);
+    NSLog(@"description: %@", [ex name]);
+    NSLog(@"user info %@", [ex userInfo]);
+    return RCTErrorWithMessage(@"non-std ObjC Exception");
   }
 }
 
