@@ -127,6 +127,7 @@
 
 - (void)setRootView:(UIView *)rootView toRootViewController:(UIViewController *)rootViewController
 {
+  NSLog(@"htht - setRootView called");
   rootViewController.view = rootView;
 }
 
@@ -142,6 +143,7 @@
         interfaceOrientation:(UIInterfaceOrientation)previousInterfaceOrientation
              traitCollection:(UITraitCollection *)previousTraitCollection API_AVAILABLE(ios(13.0))
 {
+  NSLog(@"htht - windowScene updated");
   [[NSNotificationCenter defaultCenter] postNotificationName:RCTWindowFrameDidChangeNotification object:self];
 }
 
