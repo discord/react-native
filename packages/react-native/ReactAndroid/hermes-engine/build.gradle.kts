@@ -138,7 +138,8 @@ val configureBuildForHermes by
               "-B",
               hermesBuildDir.toString(),
               "-DJSI_DIR=" + jsiDir.absolutePath,
-              "-DICU_FOUND=1"))
+              "-DICU_FOUND=1",
+              "-DHERMES_CHECK_NATIVE_STACK=OFF"))
     }
 
 val buildHermesC by
