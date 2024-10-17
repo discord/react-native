@@ -101,7 +101,7 @@ val jsiDir = File(reactNativeRootDir, "ReactCommon/jsi")
 
 val downloadHermes by
     tasks.creating(Download::class) {
-      src("https://github.com/facebook/hermes/tarball/${hermesVersion}")
+      src("https://github.com/discord/hermes/tarball/${hermesVersion}")
       onlyIfModified(true)
       overwrite(true)
       useETag("all")
@@ -114,9 +114,9 @@ val unzipHermes by
       dependsOn(downloadHermes)
       from(tarTree(downloadHermes.dest)) {
         eachFile {
-          // We flatten the unzip as the tarball contains a `facebook-hermes-<SHA>`
+          // We flatten the unzip as the tarball contains a `discord-hermes-<SHA>`
           // folder at the top level.
-          if (this.path.startsWith("facebook-hermes-")) {
+          if (this.path.startsWith("discord-hermes-")) {
             this.path = this.path.substringAfter("/")
           }
         }
@@ -139,7 +139,7 @@ val configureBuildForHermes by
               hermesBuildDir.toString(),
               "-DJSI_DIR=" + jsiDir.absolutePath,
               "-DICU_FOUND=1",
-              "-DHERMES_CHECK_NATIVE_STACK=OFF"))
+              "-DHERMES_CHECK_NATIVE_STACK=0"))
     }
 
 val buildHermesC by
@@ -203,7 +203,8 @@ val configureBuildForHermescReleaseBinary by
                 "-DCMAKE_C_FLAGS=-s",
                 "-DHERMES_ENABLE_DEBUGGER=False",
                 "-DJSI_DIR=" + jsiDir.absolutePath,
-                "-DICU_FOUND=1"
+                "-DICU_FOUND=1",
+                "-DHERMES_CHECK_NATIVE_STACK=0"
             )
         )
     }
