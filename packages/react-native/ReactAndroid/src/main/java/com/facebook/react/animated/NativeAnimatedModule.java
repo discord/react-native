@@ -38,6 +38,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -149,8 +150,17 @@ public class NativeAnimatedModule extends NativeAnimatedModuleSpec
   }
 
   private class ConcurrentOperationQueue {
-    private final Queue<UIThreadOperation> mQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<UIThreadOperation> mQueue;
     @Nullable private UIThreadOperation mPeekedOperation = null;
+
+    ConcurrentOperationQueue() {
+      if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S || Build.VERSION.SDK_INT == Build.VERSION_CODES.S_V2) {
+        // Android 12's ConcurrentLinkedQueue is flaky, use LinkedBlockingQueue instead.
+        mQueue = new LinkedBlockingQueue<>();
+      } else {
+        mQueue = new ConcurrentLinkedQueue<>();
+      }
+    }
 
     @AnyThread
     boolean isEmpty() {
