@@ -7,6 +7,8 @@
 
 package com.facebook.react.animated;
 
+import android.os.Build;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
