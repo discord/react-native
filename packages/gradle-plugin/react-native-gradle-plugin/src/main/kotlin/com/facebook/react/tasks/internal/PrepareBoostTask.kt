@@ -33,7 +33,9 @@ abstract class PrepareBoostTask : DefaultTask() {
       it.from(project.file("src/main/jni/third-party/boost"))
       it.include(
           "CMakeLists.txt",
+          "boost_${boostVersion.get()}/boost/**/*.h",
           "boost_${boostVersion.get()}/boost/**/*.hpp",
+          "boost/boost/**/*.h",
           "boost/boost/**/*.hpp",
           "asm/**/*.S")
       it.includeEmptyDirs = false
