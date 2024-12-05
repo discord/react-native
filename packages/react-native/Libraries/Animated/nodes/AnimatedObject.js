@@ -21,7 +21,7 @@ const MAX_DEPTH = 5;
 
 /* $FlowIssue[incompatible-type-guard] - Flow does not know that the prototype
    and ReactElement checks preserve the type refinement of `value`. */
-function isPlainObject(value: mixed): value is $ReadOnly<{[string]: mixed}> {
+function isPlainObject(value: mixed) {
   return (
     value !== null &&
     typeof value === 'object' &&

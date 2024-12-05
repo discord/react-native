@@ -17,12 +17,7 @@ import {useMemo} from 'react';
 
 export type AnimatedProps<Props: {...}> = {
   // eslint-disable-next-line no-unused-vars
-  +[_K in keyof (Props &
-      $ReadOnly<{
-        passthroughAnimatedPropExplicitValues?: React.ElementConfig<
-          typeof View,
-        >,
-      }>)]: any,
+  +[_K]: any,
 };
 
 export type AnimatedComponentType<
