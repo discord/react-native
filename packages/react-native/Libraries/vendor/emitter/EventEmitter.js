@@ -36,7 +36,7 @@ interface Registration<TArgs> {
 }
 
 type Registry<TEventToArgsMap: {...}> = {
-  [K in keyof TEventToArgsMap]: Set<Registration<TEventToArgsMap[K]>>,
+  [K]: Set<Registration<TEventToArgsMap[K]>>,
 };
 
 /**
