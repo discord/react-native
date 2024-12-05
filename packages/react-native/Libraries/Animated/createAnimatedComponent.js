@@ -19,12 +19,7 @@ import {useMemo} from 'react';
 
 export type AnimatedProps<Props: {...}> = {
   // eslint-disable-next-line no-unused-vars
-  +[_K in keyof (Props &
-      $ReadOnly<{
-        passthroughAnimatedPropExplicitValues?: React.ElementConfig<
-          typeof View,
-        >,
-      }>)]: any,
+  +[_K]: any,
 };
 
 // We could use a mapped type here to introduce acceptable Animated variants
