@@ -15,7 +15,7 @@
 
 #include <chrono>
 
-#include <reactperflogger/fusebox/FuseboxTracer.h>
+#include <fusebox/FuseboxTracer.h>
 
 using namespace std::chrono;
 using namespace std::literals::string_view_literals;
