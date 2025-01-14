@@ -501,8 +501,7 @@ void Binding::schedulerShouldRenderTransactions(
     return;
   }
 
-  if (ReactNativeFeatureFlags::
-          allowRecursiveCommitsWithSynchronousMountOnAndroid()) {
+  if (true) {
     std::vector<MountingTransaction> pendingTransactions;
 
     {
