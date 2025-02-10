@@ -126,7 +126,7 @@ const definitions: FeatureFlagDefinitions = {
         'Report paint time inside the Event Timing API implementation (PerformanceObserver).',
     },
     enableSynchronousStateUpdates: {
-      defaultValue: false,
+      defaultValue: true,
       description:
         'Dispatches state updates synchronously in Fabric (e.g.: updates the scroll position in the shadow tree synchronously from the main thread).',
     },
