@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2316d5e2459db4ddb3aea4d98e55fd65>>
+ * @generated SignedSource<<cbc00457c9b6f4639083b6fa970683eb>>
  * @flow strict-local
  */
 
@@ -238,7 +238,7 @@ export const enableReportEventPaintTime: Getter<boolean> = createNativeFlagGette
 /**
  * Dispatches state updates synchronously in Fabric (e.g.: updates the scroll position in the shadow tree synchronously from the main thread).
  */
-export const enableSynchronousStateUpdates: Getter<boolean> = createNativeFlagGetter('enableSynchronousStateUpdates', true);
+export const enableSynchronousStateUpdates: Getter<boolean> = createNativeFlagGetter('enableSynchronousStateUpdates', false);
 /**
  * Ensures that JavaScript always has a consistent view of the state of the UI (e.g.: commits done in other threads are not immediately propagated to JS during its execution).
  */
