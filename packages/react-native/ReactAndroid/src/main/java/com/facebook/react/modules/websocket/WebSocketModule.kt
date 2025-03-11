@@ -44,9 +44,16 @@ public class WebSocketModule(context: ReactApplicationContext) :
     public fun onMessage(byteString: ByteString, params: WritableMap)
   }
 
+  public interface OnOpenHandler {
+
+    public fun onOpen(webSocket: WebSocket, socketId: Int);
+  }
+
   private val webSocketConnections: MutableMap<Int, WebSocket> = ConcurrentHashMap()
   private val contentHandlers: MutableMap<Int, ContentHandler> = ConcurrentHashMap()
   private val cookieHandler: ForwardingCookieHandler = ForwardingCookieHandler()
+
+  var mOnOpenHandler: OnOpenHandler = null;
 
   override fun invalidate() {
     for (socket in webSocketConnections.values) {
@@ -145,6 +152,9 @@ public class WebSocketModule(context: ReactApplicationContext) :
             params.putInt("id", id)
             params.putString("protocol", response.header("Sec-WebSocket-Protocol", ""))
             sendEvent("websocketOpen", params)
+            if (mOnOpenHandler != null) {
+              mOnOpenHandler.onOpen(webSocket, id);
+            }
           }
 
           override fun onClosing(websocket: WebSocket, code: Int, reason: String) {
