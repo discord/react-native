@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4e9b371598ef4fbec6b6b9b826c5d193>>
+ * @generated SignedSource<<a56815b296157fbed602faaad755ea17>>
  */
 
 /**
@@ -803,6 +803,24 @@ bool ReactNativeFeatureFlagsAccessor::useOptimizedEventBatchingOnAndroid() {
   return flagValue.value();
 }
 
+bool ReactNativeFeatureFlagsAccessor::usePullModelOnAndroid() {
+  auto flagValue = usePullModelOnAndroid_.load();
+
+  if (!flagValue.has_value()) {
+    // This block is not exclusive but it is not necessary.
+    // If multiple threads try to initialize the feature flag, we would only
+    // be accessing the provider multiple times but the end state of this
+    // instance and the returned flag value would be the same.
+
+    markFlagAsAccessed(43, "usePullModelOnAndroid");
+
+    flagValue = currentProvider_->usePullModelOnAndroid();
+    usePullModelOnAndroid_ = flagValue;
+  }
+
+  return flagValue.value();
+}
+
 bool ReactNativeFeatureFlagsAccessor::useRuntimeShadowNodeReferenceUpdate() {
   auto flagValue = useRuntimeShadowNodeReferenceUpdate_.load();
 
@@ -812,7 +830,7 @@ bool ReactNativeFeatureFlagsAccessor::useRuntimeShadowNodeReferenceUpdate() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(43, "useRuntimeShadowNodeReferenceUpdate");
+    markFlagAsAccessed(44, "useRuntimeShadowNodeReferenceUpdate");
 
     flagValue = currentProvider_->useRuntimeShadowNodeReferenceUpdate();
     useRuntimeShadowNodeReferenceUpdate_ = flagValue;
@@ -830,7 +848,7 @@ bool ReactNativeFeatureFlagsAccessor::useRuntimeShadowNodeReferenceUpdateOnLayou
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(44, "useRuntimeShadowNodeReferenceUpdateOnLayout");
+    markFlagAsAccessed(45, "useRuntimeShadowNodeReferenceUpdateOnLayout");
 
     flagValue = currentProvider_->useRuntimeShadowNodeReferenceUpdateOnLayout();
     useRuntimeShadowNodeReferenceUpdateOnLayout_ = flagValue;
@@ -848,7 +866,7 @@ bool ReactNativeFeatureFlagsAccessor::useStateAlignmentMechanism() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(45, "useStateAlignmentMechanism");
+    markFlagAsAccessed(46, "useStateAlignmentMechanism");
 
     flagValue = currentProvider_->useStateAlignmentMechanism();
     useStateAlignmentMechanism_ = flagValue;
@@ -866,7 +884,7 @@ bool ReactNativeFeatureFlagsAccessor::useTurboModuleInterop() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(46, "useTurboModuleInterop");
+    markFlagAsAccessed(47, "useTurboModuleInterop");
 
     flagValue = currentProvider_->useTurboModuleInterop();
     useTurboModuleInterop_ = flagValue;

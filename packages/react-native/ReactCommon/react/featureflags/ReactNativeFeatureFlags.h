@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8c40f45357799de60f939b510f1d2ae5>>
+ * @generated SignedSource<<c3512e99a06c90a152e6da8bd7cd2e09>>
  */
 
 /**
@@ -251,6 +251,11 @@ class ReactNativeFeatureFlags {
    * Uses an optimized mechanism for event batching on Android that does not need to wait for a Choreographer frame callback.
    */
   RN_EXPORT static bool useOptimizedEventBatchingOnAndroid();
+
+  /**
+   * undefined
+   */
+  RN_EXPORT static bool usePullModelOnAndroid();
 
   /**
    * When enabled, cloning shadow nodes within react native will update the reference held by the current JS fiber tree.

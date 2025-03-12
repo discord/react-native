@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9f741ec3df7cd5ecd8d5c3c099c86aba>>
+ * @generated SignedSource<<6d0b1ab39305263b5f98aeddc5ce7a9c>>
  */
 
 /**
@@ -63,6 +63,7 @@ public class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAccesso
   private var useNewReactImageViewBackgroundDrawingCache: Boolean? = null
   private var useOptimisedViewPreallocationOnAndroidCache: Boolean? = null
   private var useOptimizedEventBatchingOnAndroidCache: Boolean? = null
+  private var usePullModelOnAndroidCache: Boolean? = null
   private var useRuntimeShadowNodeReferenceUpdateCache: Boolean? = null
   private var useRuntimeShadowNodeReferenceUpdateOnLayoutCache: Boolean? = null
   private var useStateAlignmentMechanismCache: Boolean? = null
@@ -451,6 +452,15 @@ public class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAccesso
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.useOptimizedEventBatchingOnAndroid()
       useOptimizedEventBatchingOnAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun usePullModelOnAndroid(): Boolean {
+    var cached = usePullModelOnAndroidCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.usePullModelOnAndroid()
+      usePullModelOnAndroidCache = cached
     }
     return cached
   }

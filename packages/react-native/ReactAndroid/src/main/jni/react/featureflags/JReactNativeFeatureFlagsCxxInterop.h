@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bba5d2a290f39b6572db7f90b67e8469>>
+ * @generated SignedSource<<92d636bd058c4f9506412e742d8fc2c8>>
  */
 
 /**
@@ -157,6 +157,9 @@ class JReactNativeFeatureFlagsCxxInterop
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool useOptimizedEventBatchingOnAndroid(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
+
+  static bool usePullModelOnAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool useRuntimeShadowNodeReferenceUpdate(

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<68e5d4ce0ed3c237eeababaa04821101>>
+ * @generated SignedSource<<13d205034411dd170bd73826939b4fa6>>
  */
 
 /**
@@ -297,6 +297,12 @@ class ReactNativeFeatureFlagsProviderHolder
     return method(javaProvider_);
   }
 
+  bool usePullModelOnAndroid() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("usePullModelOnAndroid");
+    return method(javaProvider_);
+  }
+
   bool useRuntimeShadowNodeReferenceUpdate() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useRuntimeShadowNodeReferenceUpdate");
@@ -540,6 +546,11 @@ bool JReactNativeFeatureFlagsCxxInterop::useOptimizedEventBatchingOnAndroid(
   return ReactNativeFeatureFlags::useOptimizedEventBatchingOnAndroid();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::usePullModelOnAndroid();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::useRuntimeShadowNodeReferenceUpdate(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::useRuntimeShadowNodeReferenceUpdate();
@@ -706,6 +717,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "useOptimizedEventBatchingOnAndroid",
         JReactNativeFeatureFlagsCxxInterop::useOptimizedEventBatchingOnAndroid),
+      makeNativeMethod(
+        "usePullModelOnAndroid",
+        JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid),
       makeNativeMethod(
         "useRuntimeShadowNodeReferenceUpdate",
         JReactNativeFeatureFlagsCxxInterop::useRuntimeShadowNodeReferenceUpdate),
