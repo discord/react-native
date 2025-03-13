@@ -93,7 +93,6 @@ import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * We instruct ProGuard not to strip out any fields or methods, because many of these methods are
@@ -181,8 +180,6 @@ public class FabricUIManager
 
   /** Set of events sent synchronously during the current frame render. Cleared after each frame. */
   private final Set<SynchronousEvent> mSynchronousEvents = new HashSet<>();
-
-  private final AtomicReference<Runnable> mScheduledMountRunnable = new AtomicReference<>();
 
   /**
    * This is used to keep track of whether or not the FabricUIManager has been destroyed. Once the
@@ -782,7 +779,7 @@ public class FabricUIManager
   @AnyThread
   @ThreadConfined(ANY)
   private void scheduleMountRunnable(Runnable runnable) {
-    mScheduledMountRunnable.set(runnable);
+    UiThreadUtil.runOnUiThread(runnable);
   }
 
   @SuppressWarnings("unused")
@@ -1402,12 +1399,7 @@ public class FabricUIManager
         //   remaining pre mount items.
         //   2. In case there are no view commands or mount items, wait until next frame.
         mMountItemDispatcher.dispatchPreMountItems(frameTimeNanos);
-        if (ReactNativeFeatureFlags.usePullModelOnAndroid()) {
-          Runnable runnable = mScheduledMountRunnable.getAndSet(null);
-          if (runnable != null) {
-            runnable.run();
-          }
-        } else {
+        if (!ReactNativeFeatureFlags.usePullModelOnAndroid()) {
           mMountItemDispatcher.tryDispatchMountItems();
         }
       } catch (Exception ex) {
