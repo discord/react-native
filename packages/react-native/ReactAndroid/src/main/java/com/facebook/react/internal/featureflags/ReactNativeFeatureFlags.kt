@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<89491eb63a7ca59b17419ed4432a4f88>>
+ * @generated SignedSource<<c2c1be4cfb778b93e704f0932f02e3c3>>
  */
 
 /**
@@ -285,6 +285,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun useOptimizedEventBatchingOnAndroid(): Boolean = accessor.useOptimizedEventBatchingOnAndroid()
+
+  /**
+   * undefined
+   */
+  @JvmStatic
+  public fun usePullModelOnAndroid(): Boolean = accessor.usePullModelOnAndroid()
 
   /**
    * When enabled, cloning shadow nodes within react native will update the reference held by the current JS fiber tree.

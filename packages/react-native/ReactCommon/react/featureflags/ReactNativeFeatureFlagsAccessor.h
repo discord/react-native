@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<816cbee0a21bc7e03d3d645df4d80556>>
+ * @generated SignedSource<<d2c81e7a5529e1a76b18580b6c6824a1>>
  */
 
 /**
@@ -74,6 +74,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool useNewReactImageViewBackgroundDrawing();
   bool useOptimisedViewPreallocationOnAndroid();
   bool useOptimizedEventBatchingOnAndroid();
+  bool usePullModelOnAndroid();
   bool useRuntimeShadowNodeReferenceUpdate();
   bool useRuntimeShadowNodeReferenceUpdateOnLayout();
   bool useStateAlignmentMechanism();
@@ -88,7 +89,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 47> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 48> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> batchRenderingUpdatesInEventLoop_;
@@ -133,6 +134,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> useNewReactImageViewBackgroundDrawing_;
   std::atomic<std::optional<bool>> useOptimisedViewPreallocationOnAndroid_;
   std::atomic<std::optional<bool>> useOptimizedEventBatchingOnAndroid_;
+  std::atomic<std::optional<bool>> usePullModelOnAndroid_;
   std::atomic<std::optional<bool>> useRuntimeShadowNodeReferenceUpdate_;
   std::atomic<std::optional<bool>> useRuntimeShadowNodeReferenceUpdateOnLayout_;
   std::atomic<std::optional<bool>> useStateAlignmentMechanism_;

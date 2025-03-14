@@ -774,6 +774,14 @@ public class FabricUIManager
     return UiThreadUtil.isOnUiThread();
   }
 
+  @SuppressLint("NotInvokedPrivateMethod")
+  @SuppressWarnings("unused")
+  @AnyThread
+  @ThreadConfined(ANY)
+  private void scheduleMountRunnable(Runnable runnable) {
+    UiThreadUtil.runOnUiThread(runnable);
+  }
+
   @SuppressWarnings("unused")
   @AnyThread
   @ThreadConfined(ANY)
@@ -1391,7 +1399,9 @@ public class FabricUIManager
         //   remaining pre mount items.
         //   2. In case there are no view commands or mount items, wait until next frame.
         mMountItemDispatcher.dispatchPreMountItems(frameTimeNanos);
-        mMountItemDispatcher.tryDispatchMountItems();
+        if (!ReactNativeFeatureFlags.usePullModelOnAndroid()) {
+          mMountItemDispatcher.tryDispatchMountItems();
+        }
       } catch (Exception ex) {
         FLog.e(TAG, "Exception thrown when executing UIFrameGuarded", ex);
         mIsMountingEnabled = false;

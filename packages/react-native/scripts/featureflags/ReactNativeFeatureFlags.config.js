@@ -244,6 +244,17 @@ const definitions: FeatureFlagDefinitions = {
       description:
         'Uses an optimized mechanism for event batching on Android that does not need to wait for a Choreographer frame callback.',
     },
+    usePullModelOnAndroid: {
+      defaultValue: true,
+      metadata: {
+        dateAdded: '2025-03-12',
+        description:
+          'Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     useRuntimeShadowNodeReferenceUpdate: {
       defaultValue: false,
       description:
