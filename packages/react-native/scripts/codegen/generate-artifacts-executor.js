@@ -495,7 +495,13 @@ function shouldSkipGenerationForRncore(schemaInfo, platform) {
   if (platform !== 'ios' || schemaInfo.library.config.name !== 'rncore') {
     return false;
   }
-  const rncoreOutputPath = CORE_LIBRARIES_WITH_OUTPUT_FOLDER.rncore.ios;
+  const rncoreOutputPath = path.join(
+    RNCORE_CONFIGS.ios,
+    'react',
+    'renderer',
+    'components',
+    'rncore',
+  );
   const rncoreAbsolutePath = path.resolve(rncoreOutputPath);
   return (
     rncoreAbsolutePath.includes('node_modules') &&
