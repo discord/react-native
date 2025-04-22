@@ -209,6 +209,11 @@ export interface TextProps
    * Specifies smallest possible scale a font can reach when adjustsFontSizeToFit is enabled. (values 0.01-1.0).
    */
   minimumFontScale?: number | undefined;
+
+  /**
+   * Adds a horizontal gradient using the int based color values.
+   */
+  gradientColors?: number[] | undefined;
 }
 
 /**
