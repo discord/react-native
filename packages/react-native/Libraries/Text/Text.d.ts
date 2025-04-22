@@ -214,6 +214,11 @@ export interface TextProps
    * Controls how touch events are handled. Similar to `View`'s `pointerEvents`.
    */
   pointerEvents?: ViewStyle['pointerEvents'] | undefined;
+  
+  /**
+   * Adds a horizontal gradient using the int based color values.
+   */
+  gradientColors?: number[] | undefined;
 }
 
 /**
