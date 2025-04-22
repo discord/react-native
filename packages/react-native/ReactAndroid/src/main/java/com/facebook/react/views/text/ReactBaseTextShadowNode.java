@@ -20,6 +20,7 @@ import com.facebook.common.logging.FLog;
 import com.facebook.infer.annotation.Assertions;
 import com.facebook.react.bridge.ReadableArray;
 import com.facebook.react.bridge.ReadableMap;
+import com.facebook.react.bridge.ReadableType;
 import com.facebook.react.common.ReactConstants;
 import com.facebook.react.uimanager.IllegalViewOperationException;
 import com.facebook.react.uimanager.LayoutShadowNode;
@@ -34,6 +35,7 @@ import com.facebook.react.views.text.internal.ReactTextInlineImageShadowNode;
 import com.facebook.react.views.text.internal.span.CustomLetterSpacingSpan;
 import com.facebook.react.views.text.internal.span.CustomLineHeightSpan;
 import com.facebook.react.views.text.internal.span.CustomStyleSpan;
+import com.facebook.react.views.text.internal.span.LinearGradientSpan;
 import com.facebook.react.views.text.internal.span.ReactAbsoluteSizeSpan;
 import com.facebook.react.views.text.internal.span.ReactBackgroundColorSpan;
 import com.facebook.react.views.text.internal.span.ReactClickableSpan;
@@ -160,9 +162,15 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
     }
     int end = sb.length();
     if (end >= start) {
-      if (textShadowNode.mIsColorSet) {
-        ops.add(
-            new SetSpanOperation(start, end, new ReactForegroundColorSpan(textShadowNode.mColor)));
+      if (textShadowNode.mIsColorSet || textShadowNode.mGradientColors.length >= 2) {
+        if (textShadowNode.mGradientColors.length >= 2) {
+          int effectiveFontSize = textAttributes.getEffectiveFontSize();
+          ops.add(
+                  new SetSpanOperation(start, end, new LinearGradientSpan(start * effectiveFontSize, textShadowNode.mGradientColors)));
+        } else {
+          ops.add(
+                  new SetSpanOperation(start, end, new ReactForegroundColorSpan(textShadowNode.mColor)));
+        }
       }
       if (textShadowNode.mIsBackgroundColorSet) {
         ops.add(
@@ -318,6 +326,8 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
   protected int mColor;
   protected boolean mIsBackgroundColorSet = false;
   protected int mBackgroundColor;
+
+  protected int[] mGradientColors = new int[0];
 
   protected @Nullable AccessibilityRole mAccessibilityRole = null;
   protected @Nullable Role mRole = null;
@@ -477,6 +487,25 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
       mColor = color;
     }
     markUpdated();
+  }
+
+  @ReactProp(name = "gradientColors")
+  public void setGradientColors(@Nullable ReadableArray gradientColors) {
+    if (gradientColors != null) {
+      ArrayList<Integer> colors = new ArrayList<Integer>();
+
+      for (int i = 0; i < gradientColors.size(); i++) {
+        if (!gradientColors.isNull(i) && gradientColors.getType(i) == ReadableType.Number) {
+          int color = gradientColors.getInt(i);
+          colors.add(color);
+        }
+      }
+      if (colors.size() >= 2) {
+        mGradientColors = colors.stream()
+          .mapToInt(Integer::intValue)
+          .toArray();
+      }
+    }
   }
 
   @ReactProp(name = ViewProps.BACKGROUND_COLOR, customType = "Color")
