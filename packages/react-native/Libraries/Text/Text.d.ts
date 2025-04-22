@@ -210,6 +210,9 @@ export interface TextProps
    */
   minimumFontScale?: number | undefined;
 
+  /**
+   * Adds a horizontal gradient using the int based color values.
+   */
   gradientColors?: number[] | undefined;
 }
 

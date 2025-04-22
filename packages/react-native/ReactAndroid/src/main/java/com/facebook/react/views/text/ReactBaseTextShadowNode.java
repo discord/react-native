@@ -162,8 +162,8 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
     }
     int end = sb.length();
     if (end >= start) {
-      if (textShadowNode.mIsColorSet || textShadowNode.mGradientColors.length >= 2) {
-        if (textShadowNode.mGradientColors.length >= 2) {
+      if (textShadowNode.mIsColorSet || textShadowNode.mGradientColors != null) {
+        if (textShadowNode.mGradientColors != null && textShadowNode.mGradientColors.length >= 2) {
           int effectiveFontSize = textAttributes.getEffectiveFontSize();
           ops.add(
                   new SetSpanOperation(start, end, new LinearGradientSpan(start * effectiveFontSize, textShadowNode.mGradientColors)));
@@ -327,7 +327,7 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
   protected boolean mIsBackgroundColorSet = false;
   protected int mBackgroundColor;
 
-  protected int[] mGradientColors = new int[0];
+  protected @Nullable int[] mGradientColors = null;
 
   protected @Nullable AccessibilityRole mAccessibilityRole = null;
   protected @Nullable Role mRole = null;
@@ -500,10 +500,15 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
           colors.add(color);
         }
       }
-      if (colors.size() >= 2) {
-        mGradientColors = colors.stream()
-          .mapToInt(Integer::intValue)
-          .toArray();
+
+      int colorsSize = colors.size();
+      if (colorsSize >= 2) {
+        int[] colorsAsList = new int[colorsSize];
+        for (int i = 0; i < colorsSize; i++) {
+            colorsAsList[i] = colors.get(i);
+        }
+
+        mGradientColors = colorsAsList;
       }
     }
   }
