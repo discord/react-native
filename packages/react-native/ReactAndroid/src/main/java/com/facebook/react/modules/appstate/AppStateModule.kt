@@ -7,6 +7,8 @@
 
 package com.facebook.react.modules.appstate
 
+import android.app.ActivityManager
+import com.facebook.common.logging.FLog
 import com.facebook.fbreact.specs.NativeAppStateSpec
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
@@ -16,6 +18,7 @@ import com.facebook.react.bridge.WindowFocusChangeListener
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.common.LifecycleState
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.util.RNLog
 
 @ReactModule(name = NativeAppStateSpec.NAME)
 public class AppStateModule(reactContext: ReactApplicationContext) :
@@ -26,9 +29,18 @@ public class AppStateModule(reactContext: ReactApplicationContext) :
   init {
     reactContext.addLifecycleEventListener(this)
     reactContext.addWindowFocusChangeListener(this)
+    val isAppForegrounded = isAppForegrounded()
+    FLog.w("AppStateModule", "initial isAppForegrounded = $isAppForegrounded, reactContext.lifecycleState = ${reactContext.lifecycleState}")
+
     appState =
-        if (reactContext.lifecycleState === LifecycleState.RESUMED) APP_STATE_ACTIVE
+        if (reactContext.lifecycleState === LifecycleState.RESUMED || isAppForegrounded()) APP_STATE_ACTIVE
         else APP_STATE_BACKGROUND
+  }
+
+  private fun isAppForegrounded(): Boolean {
+    return ActivityManager.RunningAppProcessInfo().apply {
+      ActivityManager.getMyMemoryState(this)
+    }.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
   }
 
   public override fun getTypedExportedConstants(): Map<String, Any> =
