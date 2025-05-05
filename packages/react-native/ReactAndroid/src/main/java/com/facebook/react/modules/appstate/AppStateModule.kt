@@ -7,6 +7,8 @@
 
 package com.facebook.react.modules.appstate
 
+import android.app.ActivityManager
+import com.facebook.common.logging.FLog
 import com.facebook.fbreact.specs.NativeAppStateSpec
 import com.facebook.react.bridge.Arguments
 import com.facebook.react.bridge.Callback
@@ -16,6 +18,7 @@ import com.facebook.react.bridge.WindowFocusChangeListener
 import com.facebook.react.bridge.WritableMap
 import com.facebook.react.common.LifecycleState
 import com.facebook.react.module.annotations.ReactModule
+import com.facebook.react.util.RNLog
 
 @ReactModule(name = NativeAppStateSpec.NAME)
 public class AppStateModule(reactContext: ReactApplicationContext) :
@@ -26,9 +29,25 @@ public class AppStateModule(reactContext: ReactApplicationContext) :
   init {
     reactContext.addLifecycleEventListener(this)
     reactContext.addWindowFocusChangeListener(this)
+    val isAppForegroundedByMemoryState = isAppForegroundedByMemoryState()
+    // pasten: temporary debug log - remove after we validate with real users
+    FLog.w("AppStateModule", "initial isAppForegroundedByMemoryState = $isAppForegroundedByMemoryState, " +
+    "reactContext.lifecycleState = ${reactContext.lifecycleState}")
+
     appState =
         if (reactContext.lifecycleState === LifecycleState.RESUMED) APP_STATE_ACTIVE
+        // pasten: during cold start appState=APP_STATE_BACKGROUND while tha is actually in the foreground
+        // best effort foreground detection when LifecycleState.BEFORE_CREATE (which is the initial state)
+        else if (reactContext.lifecycleState === LifecycleState.BEFORE_CREATE && isAppForegroundedByMemoryState) {
+          APP_STATE_ACTIVE
+        } else if (isAppForegroundedByMemoryState) APP_STATE_ACTIVE
         else APP_STATE_BACKGROUND
+  }
+
+  private fun isAppForegroundedByMemoryState(): Boolean {
+    return ActivityManager.RunningAppProcessInfo().apply {
+      ActivityManager.getMyMemoryState(this)
+    }.importance == ActivityManager.RunningAppProcessInfo.IMPORTANCE_FOREGROUND
   }
 
   public override fun getTypedExportedConstants(): Map<String, Any> =
