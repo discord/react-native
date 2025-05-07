@@ -247,7 +247,7 @@ const definitions: FeatureFlagDefinitions = {
       },
     },
     enablePropsUpdateReconciliationAndroid: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2024-07-12',
         description:
