@@ -51,6 +51,11 @@ public object DefaultNewArchitectureEntryPoint {
               bridgelessEnabled || fabricEnabled
 
           override fun useTurboModules(): Boolean = bridgelessEnabled || turboModulesEnabled
+
+          // Fixes reanimated flickering issues where shadow node updates on the UI thread wouldn't be
+          // propagated back to the react JS fiber node/tree.
+          override fun useRuntimeShadowNodeReferenceUpdate(): Boolean =
+              bridgelessEnabled || turboModulesEnabled
         })
 
     privateFabricEnabled = fabricEnabled

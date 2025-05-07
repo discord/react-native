@@ -308,13 +308,20 @@ void ShadowNode::setRuntimeShadowNodeReference(
   runtimeShadowNodeReference_ = runtimeShadowNodeReference;
 }
 
+void ShadowNode::updateRuntimeShadowNodeReference(
+    const Shared& destinationShadowNode) const {
+  if (auto reference = runtimeShadowNodeReference_.lock()) {
+    reference->shadowNode = destinationShadowNode;
+  }
+}
+
 void ShadowNode::transferRuntimeShadowNodeReference(
     const Shared& destinationShadowNode) const {
   destinationShadowNode->runtimeShadowNodeReference_ =
       runtimeShadowNodeReference_;
 
-  if (auto reference = runtimeShadowNodeReference_.lock()) {
-    reference->shadowNode = destinationShadowNode;
+  if (!ReactNativeFeatureFlags::useRuntimeShadowNodeReferenceUpdate()) {
+    updateRuntimeShadowNodeReference(destinationShadowNode);
   }
 }
 
