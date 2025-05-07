@@ -320,7 +320,7 @@ void ShadowNode::transferRuntimeShadowNodeReference(
   destinationShadowNode->runtimeShadowNodeReference_ =
       runtimeShadowNodeReference_;
 
-  if (!ReactNativeFeatureFlags::updateRuntimeShadowNodeReferencesOnCommit()) {
+  if (!ReactNativeFeatureFlags::useRuntimeShadowNodeReferenceUpdate()) {
     updateRuntimeShadowNodeReference(destinationShadowNode);
   }
 }
