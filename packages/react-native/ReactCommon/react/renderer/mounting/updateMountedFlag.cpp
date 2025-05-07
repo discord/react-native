@@ -49,7 +49,7 @@ void updateMountedFlag(
     newChild->setMounted(true);
     oldChild->setMounted(false);
 
-    if (ReactNativeFeatureFlags::updateRuntimeShadowNodeReferencesOnCommit()) {
+    if (ReactNativeFeatureFlags::useRuntimeShadowNodeReferenceUpdate()) {
       newChild->updateRuntimeShadowNodeReference(newChild);
     }
 
