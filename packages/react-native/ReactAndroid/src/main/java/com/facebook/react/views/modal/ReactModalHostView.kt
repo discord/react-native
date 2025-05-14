@@ -27,8 +27,11 @@ import android.view.accessibility.AccessibilityEvent
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.FrameLayout
 import androidx.annotation.UiThread
+import androidx.core.view.ViewCompat
 import androidx.core.content.ContextCompat
 import androidx.core.view.WindowCompat
+import androidx.core.view.WindowInsetsCompat
+import androidx.core.view.WindowInsetsCompat.CONSUMED
 import com.facebook.common.logging.FLog
 import com.facebook.react.R
 import com.facebook.react.bridge.GuardedRunnable
@@ -40,6 +43,7 @@ import com.facebook.react.bridge.WritableNativeMap
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.common.annotations.VisibleForTesting
 import com.facebook.react.config.ReactFeatureFlags
+import com.facebook.react.uimanager.DisplayMetricsHolder
 import com.facebook.react.uimanager.JSPointerDispatcher
 import com.facebook.react.uimanager.JSTouchDispatcher
 import com.facebook.react.uimanager.PixelUtil.pxToDp
@@ -52,6 +56,7 @@ import com.facebook.react.views.common.ContextUtils
 import com.facebook.react.views.view.ReactViewGroup
 import com.facebook.react.views.view.setStatusBarTranslucency
 import com.facebook.react.views.view.setSystemBarsTranslucency
+import com.facebook.yoga.annotations.DoNotStrip
 import java.util.Objects
 
 /**
@@ -122,6 +127,7 @@ public class ReactModalHostView(context: ThemedReactContext) :
   private var createNewDialog = false
 
   init {
+    initStatusBarHeight(context)
     dialogRootViewGroup = DialogRootViewGroup(context)
   }
 
@@ -412,6 +418,18 @@ public class ReactModalHostView(context: ThemedReactContext) :
     }
   }
 
+  private fun initStatusBarHeight(reactContext: ReactContext) {
+    val windowInsets =
+        reactContext.getCurrentActivity()?.window?.decorView?.let(ViewCompat::getRootWindowInsets)
+    statusBarHeight =
+        windowInsets
+            ?.getInsets(
+                WindowInsetsCompat.Type.statusBars() or
+                    WindowInsetsCompat.Type.navigationBars() or
+                    WindowInsetsCompat.Type.displayCutout())
+            ?.top ?: 0
+  }
+
   /**
    * Sets the testID on the DialogRootViewGroup. Since the accessibility events are not triggered on
    * the on the ReactModalHostView, the testID is forwarded to the DialogRootViewGroup to set the
@@ -430,7 +448,21 @@ public class ReactModalHostView(context: ThemedReactContext) :
 
   private companion object {
     private const val TAG = "ReactModalHost"
+
+    // We store the status bar height to be able to properly position
+    // the modal on the first render.
+    private var statusBarHeight = 0
+
+    @JvmStatic
+    @DoNotStrip
+    private fun getScreenDisplayMetricsWithoutInsets(): FloatArray {
+      val displayMetrics = DisplayMetricsHolder.getScreenDisplayMetrics()
+      return floatArrayOf(
+          displayMetrics.widthPixels.toFloat().pxToDp(),
+          (displayMetrics.heightPixels - statusBarHeight).toFloat().pxToDp())
+    }
   }
+
 
   /**
    * DialogRootViewGroup is the ViewGroup which contains all the children of a Modal. It gets all
@@ -568,3 +600,4 @@ public class ReactModalHostView(context: ThemedReactContext) :
     }
   }
 }
+

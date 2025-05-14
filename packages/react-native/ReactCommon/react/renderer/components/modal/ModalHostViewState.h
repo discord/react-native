@@ -9,14 +9,13 @@
 
 #include <react/renderer/core/graphicsConversions.h>
 #include <react/renderer/graphics/Float.h>
+#include "ModalHostViewUtils.h"
 
 #ifdef ANDROID
 #include <folly/dynamic.h>
 #endif
 
-#if defined(__APPLE__) && TARGET_OS_IOS
 #include "ModalHostViewUtils.h"
-#endif
 
 namespace facebook::react {
 
@@ -27,12 +26,7 @@ class ModalHostViewState final {
  public:
   using Shared = std::shared_ptr<const ModalHostViewState>;
 
-#if defined(__APPLE__) && TARGET_OS_IOS
-  ModalHostViewState() : screenSize(RCTModalHostViewScreenSize()) {
-#else
-  ModalHostViewState(){
-#endif
-  };
+  ModalHostViewState() : screenSize(RCTModalHostViewScreenSize()) {}
   ModalHostViewState(Size screenSize_) : screenSize(screenSize_){};
 
 #ifdef ANDROID
@@ -54,3 +48,4 @@ class ModalHostViewState final {
 };
 
 } // namespace facebook::react
+
