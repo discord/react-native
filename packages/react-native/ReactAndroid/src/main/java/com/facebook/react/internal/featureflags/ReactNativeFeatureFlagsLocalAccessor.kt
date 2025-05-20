@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<f1ed4107e24ced5d2673bfb065573062>>
+ * @generated SignedSource<<0614fa80cbc66806fa45aef70f34e2d7>>
  */
 
 /**
@@ -67,6 +67,7 @@ public class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcces
   private var useOptimizedEventBatchingOnAndroidCache: Boolean? = null
   private var useRawPropsJsiValueCache: Boolean? = null
   private var useRuntimeShadowNodeReferenceUpdateCache: Boolean? = null
+  private var useShadowNodeStateOnCloneCache: Boolean? = null
   private var useTurboModuleInteropCache: Boolean? = null
   private var useTurboModulesCache: Boolean? = null
 
@@ -496,6 +497,16 @@ public class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcces
       cached = currentProvider.useRuntimeShadowNodeReferenceUpdate()
       accessedFeatureFlags.add("useRuntimeShadowNodeReferenceUpdate")
       useRuntimeShadowNodeReferenceUpdateCache = cached
+    }
+    return cached
+  }
+
+  override fun useShadowNodeStateOnClone(): Boolean {
+    var cached = useShadowNodeStateOnCloneCache
+    if (cached == null) {
+      cached = currentProvider.useShadowNodeStateOnClone()
+      accessedFeatureFlags.add("useShadowNodeStateOnClone")
+      useShadowNodeStateOnCloneCache = cached
     }
     return cached
   }
