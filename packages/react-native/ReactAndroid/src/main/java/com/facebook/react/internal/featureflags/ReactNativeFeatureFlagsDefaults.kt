@@ -109,7 +109,7 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun useRuntimeShadowNodeReferenceUpdate(): Boolean = true
 
-  override fun useShadowNodeStateOnClone(): Boolean = false
+  override fun useShadowNodeStateOnClone(): Boolean = true
 
   override fun useTurboModuleInterop(): Boolean = false
 
