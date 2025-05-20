@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<e38a0e9474ac349a4b8153862470c856>>
+ * @generated SignedSource<<830cdd4b394262ee65abc63a54833674>>
  */
 
 /**
@@ -197,6 +197,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
 
   bool useRuntimeShadowNodeReferenceUpdate() override {
     return true;
+  }
+
+  bool useShadowNodeStateOnClone() override {
+    return false;
   }
 
   bool useTurboModuleInterop() override {

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8eb2b5d6dd367826ff7bc899afbdea60>>
+ * @generated SignedSource<<2a6cbfd5de86a5bb840f1fc5f47c51a6>>
  */
 
 /**
@@ -75,6 +75,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool useOptimizedEventBatchingOnAndroid();
   bool useRawPropsJsiValue();
   bool useRuntimeShadowNodeReferenceUpdate();
+  bool useShadowNodeStateOnClone();
   bool useTurboModuleInterop();
   bool useTurboModules();
 
@@ -88,7 +89,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 45> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 46> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> completeReactInstanceCreationOnBgThreadOnAndroid_;
@@ -133,6 +134,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> useOptimizedEventBatchingOnAndroid_;
   std::atomic<std::optional<bool>> useRawPropsJsiValue_;
   std::atomic<std::optional<bool>> useRuntimeShadowNodeReferenceUpdate_;
+  std::atomic<std::optional<bool>> useShadowNodeStateOnClone_;
   std::atomic<std::optional<bool>> useTurboModuleInterop_;
   std::atomic<std::optional<bool>> useTurboModules_;
 };
