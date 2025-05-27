@@ -60,6 +60,8 @@ class FabricMountingManager final {
 
   void onAllAnimationsComplete();
 
+  void measure(const ShadowView& shadowView, std::function<void(folly::dynamic)> callback);
+
  private:
   bool isOnMainThread();
 

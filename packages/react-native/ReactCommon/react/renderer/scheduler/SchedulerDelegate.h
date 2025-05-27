@@ -64,6 +64,8 @@ class SchedulerDelegate {
       bool isJSResponder,
       bool blockNativeResponder) = 0;
 
+  virtual void schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) = 0;
+
   virtual ~SchedulerDelegate() noexcept = default;
 };
 
