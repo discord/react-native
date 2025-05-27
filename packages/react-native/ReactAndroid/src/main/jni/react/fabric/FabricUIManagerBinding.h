@@ -120,6 +120,8 @@ class FabricUIManagerBinding : public jni::HybridClass<FabricUIManagerBinding>,
       bool isJSResponder,
       bool blockNativeResponder) override;
 
+  void schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) override;
+
   void setPixelDensity(float pointScaleFactor);
 
   void driveCxxAnimations();

@@ -40,7 +40,7 @@ export interface Spec {
   +appendChild: (parentNode: Node, child: Node) => Node;
   +appendChildToSet: (childSet: NodeSet, child: Node) => void;
   +completeRoot: (rootTag: RootTag, childSet: NodeSet) => void;
-  +measure: (node: Node, callback: MeasureOnSuccessCallback) => void;
+  +measure: (node: Node, callback: MeasureOnSuccessCallback, measureOnUI: Boolean) => void;
   +measureInWindow: (
     node: Node,
     callback: MeasureInWindowOnSuccessCallback,

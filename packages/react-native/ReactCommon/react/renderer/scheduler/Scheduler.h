@@ -95,6 +95,7 @@ class Scheduler final : public UIManagerDelegate {
       const ShadowNode::Shared& shadowNode,
       bool isJSResponder,
       bool blockNativeResponder) override;
+  void uiManagerMeasure(const ShadowNode::Shared& shadowNode, std::function<void(folly::dynamic)> jsCallback) override;
 
 #pragma mark - ContextContainer
   ContextContainer::Shared getContextContainer() const;

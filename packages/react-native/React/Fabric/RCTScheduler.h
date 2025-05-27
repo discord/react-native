@@ -42,6 +42,10 @@ NS_ASSUME_NONNULL_BEGIN
                 blockNativeResponder:(BOOL)blockNativeResponder
                        forShadowView:(const facebook::react::ShadowView &)shadowView;
 
+
+- (void)schedulerMeasure:(const facebook::react::ShadowView &)shadowView
+               jsCallback:(std::function<void(folly::dynamic)>)jsCallback;
+
 @end
 
 /**

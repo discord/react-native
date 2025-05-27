@@ -611,6 +611,14 @@ void FabricUIManagerBinding::schedulerDidSetIsJSResponder(
       shadowView, isJSResponder, blockNativeResponder);
 }
 
+void FabricUIManagerBinding::schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) {
+  auto mountingManager = getMountingManager("schedulerMeasure");
+  if (!mountingManager) {
+    return;
+  }
+  mountingManager->measure(shadowView, jsCallback);
+};
+
 void FabricUIManagerBinding::onAnimationStarted() {
   auto mountingManager = getMountingManager("onAnimationStarted");
   if (!mountingManager) {
