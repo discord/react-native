@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<63601ec83ade8f3774d185ebacf4c792>>
+ * @generated SignedSource<<89b06cbba840fbb8a53cdda5dc83a233>>
  * @flow strict
  */
 
@@ -275,7 +275,7 @@ export const enablePreciseSchedulingForPremountItemsOnAndroid: Getter<boolean> =
 /**
  * When enabled, Android will receive prop updates based on the differences between the last rendered shadow node and the last committed shadow node.
  */
-export const enablePropsUpdateReconciliationAndroid: Getter<boolean> = createNativeFlagGetter('enablePropsUpdateReconciliationAndroid', false);
+export const enablePropsUpdateReconciliationAndroid: Getter<boolean> = createNativeFlagGetter('enablePropsUpdateReconciliationAndroid', true);
 /**
  * Report paint time inside the Event Timing API implementation (PerformanceObserver).
  */
@@ -363,7 +363,7 @@ export const useRuntimeShadowNodeReferenceUpdate: Getter<boolean> = createNative
 /**
  * Use the state stored on the source shadow node when cloning it instead of reading in the most recent state on the shadow node family.
  */
-export const useShadowNodeStateOnClone: Getter<boolean> = createNativeFlagGetter('useShadowNodeStateOnClone', false);
+export const useShadowNodeStateOnClone: Getter<boolean> = createNativeFlagGetter('useShadowNodeStateOnClone', true);
 /**
  * In Bridgeless mode, should legacy NativeModules use the TurboModule system?
  */

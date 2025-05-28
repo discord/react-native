@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<830cdd4b394262ee65abc63a54833674>>
+ * @generated SignedSource<<274474e3b1be4f595c5dff2959b78341>>
  */
 
 /**
@@ -112,7 +112,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enablePropsUpdateReconciliationAndroid() override {
-    return false;
+    return true;
   }
 
   bool enableReportEventPaintTime() override {
@@ -200,7 +200,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool useShadowNodeStateOnClone() override {
-    return false;
+    return true;
   }
 
   bool useTurboModuleInterop() override {
