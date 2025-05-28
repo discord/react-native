@@ -36,6 +36,7 @@ import com.facebook.react.fabric.events.EventEmitterWrapper;
 import com.facebook.react.fabric.mounting.mountitems.MountItem;
 import com.facebook.react.touch.JSResponderHandler;
 import com.facebook.react.uimanager.PixelUtil;
+import com.facebook.react.uimanager.RootView;
 import com.facebook.react.uimanager.RootViewManager;
 import com.facebook.react.uimanager.RootViewUtil;
 import com.facebook.react.uimanager.ThemedReactContext;
@@ -481,12 +482,19 @@ public class MountingManager {
         : getSurfaceManager(surfaceId));
   }
 
-  public void measure(int surfaceId, int reactTag, final Callback callback) {
+  public synchronized void measure(int surfaceId, int reactTag, final Callback callback) {
     UiThreadUtil.assertOnUiThread();
     SurfaceMountingManager smm = getSurfaceMountingManager(surfaceId, reactTag);
     View view = smm.getView(reactTag);
     int[] mMeasureBuffer = new int[4];
-    measure(view, mMeasureBuffer);
+    View rootView = smm.getRootViewIfAttached();
+    if (rootView == null) {
+      FLog.e(TAG, "Failed to get root view for surfaceId: %d", surfaceId);
+      return; // Simply omit the measure call, we assume that we are in the process of tearing down
+              // the surface and all its children, so we don't care at this point about delivering
+    }
+
+    measure(rootView, view, mMeasureBuffer);
 
     float x = PixelUtil.toDIPFromPixel(mMeasureBuffer[0]);
     float y = PixelUtil.toDIPFromPixel(mMeasureBuffer[1]);
@@ -495,8 +503,7 @@ public class MountingManager {
     callback.invoke(0, 0, width, height, x, y);
   }
 
-  public synchronized void measure(View v, int[] outputBuffer) {
-    View rootView = (View) RootViewUtil.getRootView(v);
+  public synchronized void measure(View rootView, View v, int[] outputBuffer) {
     computeBoundingBox(rootView, outputBuffer);
     int rootX = outputBuffer[0];
     int rootY = outputBuffer[1];
