@@ -459,7 +459,7 @@ const definitions: FeatureFlagDefinitions = {
       },
     },
     useShadowNodeStateOnClone: {
-      defaultValue: true,
+      defaultValue: false,
       metadata: {
         dateAdded: '2025-04-16',
         description:

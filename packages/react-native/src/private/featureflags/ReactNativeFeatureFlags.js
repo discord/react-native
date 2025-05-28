@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<89b06cbba840fbb8a53cdda5dc83a233>>
+ * @generated SignedSource<<7adbf7056191e6b287729fc4befbdcbf>>
  * @flow strict
  */
 
@@ -363,7 +363,7 @@ export const useRuntimeShadowNodeReferenceUpdate: Getter<boolean> = createNative
 /**
  * Use the state stored on the source shadow node when cloning it instead of reading in the most recent state on the shadow node family.
  */
-export const useShadowNodeStateOnClone: Getter<boolean> = createNativeFlagGetter('useShadowNodeStateOnClone', true);
+export const useShadowNodeStateOnClone: Getter<boolean> = createNativeFlagGetter('useShadowNodeStateOnClone', false);
 /**
  * In Bridgeless mode, should legacy NativeModules use the TurboModule system?
  */
