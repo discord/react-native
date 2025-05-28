@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<16a044e68001307dc901537101b73db9>>
+ * @generated SignedSource<<11d93a900862ed8ce98f90f9af2de47b>>
  */
 
 /**
@@ -65,7 +65,7 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enablePreciseSchedulingForPremountItemsOnAndroid(): Boolean = false
 
-  override fun enablePropsUpdateReconciliationAndroid(): Boolean = true
+  override fun enablePropsUpdateReconciliationAndroid(): Boolean = false
 
   override fun enableReportEventPaintTime(): Boolean = false
 

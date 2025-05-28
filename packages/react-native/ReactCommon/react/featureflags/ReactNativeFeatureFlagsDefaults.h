@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7ee9e37d5f14514dfccd01a6fdda920b>>
+ * @generated SignedSource<<830cdd4b394262ee65abc63a54833674>>
  */
 
 /**
@@ -112,7 +112,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enablePropsUpdateReconciliationAndroid() override {
-    return true;
+    return false;
   }
 
   bool enableReportEventPaintTime() override {

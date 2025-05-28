@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7adbf7056191e6b287729fc4befbdcbf>>
+ * @generated SignedSource<<63601ec83ade8f3774d185ebacf4c792>>
  * @flow strict
  */
 
@@ -275,7 +275,7 @@ export const enablePreciseSchedulingForPremountItemsOnAndroid: Getter<boolean> =
 /**
  * When enabled, Android will receive prop updates based on the differences between the last rendered shadow node and the last committed shadow node.
  */
-export const enablePropsUpdateReconciliationAndroid: Getter<boolean> = createNativeFlagGetter('enablePropsUpdateReconciliationAndroid', true);
+export const enablePropsUpdateReconciliationAndroid: Getter<boolean> = createNativeFlagGetter('enablePropsUpdateReconciliationAndroid', false);
 /**
  * Report paint time inside the Event Timing API implementation (PerformanceObserver).
  */
