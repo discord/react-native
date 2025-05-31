@@ -17,6 +17,7 @@ import com.facebook.react.modules.core.DefaultHardwareBackBtnHandler;
 import com.facebook.react.modules.core.PermissionAwareActivity;
 import com.facebook.react.modules.core.PermissionListener;
 import org.jetbrains.annotations.NotNull;
+import com.facebook.react.uimanager.UIManagerConstantsCache;
 
 /** Base Activity for React Native applications. */
 public abstract class ReactActivity extends AppCompatActivity
@@ -44,6 +45,7 @@ public abstract class ReactActivity extends AppCompatActivity
   @Override
   protected void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
+    UIManagerConstantsCache.getInstance().init(this);
     mDelegate.onCreate(savedInstanceState);
   }
 

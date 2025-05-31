@@ -22,6 +22,7 @@ import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import com.facebook.react.uimanager.UIManagerConstantsCache;
 
 /**
  * This is part of the glue which wraps a java BaseJavaModule in a C++ NativeModule. This could all
@@ -118,7 +119,10 @@ class JavaModuleWrapper {
         .flush();
     ReactMarker.logMarker(GET_CONSTANTS_START, moduleName);
 
+
+    Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "module.getModule");
     BaseJavaModule baseJavaModule = getModule();
+    Systrace.endSection(TRACE_TAG_REACT_JAVA_BRIDGE);
 
     Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "module.getConstants");
     Map<String, Object> map = baseJavaModule.getConstants();
@@ -127,6 +131,12 @@ class JavaModuleWrapper {
     Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "create WritableNativeMap");
     ReactMarker.logMarker(CONVERT_CONSTANTS_START, moduleName);
     try {
+      if (moduleName == "UIManager") {
+        NativeMap res = UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap();
+        if (res != null) {
+          return res;
+        }
+      }
       return Arguments.makeNativeMap(map);
     } finally {
       ReactMarker.logMarker(CONVERT_CONSTANTS_END, moduleName);
