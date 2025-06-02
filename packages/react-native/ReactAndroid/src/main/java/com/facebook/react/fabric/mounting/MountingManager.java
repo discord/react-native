@@ -485,7 +485,15 @@ public class MountingManager {
   public synchronized void measure(int surfaceId, int reactTag, final Callback callback) {
     UiThreadUtil.assertOnUiThread();
     SurfaceMountingManager smm = getSurfaceMountingManager(surfaceId, reactTag);
-    View view = smm.getView(reactTag);
+    
+    View view;
+    try {
+        view = smm.getView(reactTag);
+    } catch (Exception e) {
+        FLog.e(TAG, "Failed to get view for reactTag: %d, surfaceId: %d", reactTag, surfaceId, e);
+        return;
+    }
+
     int[] mMeasureBuffer = new int[4];
     View rootView = smm.getRootViewIfAttached();
     if (rootView == null) {
