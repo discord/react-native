@@ -9,9 +9,10 @@ package com.facebook.react.uimanager;
 
 import static com.facebook.react.bridge.ReactMarkerConstants.CREATE_UI_MANAGER_MODULE_CONSTANTS_END;
 import static com.facebook.react.bridge.ReactMarkerConstants.CREATE_UI_MANAGER_MODULE_CONSTANTS_START;
+import static com.facebook.react.uimanager.common.UIManagerType.DEFAULT;
 import static com.facebook.react.uimanager.common.UIManagerType.FABRIC;
-import static com.facebook.react.uimanager.common.UIManagerType.LEGACY;
 
+import android.util.Log;
 import android.content.ComponentCallbacks2;
 import android.content.res.Configuration;
 import android.view.View;
@@ -39,17 +40,12 @@ import com.facebook.react.bridge.UiThreadUtil;
 import com.facebook.react.bridge.WritableMap;
 import com.facebook.react.common.MapBuilder;
 import com.facebook.react.common.ReactConstants;
-import com.facebook.react.common.annotations.internal.LegacyArchitecture;
-import com.facebook.react.common.annotations.internal.LegacyArchitectureLogLevel;
-import com.facebook.react.common.annotations.internal.LegacyArchitectureLogger;
-import com.facebook.react.common.build.ReactBuildConfig;
 import com.facebook.react.module.annotations.ReactModule;
 import com.facebook.react.uimanager.common.ViewUtil;
 import com.facebook.react.uimanager.debug.NotThreadSafeViewHierarchyUpdateDebugListener;
 import com.facebook.react.uimanager.events.EventDispatcher;
 import com.facebook.react.uimanager.events.EventDispatcherImpl;
 import com.facebook.react.uimanager.events.RCTEventEmitter;
-import com.facebook.react.uimanager.internal.LegacyArchitectureShadowNodeLogger;
 import com.facebook.systrace.Systrace;
 import com.facebook.systrace.SystraceMessage;
 import java.util.ArrayList;
@@ -87,14 +83,8 @@ import java.util.concurrent.CopyOnWriteArrayList;
  * Don't dispatch the view hierarchy at the end of a batch if no UI changes occurred
  */
 @ReactModule(name = UIManagerModule.NAME)
-@LegacyArchitecture
 public class UIManagerModule extends ReactContextBaseJavaModule
     implements OnBatchCompleteListener, LifecycleEventListener, UIManager {
-  static {
-    LegacyArchitectureLogger.assertLegacyArchitecture(
-        "UIManagerModule", LegacyArchitectureLogLevel.WARNING);
-  }
-
   public static final String TAG = UIManagerModule.class.getSimpleName();
 
   /** Resolves a name coming from native side to a name of the event that is exposed to JS. */
@@ -129,7 +119,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
     mEventDispatcher = new EventDispatcherImpl(reactContext);
     mModuleConstants = createConstants(viewManagerResolver);
-    mCustomDirectEvents = UIManagerModuleConstants.directEventTypeConstants;
+    mCustomDirectEvents = UIManagerModuleConstants.getDirectEventTypeConstants();
     mViewManagerRegistry = new ViewManagerRegistry(viewManagerResolver);
     mUIImplementation =
         new UIImplementation(
@@ -146,26 +136,44 @@ public class UIManagerModule extends ReactContextBaseJavaModule
       List<ViewManager> viewManagersList,
       int minTimeLeftInFrameForNonBatchedOperationMs) {
     super(reactContext);
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "UIManagerModule.init");
     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
-    mEventDispatcher = new EventDispatcherImpl(reactContext);
-    mCustomDirectEvents = MapBuilder.newHashMap();
-    mModuleConstants = createConstants(viewManagersList, null, mCustomDirectEvents);
-    mViewManagerRegistry = new ViewManagerRegistry(viewManagersList);
-    mUIImplementation =
-        new UIImplementation(
-            reactContext,
-            mViewManagerRegistry,
-            mEventDispatcher,
-            minTimeLeftInFrameForNonBatchedOperationMs);
+    long startTime, endTime;
 
-    if (ReactBuildConfig.DEBUG) {
-      for (ViewManager<?, ?> viewManager : viewManagersList) {
-        LegacyArchitectureShadowNodeLogger.assertUnsupportedViewManager(
-            reactContext, viewManager.getShadowNodeClass(), viewManager.getClass().getSimpleName());
-      }
-    }
+    startTime = System.currentTimeMillis();
+    mEventDispatcher = new EventDispatcherImpl(reactContext);
+    endTime = System.currentTimeMillis();
+    Log.v(ReactConstants.TAG, "UIManagerModule: EventDispatcherImpl init took " + (endTime - startTime) + " ms");
+
+    startTime = System.currentTimeMillis();
+    mCustomDirectEvents = MapBuilder.newHashMap();
+    endTime = System.currentTimeMillis();
+    Log.v(ReactConstants.TAG, "UIManagerModule: CustomDirectEvents init took " + (endTime - startTime) + " ms");
+
+    startTime = System.currentTimeMillis();
+    mModuleConstants = createConstants(viewManagersList, null, mCustomDirectEvents);
+    endTime = System.currentTimeMillis();
+    Log.v(ReactConstants.TAG, "UIManagerModule: ModuleConstants init took " + (endTime - startTime) + " ms");
+
+    startTime = System.currentTimeMillis();
+    mViewManagerRegistry = new ViewManagerRegistry(viewManagersList);
+    endTime = System.currentTimeMillis();
+    Log.v(ReactConstants.TAG, "UIManagerModule: ViewManagerRegistry init took " + (endTime - startTime) + " ms");
+
+    startTime = System.currentTimeMillis();
+    mUIImplementation =
+      new UIImplementation(
+        reactContext,
+        mViewManagerRegistry,
+        mEventDispatcher,
+        minTimeLeftInFrameForNonBatchedOperationMs);
+    endTime = System.currentTimeMillis();
+    Log.v(ReactConstants.TAG, "UIManagerModule: UIImplementation init took " + (endTime - startTime) + " ms");
 
     reactContext.addLifecycleEventListener(this);
+    mEventDispatcher.registerEventEmitter(
+        DEFAULT, getReactApplicationContext().getJSModule(RCTEventEmitter.class));
+    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
   }
 
   /**
@@ -244,13 +252,13 @@ public class UIManagerModule extends ReactContextBaseJavaModule
 
   private static Map<String, Object> createConstants(ViewManagerResolver viewManagerResolver) {
     ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_CONSTANTS_START);
-    SystraceMessage.beginSection(Systrace.TRACE_TAG_REACT, "CreateUIManagerConstants")
+    SystraceMessage.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "CreateUIManagerConstants")
         .arg("Lazy", true)
         .flush();
     try {
       return UIManagerModuleConstantsHelper.createConstants(viewManagerResolver);
     } finally {
-      Systrace.endSection(Systrace.TRACE_TAG_REACT);
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
       ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_CONSTANTS_END);
     }
   }
@@ -266,16 +274,21 @@ public class UIManagerModule extends ReactContextBaseJavaModule
     try {
       // If the background load is still happening, this will wait. If it completed, returns immediately.
       Map<String,Object> cached = UIManagerConstantsCache.getInstance().getCachedConstants();
+      Map<String,Object> cachedCustomBubblingEvents = UIManagerConstantsCache.getInstance().getCachedBubblingEventsTypes();
       if (cached != null) {
+        if (customBubblingEvents != null) {
+          customBubblingEvents.putAll(cachedCustomBubblingEvents);
+        }
+
         return cached;
       }
 
       // Otherwise, build fresh on this thread…
       Map<String,Object> fresh = UIManagerModuleConstantsHelper.createConstants(
-              viewManagers, customBubblingEvents, customDirectEvents);
+          viewManagers, customBubblingEvents, customDirectEvents);
 
       // …and save to MMKV in the background for next time:
-      UIManagerConstantsCache.getInstance().saveConstants(fresh);
+      UIManagerConstantsCache.getInstance().saveConstantsAndBubblingEventsTypes(fresh, customBubblingEvents);
       return fresh;
     } finally {
       Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
@@ -296,7 +309,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
   public static @Nullable WritableMap getConstantsForViewManager(
       ViewManager viewManager, Map<String, Object> customDirectEvents) {
     SystraceMessage.beginSection(
-            Systrace.TRACE_TAG_REACT, "UIManagerModule.getConstantsForViewManager")
+            Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "UIManagerModule.getConstantsForViewManager")
         .arg("ViewManager", viewManager.getName())
         .arg("Lazy", true)
         .flush();
@@ -309,7 +322,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
       }
       return null;
     } finally {
-      SystraceMessage.endSection(Systrace.TRACE_TAG_REACT).flush();
+      SystraceMessage.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE).flush();
     }
   }
 
@@ -383,7 +396,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
    */
   @Override
   public <T extends View> int addRootView(final T rootView, WritableMap initialProps) {
-    Systrace.beginSection(Systrace.TRACE_TAG_REACT, "UIManagerModule.addRootView");
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "UIManagerModule.addRootView");
     final int tag = ReactRootViewTagGenerator.getNextRootViewTag();
     final ReactApplicationContext reactApplicationContext = getReactApplicationContext();
 
@@ -396,7 +409,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
             -1);
 
     mUIImplementation.registerRootView(rootView, tag, themedRootContext);
-    Systrace.endSection(Systrace.TRACE_TAG_REACT);
+    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
     return tag;
   }
 
@@ -693,7 +706,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
     int batchId = mBatchId;
     mBatchId++;
 
-    SystraceMessage.beginSection(Systrace.TRACE_TAG_REACT, "onBatchCompleteUI")
+    SystraceMessage.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "onBatchCompleteUI")
         .arg("BatchId", batchId)
         .flush();
     for (UIManagerModuleListener listener : mListeners) {
@@ -710,7 +723,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
         mUIImplementation.dispatchViewUpdates(batchId);
       }
     } finally {
-      Systrace.endSection(Systrace.TRACE_TAG_REACT);
+      Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
     }
   }
 
@@ -869,7 +882,7 @@ public class UIManagerModule extends ReactContextBaseJavaModule
   @Override
   public void receiveEvent(
       int surfaceId, int reactTag, String eventName, @Nullable WritableMap event) {
-    assert ViewUtil.getUIManagerType(reactTag) == LEGACY;
+    assert ViewUtil.getUIManagerType(reactTag) == DEFAULT;
     getReactApplicationContext()
         .getJSModule(RCTEventEmitter.class)
         .receiveEvent(reactTag, eventName, event);
