@@ -7,6 +7,8 @@
 
 package com.facebook.react.animated;
 
+import android.os.Build;
+
 import androidx.annotation.AnyThread;
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
@@ -41,6 +43,7 @@ import java.util.List;
 import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -152,8 +155,17 @@ public class NativeAnimatedModule extends NativeAnimatedModuleSpec
   }
 
   private class ConcurrentOperationQueue {
-    private final Queue<UIThreadOperation> mQueue = new ConcurrentLinkedQueue<>();
+    private final Queue<UIThreadOperation> mQueue;
     @Nullable private UIThreadOperation mPeekedOperation = null;
+
+    ConcurrentOperationQueue() {
+      if (Build.VERSION.SDK_INT == Build.VERSION_CODES.S) {
+        https://issuetracker.google.com/issues/261481042
+        mQueue = new LinkedBlockingQueue<>();
+      } else {
+        mQueue = new ConcurrentLinkedQueue<>();
+      }
+    }
 
     @AnyThread
     boolean isEmpty() {
