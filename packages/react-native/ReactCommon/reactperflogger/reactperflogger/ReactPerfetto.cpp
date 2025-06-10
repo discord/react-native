@@ -32,8 +32,8 @@ void initializePerfetto() {
     perfetto::TrackEvent::Register();
   });
 
-  HermesPerfettoDataSource::RegisterDataSource();
-  FuseboxPerfettoDataSource::RegisterDataSource();
+  //HermesPerfettoDataSource::RegisterDataSource();
+  //FuseboxPerfettoDataSource::RegisterDataSource();
 }
 
 static perfetto::Track createTrack(const std::string& trackName) {

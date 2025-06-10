@@ -14,8 +14,19 @@
 #include <jsinspector-modern/InspectorFlags.h>
 
 #include <hermes/inspector-modern/chrome/HermesRuntimeTargetDelegate.h>
-#include <hermes/inspector-modern/chrome/Registration.h>
-#include <hermes/inspector/RuntimeAdapter.h>
+
+#include <android/log.h>
+#include <perfetto.h>  // Your include path may differ!
+
+
+
+#define LOG_TAG "MyNativeModule"
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
 
 using namespace facebook::hermes;
 using namespace facebook::jsi;
@@ -24,40 +35,107 @@ namespace facebook::react {
 
 namespace {
 
+// Helper to parse an optional JS object {key: value, ...} to a C++ vector for TRACE_EVENT
+static std::vector<std::string> parseEventArgs(jsi::Runtime& rt, const jsi::Value& val) {
+    std::vector<std::string> args;
+    if (val.isObject()) {
+        auto obj = val.asObject(rt);
+        auto propNames = obj.getPropertyNames(rt);
+        for (size_t i = 0; i < propNames.size(rt); ++i) {
+            auto key = propNames.getValueAtIndex(rt, i).asString(rt).utf8(rt);
+            auto value = obj.getProperty(rt, key.c_str()).asString(rt).utf8(rt);
+            args.push_back(key);
+            args.push_back(value);
+        }
+    }
+    return args;
+}
+
+void installSystraceJSIGlobals(jsi::Runtime& runtime) {
+    // is tracing
+    runtime.global().setProperty(
+        runtime, "nativeTraceIsTracing",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceIsTracing"), 1,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+                //int32_t traceTag = args[0].asNumber();
+                return true;//jsi::Value(traceTag == TRACE_TAG_REACT_APPS);
+            }));
+
+    // beginEvent
+    runtime.global().setProperty(
+        runtime, "nativeTraceBeginSection",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceBeginSection"), 3,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+                auto eventName = args[1].asString(rt).utf8(rt);
+                auto argVec = parseEventArgs(rt, args[2]);
+                // Unpack pairs for TRACE_EVENT
+                if (argVec.empty()) {
+                    //TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()});
+                } else {
+                    // up to 2 custom args for demo
+                   // TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()},
+                    //    argVec[0].c_str(), argVec.size() > 1 ? argVec[1].c_str() : "");
+                }
+                return jsi::Value::undefined();
+            }));
+
+    // endEvent
+    runtime.global().setProperty(
+        runtime, "nativeTraceEndSection",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceEndSection"), 2,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+                //TRACE_EVENT_END("react-native");
+                return jsi::Value::undefined();
+            }));
+
+    // beginAsyncEvent
+    runtime.global().setProperty(
+        runtime, "nativeTraceBeginAsyncSection",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceBeginAsyncSection"), 4,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+                //auto eventName = args[1].asString(rt).utf8(rt);
+               // int32_t cookie = args[2].asNumber();
+                // NOTE: Perfetto async support may use different macros, demo below.
+               // TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()}, "cookie", std::to_string(cookie).c_str());
+                return jsi::Value::undefined();
+            }));
+
+    // endAsyncEvent
+    runtime.global().setProperty(
+        runtime, "nativeTraceEndAsyncSection",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceEndAsyncSection"), 4,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+                //auto eventName = args[1].asString(rt).utf8(rt);
+                //int32_t cookie = args[2].asNumber();
+                // Again, cookie is not natively handled by TRACE_EVENT_END, just for symmetry.
+               // TRACE_EVENT_END("react-native");
+                return jsi::Value::undefined();
+            }));
+
+    // counterEvent
+    runtime.global().setProperty(
+        runtime, "nativeTraceCounter",
+        jsi::Function::createFromHostFunction(
+            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceCounter"), 3,
+            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
+              //  auto eventName = args[1].asString(rt).utf8(rt);
+              //  double value = args[2].asNumber();
+                // Perfetto counters usually use TRACE_COUNTER for newer versions, not always present.
+                // You might need a custom macro here, or use a standard event for demo:
+             //   TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()}, "value", std::to_string(value).c_str());
+              //  TRACE_EVENT_END("react-native");
+                return jsi::Value::undefined();
+            }));
+}
+
 #ifdef HERMES_ENABLE_DEBUGGER
 
-class HermesExecutorRuntimeAdapter
-    : public facebook::hermes::inspector_modern::RuntimeAdapter {
- public:
-  HermesExecutorRuntimeAdapter(
-      std::shared_ptr<HermesRuntime> runtime,
-      std::shared_ptr<MessageQueueThread> thread)
-      : runtime_(runtime), thread_(std::move(thread)) {}
 
-  virtual ~HermesExecutorRuntimeAdapter() = default;
-
-  HermesRuntime& getRuntime() override {
-    return *runtime_;
-  }
-
-  void tickleJs() override {
-    thread_->runOnQueue(
-        [weakRuntime = std::weak_ptr<HermesRuntime>(runtime_)]() {
-          auto runtime = weakRuntime.lock();
-          if (!runtime) {
-            return;
-          }
-          jsi::Function func =
-              runtime->global().getPropertyAsFunction(*runtime, "__tickleJs");
-          func.call(*runtime);
-        });
-  }
-
- private:
-  std::shared_ptr<HermesRuntime> runtime_;
-
-  std::shared_ptr<MessageQueueThread> thread_;
-};
 
 #endif // HERMES_ENABLE_DEBUGGER
 
@@ -145,14 +223,7 @@ class DecoratedRuntime : public jsi::WithRuntimeDecorator<ReentrancyCheck> {
       : jsi::WithRuntimeDecorator<ReentrancyCheck>(*runtime, reentrancyCheck_),
         runtime_(std::move(runtime)) {
 #ifdef HERMES_ENABLE_DEBUGGER
-    enableDebugger_ = enableDebugger;
-    if (enableDebugger_) {
-      std::shared_ptr<HermesRuntime> rt(runtime_, &hermesRuntime);
-      auto adapter =
-          std::make_unique<HermesExecutorRuntimeAdapter>(rt, jsQueue);
-      debugToken_ = facebook::hermes::inspector_modern::chrome::enableDebugging(
-          std::move(adapter), debuggerName);
-    }
+
 #else
     (void)jsQueue;
 #endif // HERMES_ENABLE_DEBUGGER
@@ -160,9 +231,7 @@ class DecoratedRuntime : public jsi::WithRuntimeDecorator<ReentrancyCheck> {
 
   ~DecoratedRuntime() {
 #ifdef HERMES_ENABLE_DEBUGGER
-    if (enableDebugger_) {
-      facebook::hermes::inspector_modern::chrome::disableDebugging(debugToken_);
-    }
+
 #endif // HERMES_ENABLE_DEBUGGER
   }
 
@@ -177,8 +246,7 @@ class DecoratedRuntime : public jsi::WithRuntimeDecorator<ReentrancyCheck> {
   std::shared_ptr<Runtime> runtime_;
   ReentrancyCheck reentrancyCheck_;
 #ifdef HERMES_ENABLE_DEBUGGER
-  bool enableDebugger_;
-  facebook::hermes::inspector_modern::chrome::DebugSessionToken debugToken_;
+
 #endif // HERMES_ENABLE_DEBUGGER
 };
 
@@ -196,10 +264,16 @@ std::unique_ptr<JSExecutor> HermesExecutorFactory::createJSExecutor(
     std::shared_ptr<ExecutorDelegate> delegate,
     std::shared_ptr<MessageQueueThread> jsQueue) {
   std::unique_ptr<HermesRuntime> hermesRuntime;
+
+  LOGD("Creating HermesRuntime with JIT enabled: %s",
+       runtimeConfig_.getEnableJIT() ? "true" : "false");
   {
     TraceSection s("makeHermesRuntime");
     hermesRuntime = hermes::makeHermesRuntime(runtimeConfig_);
   }
+
+  installSystraceJSIGlobals(*hermesRuntime);
+
 
   HermesRuntime& hermesRuntimeRef = *hermesRuntime;
   auto& inspectorFlags = jsinspector_modern::InspectorFlags::getInstance();
@@ -241,6 +315,9 @@ std::unique_ptr<JSExecutor> HermesExecutorFactory::createJSExecutor(
 ::hermes::vm::RuntimeConfig HermesExecutorFactory::defaultRuntimeConfig() {
   return ::hermes::vm::RuntimeConfig::Builder()
       .withEnableSampleProfiling(true)
+      .withEnableJIT(false)
+      .withEnableHermesInternal(true)
+      .withOptimizedEval(true)
       .build();
 }
 

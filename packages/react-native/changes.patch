@@ -1,0 +1,4275 @@
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Animated/nodes/AnimatedValue.js ../../../../discord/node_modules/react-native/Libraries/Animated/nodes/AnimatedValue.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Animated/nodes/AnimatedValue.js	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/Libraries/Animated/nodes/AnimatedValue.js	2025-05-27 19:18:12
+@@ -85,7 +85,7 @@
+  * See https://reactnative.dev/docs/animatedvalue
+  */
+ export default class AnimatedValue extends AnimatedWithChildren {
+-  #listenerCount: number = 0;
++  #attached: boolean = false;
+   #updateSubscription: ?EventSubscription = null;
+ 
+   _value: number;
+@@ -107,14 +107,21 @@
+     }
+   }
+ 
+-  __detach() {
++  __attach(): void {
++    this.#attached = true;
++    this.#ensureUpdateSubscriptionExists();
++  }
++
++  __detach(): void {
+     if (this.__isNative) {
++      this.#updateSubscription?.remove();
+       NativeAnimatedAPI.getValue(this.__getNativeTag(), value => {
+         this._value = value - this._offset;
+       });
+     }
+     this.stopAnimation();
+     super.__detach();
++    this.#attached = false;
+   }
+ 
+   __getValue(): number {
+@@ -123,38 +130,23 @@
+ 
+   __makeNative(platformConfig: ?PlatformConfig): void {
+     super.__makeNative(platformConfig);
+-    if (this.#listenerCount > 0) {
+-      this.#ensureUpdateSubscriptionExists();
+-    }
++    this.#ensureUpdateSubscriptionExists();
+   }
+ 
+-  addListener(callback: (value: any) => mixed): string {
+-    const id = super.addListener(callback);
+-    this.#listenerCount++;
+-    if (this.__isNative) {
+-      this.#ensureUpdateSubscriptionExists();
+-    }
+-    return id;
+-  }
+-
+-  removeListener(id: string): void {
+-    super.removeListener(id);
+-    this.#listenerCount--;
+-    if (this.__isNative && this.#listenerCount === 0) {
+-      this.#updateSubscription?.remove();
+-    }
+-  }
+-
+-  removeAllListeners(): void {
+-    super.removeAllListeners();
+-    this.#listenerCount = 0;
+-    if (this.__isNative) {
+-      this.#updateSubscription?.remove();
+-    }
+-  }
+-
++  /**
++   * NOTE: In theory, we should only need to call this when any listeners
++   * are added. However, there is a global `onUserDrivenAnimationEnded`
++   * listener that relies on `onAnimatedValueUpdate` having fired to update
++   * the values in JavaScript. If that listener is removed, this could be
++   * re-optimized.
++   */
+   #ensureUpdateSubscriptionExists(): void {
+     if (this.#updateSubscription != null) {
++      return;
++    }
++    // The order in which `__attach` and `__makeNative` are called is not
++    // deterministic, and we only want to do this when both have occurred.
++    if (!this.#attached || !this.__isNative) {
+       return;
+     }
+     const nativeTag = this.__getNativeTag();
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Animated/useAnimatedProps.js ../../../../discord/node_modules/react-native/Libraries/Animated/useAnimatedProps.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Animated/useAnimatedProps.js	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/Libraries/Animated/useAnimatedProps.js	2025-05-27 19:18:12
+@@ -17,9 +17,7 @@
+ import {isPublicInstance as isFabricPublicInstance} from '../ReactNative/ReactFabricPublicInstance/ReactFabricPublicInstanceUtils';
+ import useRefEffect from '../Utilities/useRefEffect';
+ import {AnimatedEvent} from './AnimatedEvent';
+-import AnimatedNode from './nodes/AnimatedNode';
+ import AnimatedProps from './nodes/AnimatedProps';
+-import AnimatedValue from './nodes/AnimatedValue';
+ import {
+   useCallback,
+   useEffect,
+@@ -39,11 +37,6 @@
+ 
+ type UpdateCallback = () => void;
+ 
+-type AnimatedValueListeners = Array<{
+-  propValue: AnimatedValue,
+-  listenerId: string,
+-}>;
+-
+ const useMemoOrAnimatedPropsMemo =
+   ReactNativeFeatureFlags.enableAnimatedPropsMemo()
+     ? useAnimatedPropsMemo
+@@ -169,7 +162,6 @@
+ 
+       const target = getEventTarget(instance);
+       const events = [];
+-      const animatedValueListeners: AnimatedValueListeners = [];
+ 
+       for (const propName in props) {
+         // $FlowFixMe[invalid-computed-prop]
+@@ -177,8 +169,6 @@
+         if (propValue instanceof AnimatedEvent && propValue.__isNative) {
+           propValue.__attach(target, propName);
+           events.push([propName, propValue]);
+-          // $FlowFixMe[incompatible-call] - the `addListenersToPropsValue` drills down the propValue.
+-          addListenersToPropsValue(propValue, animatedValueListeners);
+         }
+       }
+ 
+@@ -188,10 +178,6 @@
+         for (const [propName, propValue] of events) {
+           propValue.__detach(target, propName);
+         }
+-
+-        for (const {propValue, listenerId} of animatedValueListeners) {
+-          propValue.removeListener(listenerId);
+-        }
+       };
+     },
+     [node, useNativePropsInFabric, props],
+@@ -213,35 +199,6 @@
+       : node.__getValue()),
+     collapsable: false,
+   };
+-}
+-
+-function addListenersToPropsValue(
+-  propValue: AnimatedValue,
+-  accumulator: AnimatedValueListeners,
+-) {
+-  // propValue can be a scalar value, an array or an object.
+-  if (propValue instanceof AnimatedValue) {
+-    const listenerId = propValue.addListener(() => {});
+-    accumulator.push({propValue, listenerId});
+-  } else if (Array.isArray(propValue)) {
+-    // An array can be an array of scalar values, arrays of arrays, or arrays of objects
+-    for (const prop of propValue) {
+-      addListenersToPropsValue(prop, accumulator);
+-    }
+-  } else if (propValue instanceof Object) {
+-    addAnimatedValuesListenersToProps(propValue, accumulator);
+-  }
+-}
+-
+-function addAnimatedValuesListenersToProps(
+-  props: AnimatedNode,
+-  accumulator: AnimatedValueListeners,
+-) {
+-  for (const propName in props) {
+-    // $FlowFixMe[prop-missing] - This is an object contained in a prop, but we don't know the exact type.
+-    const propValue = props[propName];
+-    addListenersToPropsValue(propValue, accumulator);
+-  }
+ }
+ 
+ /**
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Performance/Systrace.js ../../../../discord/node_modules/react-native/Libraries/Performance/Systrace.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Performance/Systrace.js	2025-06-06 12:12:05
++++ ../../../../discord/node_modules/react-native/Libraries/Performance/Systrace.js	2025-06-09 19:06:45
+@@ -31,7 +31,6 @@
+  * }
+  */
+ export function isEnabled(): boolean {
+-  return false;
+   return global.nativeTraceIsTracing
+     ? global.nativeTraceIsTracing(TRACE_TAG_REACT_APPS)
+     : Boolean(global.__RCTProfileIsProfiling);
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Pressability/Pressability.js ../../../../discord/node_modules/react-native/Libraries/Pressability/Pressability.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/Pressability/Pressability.js	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/Libraries/Pressability/Pressability.js	2025-05-27 19:18:13
+@@ -805,7 +805,7 @@
+     if (typeof this._responderID === 'number') {
+       UIManager.measure(this._responderID, this._measureCallback);
+     } else {
+-      this._responderID.measure(this._measureCallback, true /* measureOnUI - will measure native view hierarchy */);
++      this._responderID.measure(this._measureCallback);
+     }
+   }
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/ReactNative/FabricUIManager.js ../../../../discord/node_modules/react-native/Libraries/ReactNative/FabricUIManager.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/ReactNative/FabricUIManager.js	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/Libraries/ReactNative/FabricUIManager.js	2025-05-27 19:18:13
+@@ -40,7 +40,7 @@
+   +appendChild: (parentNode: Node, child: Node) => Node;
+   +appendChildToSet: (childSet: NodeSet, child: Node) => void;
+   +completeRoot: (rootTag: RootTag, childSet: NodeSet) => void;
+-  +measure: (node: Node, callback: MeasureOnSuccessCallback, measureOnUI: Boolean) => void;
++  +measure: (node: Node, callback: MeasureOnSuccessCallback) => void;
+   +measureInWindow: (
+     node: Node,
+     callback: MeasureInWindowOnSuccessCallback,
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/ReactNative/ReactFabricPublicInstance/ReactFabricHostComponent.js ../../../../discord/node_modules/react-native/Libraries/ReactNative/ReactFabricPublicInstance/ReactFabricHostComponent.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/ReactNative/ReactFabricPublicInstance/ReactFabricHostComponent.js	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/Libraries/ReactNative/ReactFabricPublicInstance/ReactFabricHostComponent.js	2025-05-27 19:18:13
+@@ -65,12 +65,12 @@
+     TextInputState.focusTextInput(this);
+   }
+ 
+-  measure(callback: MeasureOnSuccessCallback, measureOnUI = false) {
++  measure(callback: MeasureOnSuccessCallback) {
+     const node = getNodeFromInternalInstanceHandle(
+       this.__internalInstanceHandle,
+     );
+     if (node != null) {
+-      fabricMeasure(node, callback, measureOnUI);
++      fabricMeasure(node, callback);
+     }
+   }
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js ../../../../discord/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js	2025-05-27 19:18:13
++++ ../../../../discord/node_modules/react-native/Libraries/TurboModule/TurboModuleRegistry.js	2025-06-04 09:42:29
+@@ -11,6 +11,7 @@
+ import type {TurboModule} from './RCTExport';
+ 
+ import invariant from 'invariant';
++import * as Systrace from '../Performance/Systrace';
+ 
+ const NativeModules = require('../BatchedBridge/NativeModules');
+ 
+@@ -43,7 +44,12 @@
+ }
+ 
+ export function getEnforcing<T: TurboModule>(name: string): T {
++  Systrace.beginEvent(
++    'TurboModuleRegistry.getEnforcing',
++    {name},
++  );
+   const module = requireModule<T>(name);
++  Systrace.endEvent();
+   invariant(
+     module != null,
+     `TurboModuleRegistry.getEnforcing(...): '${name}' could not be found. ` +
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTScheduler.h ../../../../discord/node_modules/react-native/React/Fabric/RCTScheduler.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTScheduler.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/React/Fabric/RCTScheduler.h	2025-05-27 19:18:14
+@@ -42,10 +42,6 @@
+                 blockNativeResponder:(BOOL)blockNativeResponder
+                        forShadowView:(const facebook::react::ShadowView &)shadowView;
+ 
+-
+-- (void)schedulerMeasure:(const facebook::react::ShadowView &)shadowView
+-               jsCallback:(std::function<void(folly::dynamic)>)jsCallback;
+-
+ @end
+ 
+ /**
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTScheduler.mm ../../../../discord/node_modules/react-native/React/Fabric/RCTScheduler.mm
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTScheduler.mm	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/React/Fabric/RCTScheduler.mm	2025-05-27 19:18:14
+@@ -67,12 +67,6 @@
+     RCTScheduler *scheduler = (__bridge RCTScheduler *)scheduler_;
+     [scheduler.delegate schedulerDidSendAccessibilityEvent:shadowView eventType:eventType];
+   }
+-  
+-  
+-  void schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) override {
+-    RCTScheduler *scheduler = (__bridge RCTScheduler *)scheduler_;
+-    [scheduler.delegate schedulerMeasure:shadowView jsCallback:jsCallback];
+-  }
+ 
+  private:
+   void *scheduler_;
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTSurfacePresenter.mm ../../../../discord/node_modules/react-native/React/Fabric/RCTSurfacePresenter.mm
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/React/Fabric/RCTSurfacePresenter.mm	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/React/Fabric/RCTSurfacePresenter.mm	2025-05-27 19:18:14
+@@ -342,15 +342,6 @@
+   }
+ }
+ 
+-- (void)schedulerMeasure:(const facebook::react::ShadowView &)shadowView jsCallback:(std::function<void (folly::dynamic)>)jsCallback {
+-  // TODO: do we need to implement this on iOS? It seems to _just work_
+-//  dispatch_async(dispatch_get_main_queue(), ^{
+-//    ReactTag tag = shadowView.tag;
+-//    UIView<RCTComponentViewProtocol> *componentView =
+-//    [self->_mountingManager.componentViewRegistry findComponentViewWithTag:tag];
+-//  });
+-}
+-
+ #pragma mark - RCTMountingManagerDelegate
+ 
+ - (void)mountingManager:(RCTMountingManager *)mountingManager willMountComponentsWithRootTag:(ReactTag)rootTag
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/build.gradle.kts ../../../../discord/node_modules/react-native/ReactAndroid/build.gradle.kts
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/build.gradle.kts	2025-06-08 00:22:46
++++ ../../../../discord/node_modules/react-native/ReactAndroid/build.gradle.kts	2025-06-02 21:29:56
+@@ -85,7 +85,7 @@
+               PrefabPreprocessingEntry(
+                   "reactnative",
+                   listOf(
+-                      // SoLoader.loadLibrary(
++                      // hermes_executor
+                       // This prefab targets is used by Expo & Reanimated
+                       Pair("../ReactCommon/hermes/inspector-modern/", "hermes/inspector-modern/"),
+                       // jscexecutor
+@@ -233,7 +233,7 @@
+                   )),
+               PrefabPreprocessingEntry(
+                   "hermestooling",
+-                  // SoLoader.loadLibrary(
++                  // hermes_executor
+                   Pair("../ReactCommon/hermes/inspector-modern/", "hermes/inspector-modern/")),
+               PrefabPreprocessingEntry(
+                   "jsctooling",
+@@ -463,7 +463,7 @@
+       // Shared libraries (.so) are copied from the merged_native_libs folder instead
+       from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+       exclude("**/libjsc.so")
+-      exclude("**/libhermesvm.so")
++      exclude("**/libhermesvm.so")
+       into("src/main/jni/prebuilt/lib")
+     }
+ 
+@@ -474,7 +474,7 @@
+       // Shared libraries (.so) are copied from the merged_native_libs folder instead
+       from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+       exclude("**/libjsc.so")
+-      exclude("**/libhermesvm.so")
++      exclude("**/libhermesvm.so")
+       into("src/main/jni/prebuilt/lib/debug")
+     }
+ 
+@@ -485,7 +485,7 @@
+         // Shared libraries (.so) are copied from the merged_native_libs folder instead
+         from("$buildDir/intermediates/merged_native_libs/release/out/lib/")
+         exclude("**/libjsc.so")
+-        exclude("**/libhermesvm.so")
++        exclude("**/libhermesvm.so")
+         into("src/main/jni/prebuilt/lib/release")
+     }
+ 
+@@ -561,7 +561,7 @@
+     buildConfigField("boolean", "IS_INTERNAL_BUILD", "false")
+     buildConfigField("int", "EXOPACKAGE_FLAGS", "0")
+     buildConfigField("boolean", "UNSTABLE_ENABLE_FUSEBOX_RELEASE", "false")
+-    buildConfigField("boolean", "ENABLE_PERFETTO", "false")
++    buildConfigField("boolean", "ENABLE_PERFETTO", "true")
+ 
+     resValue("integer", "react_native_dev_server_port", reactNativeDevServerPort())
+ 
+@@ -650,7 +650,7 @@
+     // we produce. The reason behind this is that we want to allow users to pick the
+     // JS engine by specifying a dependency on either `hermes-engine` or `android-jsc`
+     // that will include the necessary .so files to load.
+-    jniLibs.excludes.add("**/libhermesvm.so")
++    jniLibs.excludes.add("**/libhermesvm.so")
+     jniLibs.excludes.add("**/libjsc.so")
+   }
+ 
+@@ -683,6 +683,7 @@
+ tasks.withType<KotlinCompile>().configureEach { exclude("com/facebook/annotationprocessors/**") }
+ 
+ dependencies {
++    implementation("com.tencent:mmkv-static:1.2.14")
+   api(libs.androidx.appcompat)
+   api(libs.androidx.appcompat.resources)
+   api(libs.androidx.autofill)
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/OnLoad.cpp ../../../../discord/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/OnLoad.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/OnLoad.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/cmake-utils/default-app-setup/OnLoad.cpp	2025-06-03 17:08:08
+@@ -33,6 +33,8 @@
+ #include <fbjni/fbjni.h>
+ #include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
+ #include <rncore.h>
++#include <reactperflogger/ReactPerfettoLogger.h>
++#include <android/log.h>
+ 
+ #ifdef REACT_NATIVE_APP_CODEGEN_HEADER
+ #include REACT_NATIVE_APP_CODEGEN_HEADER
+@@ -114,6 +116,10 @@
+ } // namespace facebook::react
+ 
+ JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void*) {
++  __android_log_print(ANDROID_LOG_DEBUG, "NativePerformance 2",
++                   "NativePerformance constructor called");
++  initializePerfetto();
++
+   return facebook::jni::initialize(vm, [] {
+     facebook::react::DefaultTurboModuleManagerDelegate::cxxModuleProvider =
+         &facebook::react::cxxModuleProvider;
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/gradle.properties ../../../../discord/node_modules/react-native/ReactAndroid/gradle.properties
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/gradle.properties	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/gradle.properties	2025-05-27 19:18:14
+@@ -1,4 +1,4 @@
+-VERSION_NAME=0.78.0-discord-16
++VERSION_NAME=0.78.0-discord-13
+ react.internal.publishingGroup=com.facebook.react
+ 
+ android.useAndroidX=true
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/hermes-engine/build.gradle.kts ../../../../discord/node_modules/react-native/ReactAndroid/hermes-engine/build.gradle.kts
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/hermes-engine/build.gradle.kts	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/hermes-engine/build.gradle.kts	2025-06-05 19:40:49
+@@ -5,22 +5,27 @@
+  * LICENSE file in the root directory of this source tree.
+  */
+ 
++import com.facebook.react.tasks.internal.*
+ import de.undercouch.gradle.tasks.download.Download
+-import java.io.FileOutputStream
+ import org.apache.tools.ant.taskdefs.condition.Os
++import org.codehaus.groovy.runtime.memoize.EvictableCache
++import org.gradle.api.file.RelativePath
++import org.gradle.api.file.FileCopyDetails
++import java.io.FileOutputStream
+ 
+ plugins {
+   id("maven-publish")
+   id("signing")
+-  id(libs.plugins.android.library.get().pluginId)
+-  id(libs.plugins.download.get().pluginId)
++    id(libs.plugins.android.library.get().pluginId)
++    id(libs.plugins.download.get().pluginId)  // pick a recent download-task plugin version
+ }
+ 
+ group = "com.facebook.react"
++val rnProject = project(":packages:react-native:ReactAndroid")
+ 
+-version = parent?.properties?.get("publishing_version")?.toString()!!
++version = rnProject.properties?.get("publishing_version")?.toString()!!
+ 
+-val cmakeVersion = parent?.properties?.get("cmake_version")?.toString()!!
++val cmakeVersion = rnProject.properties?.get("cmake_version")?.toString()!!
+ val cmakePath = "${getSDKPath()}/cmake/$cmakeVersion"
+ val cmakeBinaryPath = "${cmakePath}/bin/cmake"
+ 
+@@ -60,10 +65,11 @@
+ // By default we are going to download and unzip hermes inside the /sdks/hermes folder
+ // but you can provide an override for where the hermes source code is located.
+ val buildDir = project.layout.buildDirectory.get().asFile
+-val overrideHermesDir = System.getenv("REACT_NATIVE_OVERRIDE_HERMES_DIR") != null
++
++val overrideHermesDir = true//;
+ val hermesDir =
+     if (overrideHermesDir) {
+-      File(System.getenv("REACT_NATIVE_OVERRIDE_HERMES_DIR"))
++        File("/Users/szymonkapala/work/discord/discord_hermes/hermes")
+     } else {
+       File(reactNativeRootDir, "sdks/hermes")
+     }
+@@ -90,21 +96,22 @@
+ // We inject the JSI directory used inside the Hermes build with the -DJSI_DIR config.
+ val jsiDir = File(reactNativeRootDir, "ReactCommon/jsi")
+ 
++val downloadHermesDest = File(downloadsDir, "hermes.tar.gz")
+ val downloadHermes by
+-    tasks.creating(Download::class) {
++    tasks.registering(Download::class) {
+       src("https://github.com/facebook/hermes/tarball/${hermesVersion}")
+       onlyIfModified(true)
+       overwrite(true)
+       quiet(true)
+       useETag("all")
+       retries(5)
+-      dest(File(downloadsDir, "hermes.tar.gz"))
++      dest(downloadHermesDest)
+     }
+ 
+ val unzipHermes by
+     tasks.registering(Copy::class) {
+       dependsOn(downloadHermes)
+-      from(tarTree(downloadHermes.dest)) {
++      from(tarTree(downloadHermesDest)) {
+         eachFile {
+           // We flatten the unzip as the tarball contains a `facebook-hermes-<SHA>`
+           // folder at the top level.
+@@ -122,15 +129,42 @@
+ // `ConfigureCMake*` tasks depend upon the `ImportHermesc.cmake` file which is actually generated by
+ // the two tasks mentioned before, so we install CMake manually to break the circular dependency.
+ 
++/**
++ * A Task that will just expose an Exec-like task and that offers properties to configure the
++ * standard output and error.
++ */
++abstract class CustomExecTask : Exec() {
++
++    @get:OutputFile @get:Optional abstract val standardOutputFile: RegularFileProperty
++
++    @get:OutputFile @get:Optional abstract val errorOutputFile: RegularFileProperty
++
++    @get:Input @get:Optional abstract val onlyIfProvidedPathDoesNotExists: Property<String>
++
++    override fun exec() {
++        if (onlyIfProvidedPathDoesNotExists.isPresent &&
++            File(onlyIfProvidedPathDoesNotExists.get()).exists()) {
++            return
++        }
++        if (standardOutputFile.isPresent) {
++            standardOutput = FileOutputStream(standardOutputFile.get().asFile)
++        }
++        if (errorOutputFile.isPresent) {
++            errorOutput = FileOutputStream(errorOutputFile.get().asFile)
++        }
++        super.exec()
++    }
++}
++
+ val installCMake by
+-    tasks.registering(Exec::class) {
+-      onlyIf { !File(cmakePath).exists() }
++    tasks.registering(CustomExecTask::class) {
++      onlyIfProvidedPathDoesNotExists.set(cmakePath)
+       commandLine(
+           windowsAwareCommandLine(getSDKManagerPath(), "--install", "cmake;${cmakeVersion}"))
+     }
+ 
+ val configureBuildForHermes by
+-    tasks.registering(Exec::class) {
++    tasks.registering(CustomExecTask::class) {
+       dependsOn(installCMake)
+       workingDir(hermesDir)
+       inputs.dir(hermesDir)
+@@ -146,14 +180,15 @@
+               ".",
+               "-B",
+               hermesBuildDir.toString(),
++              "-DCMAKE_INSTALL_PREFIX=${hermesBuildDir}/hermes-install",
+               "-DJSI_DIR=" + jsiDir.absolutePath,
+-              "-DICU_FOUND=1",
++              "-DCMAKE_BUILD_TYPE=Release",
+           ))
+-      standardOutput = FileOutputStream("$buildDir/configure-hermesc.log")
++      standardOutputFile.set(project.file("$buildDir/configure-hermesc.log"))
+     }
+ 
+ val buildHermesC by
+-    tasks.registering(Exec::class) {
++    tasks.registering(CustomExecTask::class) {
+       dependsOn(configureBuildForHermes)
+       workingDir(hermesDir)
+       inputs.files(hermesBuildOutputFileTree)
+@@ -167,10 +202,50 @@
+           "-j",
+           ndkBuildJobs,
+       )
+-      standardOutput = FileOutputStream("$buildDir/build-hermesc.log")
+-      errorOutput = FileOutputStream("$buildDir/build-hermesc.error.log")
++      standardOutputFile.set(project.file("$buildDir/build-hermesc.log"))
++      errorOutputFile.set(project.file("$buildDir/build-hermesc.error.log"))
+     }
+ 
++
++
++
++// prefabHeadersDir is <buildDir>/prefab-headers
++// we want <buildDir>/prefab/<moduleName>/libs/<ABI>/libhermesvm.so
++val prefabLibsDir = File(buildDir, "prefab/hermesvm/libs")// 2) Now hunt & copy every libhermesvm.so out of obj/<ABI>/ in Debug
++
++// put this in your hermes-engine/build.gradle.kts, *outside* of the android { } block
++// copy both Debug & Release .so into your ReactAndroid prefab area
++val syncHermesSo by tasks.registering(Copy::class) {
++    // make sure hermesc is built first
++    dependsOn("buildHermesC")
++
++    // which ABIs you care about
++    val abis = listOf("arm64-v8a", "x86_64")
++    // both build variants
++    val variants = listOf("Debug", "Release")
++
++    variants.forEach { variant ->
++        // get the concrete directory on disk
++        val cxxDir = buildDir.resolve("intermediates/cxx/$variant")
++        if (cxxDir.exists()) {
++            from(cxxDir) {
++                abis.forEach { abi ->
++                    include("**/obj/$abi/libhermesvm.so")
++                    // grab that ephemeral hash subfolder (e.g. “4p334q2g”)
++                    val hash = cxxDir.listFiles()!!
++                        .first { it.isDirectory }
++                        .name
++                    // mirror the prefab path under hermes-engine
++                    into("refs/packages/react-native/ReactAndroid/hermes-engine/$hash/modules/hermesvm/libs/$abi")
++                }
++            }
++        }
++    }
++
++    // drop them into RN’s intermediates folder
++    into(layout.projectDirectory.dir("node_modules/react-native/ReactAndroid/build/intermediates/cxx"))
++}
++
+ val prepareHeadersForPrefab by
+     tasks.registering(Copy::class) {
+       dependsOn(buildHermesC)
+@@ -194,7 +269,7 @@
+ 
+ fun reactNativeArchitectures(): List<String> {
+   val value = project.properties["reactNativeArchitectures"]
+-  return value?.toString()?.split(",") ?: listOf("armeabi-v7a", "x86", "x86_64", "arm64-v8a")
++  return /*value?.toString()?.split(",") ?: */listOf("armeabi-v7a", "x86", "x86_64", "arm64-v8a")
+ }
+ 
+ repositories {
+@@ -206,8 +281,8 @@
+ }
+ 
+ android {
+-  compileSdk = libs.versions.compileSdk.get().toInt()
+-  buildToolsVersion = libs.versions.buildTools.get()
++  compileSdk = 35
++  buildToolsVersion = "35.0.0"
+   namespace = "com.facebook.hermes"
+ 
+   // Used to override the NDK path/version on internal CI or by allowing
+@@ -222,11 +297,6 @@
+     ndkVersion = libs.versions.ndkVersion.get()
+   }
+ 
+-  compileOptions {
+-    sourceCompatibility = JavaVersion.VERSION_17
+-    targetCompatibility = JavaVersion.VERSION_17
+-  }
+-
+   defaultConfig {
+     minSdk = libs.versions.minSdk.get().toInt()
+ 
+@@ -239,16 +309,19 @@
+             "-DANDROID_STL=c++_shared",
+             "-DANDROID_PIE=True",
+             "-DANDROID_SUPPORT_FLEXIBLE_PAGE_SIZES=ON",
+-            "-DIMPORT_HERMESC=${File(hermesBuildDir, "ImportHermesc.cmake").toString()}",
++            "-DIMPORT_HOST_COMPILERS=${File(hermesBuildDir, "ImportHostCompilers.cmake").toString()}",
+             "-DJSI_DIR=${jsiDir}",
+             "-DHERMES_SLOW_DEBUG=False",
+             "-DHERMES_BUILD_SHARED_JSI=True",
+             "-DHERMES_RELEASE_VERSION=for RN ${version}",
++            "-DCMAKE_BUILD_TYPE=Release",
+             // We intentionally build Hermes with Intl support only. This is to simplify
+             // the build setup and to avoid overcomplicating the build-type matrix.
+-            "-DHERMES_ENABLE_INTL=True")
++            "-DHERMES_ENABLE_INTL=True",
++            "-DHERMES_IS_MOBILE_BUILD:BOOLEAN=ON",
++            )
+ 
+-        targets("libhermes")
++        targets("hermesvm")
+       }
+     }
+     ndk { abiFilters.addAll(reactNativeArchitectures()) }
+@@ -269,7 +342,10 @@
+           // Therefore we're passing as build type Release, to provide a faster build.
+           // This has the (unlucky) side effect of letting AGP call the build
+           // tasks `configureCMakeRelease` while is actually building the debug flavor.
+-          arguments("-DCMAKE_BUILD_TYPE=Release")
++            arguments(
++                "-DCMAKE_BUILD_TYPE=Debug",
++                "-DHERMES_ENABLE_DEBUGGER=1"
++            )
+         }
+       }
+     }
+@@ -277,9 +353,10 @@
+       externalNativeBuild {
+         cmake {
+           arguments(
+-              "-DCMAKE_BUILD_TYPE=MinSizeRel",
++              "-DCMAKE_BUILD_TYPE=Release",
+               // For release builds, we don't want to enable the Hermes Debugger.
+-              "-DHERMES_ENABLE_DEBUGGER=False")
++              "-DHERMES_ENABLE_DEBUGGER=False"
++          )
+         }
+       }
+     }
+@@ -287,7 +364,7 @@
+ 
+   sourceSets.getByName("main") {
+     manifest.srcFile("$hermesDir/android/hermes/src/main/AndroidManifest.xml")
+-    java.srcDir("$hermesDir/lib/Platform/Intl/java")
++    java.srcDirs("$hermesDir/lib/Platform/Intl/java")//, "$hermesDir/lib/Platform/Unicode/java")
+   }
+ 
+   buildFeatures {
+@@ -315,12 +392,42 @@
+   }
+ 
+   prefab {
+-    create("libhermes") {
++    create("hermesvm") {
+       headers = prefabHeadersDir.absolutePath
+-      libraryName = "libhermes"
++      libraryName = "libhermesvm"
++      headerOnly = false
+     }
+   }
++    compileOptions {
++        sourceCompatibility = JavaVersion.VERSION_11
++        targetCompatibility = JavaVersion.VERSION_11
++    }
+ }
++
++
++
++afterEvaluate {
++    tasks.named("preBuild").configure {
++        dependsOn(syncHermesSo)
++    }
++    tasks.named("prefabDebugPackage") {
++        dependsOn(syncHermesSo)
++    }
++    tasks.named("prefabDebugConfigurePackage") {
++        dependsOn(syncHermesSo)
++    }
++    tasks.named("prefabReleaseConfigurePackage") {
++        dependsOn(syncHermesSo)
++    }
++    tasks.named("prefabReleasePackage") {
++        dependsOn(syncHermesSo)
++    }
++    tasks.named("prepareHeadersForPrefab") {
++        dependsOn(syncHermesSo)
++    }
++}
++
++
+ 
+ afterEvaluate {
+   if (!overrideHermesDir) {
+Only in ../../../../discord/node_modules/react-native/ReactAndroid/hermes-engine: node_modules
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/proguard-rules.pro ../../../../discord/node_modules/react-native/ReactAndroid/proguard-rules.pro
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/proguard-rules.pro	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/proguard-rules.pro	2025-06-02 17:36:34
+@@ -74,3 +74,8 @@
+ -keepclassmembers class * {
+     @com.facebook.yoga.annotations.DoNotStrip *;
+ }
++
++
++-keep class android.os.Trace { *; }
++-keep class androidx.tracing.Trace { *; }
++-keep class com.facebook.systrace.Systrace { *; }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/instrumentation/HermesSamplingProfiler.kt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/instrumentation/HermesSamplingProfiler.kt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/instrumentation/HermesSamplingProfiler.kt	2025-06-08 00:11:16
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/instrumentation/HermesSamplingProfiler.kt	2025-06-09 23:29:43
+@@ -12,7 +12,8 @@
+ /** Hermes sampling profiler static JSI API. */
+ public object HermesSamplingProfiler {
+   init {
+-    SoLoader.loadLibrary("jsijniprofiler")
++    System.loadLibrary("hermestooling")
++    //SoLoader.loadLibrary("jsijniprofiler")
+   }
+ 
+   /** Start sample profiling. */
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/reactexecutor/HermesExecutor.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/reactexecutor/HermesExecutor.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/reactexecutor/HermesExecutor.java	2025-06-08 00:23:42
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/reactexecutor/HermesExecutor.java	2025-06-09 23:36:54
+@@ -23,9 +23,10 @@
+   public static void loadLibrary() throws UnsatisfiedLinkError {
+     if (mode_ == null) {
+       // libhermes must be loaded explicitly to invoke its JNI_OnLoad.
+-      SoLoader.loadLibrary("hermes");
+-      SoLoader.loadLibrary("hermes_executor");
+-      // libSoLoader.loadLibrary( is built differently for Debug & Release so we load the proper mode.
++      System.loadLibrary("hermesvm");
++      System.loadLibrary("hermes_tooling");
++      System.loadLibrary("hermes_executor");
++      // libhermes_executor is built differently for Debug & Release so we load the proper mode.
+       mode_ = ReactBuildConfig.DEBUG ? "Debug" : "Release";
+     }
+   }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/unicode/AndroidUnicodeUtils.kt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/unicode/AndroidUnicodeUtils.kt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/unicode/AndroidUnicodeUtils.kt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/hermes/unicode/AndroidUnicodeUtils.kt	2025-05-28 11:56:15
+@@ -17,7 +17,7 @@
+ // rather than the device locale. This is challenging because getApplicationLocale() is only
+ // available via DI.
+ @DoNotStrip
+-public object AndroidUnicodeUtils {
++public object AndroidUnicodeUtils2 {
+ 
+   @DoNotStrip
+   @JvmStatic
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/CoreModulesPackage.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/CoreModulesPackage.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/CoreModulesPackage.java	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/CoreModulesPackage.java	2025-06-02 18:00:07
+@@ -39,6 +39,7 @@
+ import java.util.Collection;
+ import java.util.HashMap;
+ import java.util.Map;
++import android.util.Log;
+ 
+ /**
+  * This is the basic module to support React Native. The debug modules are now in DebugCorePackage.
+@@ -170,7 +171,9 @@
+   }
+ 
+   private UIManagerModule createUIManager(final ReactApplicationContext reactContext) {
++    long startTime = System.currentTimeMillis();
+     ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_START);
++    Log.d("SYSTRACE_TEST", "Tracing enabled: ${" + Systrace.isTracing(4l) + "}");
+     Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "createUIManagerModule");
+     try {
+       if (mLazyViewManagersEnabled) {
+@@ -198,6 +201,8 @@
+     } finally {
+       Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+       ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_END);
++      long endTime = System.currentTimeMillis();
++      System.out.println("createUIManager execution time: " + (endTime - startTime) + " ms");
+     }
+   }
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/bridge/JavaModuleWrapper.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/bridge/JavaModuleWrapper.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/bridge/JavaModuleWrapper.java	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/bridge/JavaModuleWrapper.java	2025-06-05 11:59:27
+@@ -22,6 +22,7 @@
+ import java.util.ArrayList;
+ import java.util.List;
+ import java.util.Map;
++import com.facebook.react.uimanager.UIManagerConstantsCache;
+ 
+ /**
+  * This is part of the glue which wraps a java BaseJavaModule in a C++ NativeModule. This could all
+@@ -118,7 +119,10 @@
+         .flush();
+     ReactMarker.logMarker(GET_CONSTANTS_START, moduleName);
+ 
++
++    Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "module.getModule");
+     BaseJavaModule baseJavaModule = getModule();
++    Systrace.endSection(TRACE_TAG_REACT_JAVA_BRIDGE);
+ 
+     Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "module.getConstants");
+     Map<String, Object> map = baseJavaModule.getConstants();
+@@ -127,6 +131,12 @@
+     Systrace.beginSection(TRACE_TAG_REACT_JAVA_BRIDGE, "create WritableNativeMap");
+     ReactMarker.logMarker(CONVERT_CONSTANTS_START, moduleName);
+     try {
++      /*if (moduleName == "UIManager") {
++        NativeMap res = UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap();
++        if (res != null) {
++          return res;
++        }
++      }*/
+       return Arguments.makeNativeMap(map);
+     } finally {
+       ReactMarker.logMarker(CONVERT_CONSTANTS_END, moduleName);
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/FabricUIManager.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/FabricUIManager.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/FabricUIManager.java	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/FabricUIManager.java	2025-05-27 19:18:14
+@@ -32,7 +32,6 @@
+ import com.facebook.common.logging.FLog;
+ import com.facebook.infer.annotation.ThreadConfined;
+ import com.facebook.proguard.annotations.DoNotStripAny;
+-import com.facebook.react.bridge.Callback;
+ import com.facebook.react.bridge.ColorPropConverter;
+ import com.facebook.react.bridge.GuardedRunnable;
+ import com.facebook.react.bridge.LifecycleEventListener;
+@@ -1182,27 +1181,6 @@
+             return "CLEAR_JS_RESPONDER";
+           }
+         });
+-  }
+-
+-  public void measure(int surfaceId, int reactTag, final Callback callback) {
+-    mMountItemDispatcher.addMountItem(
+-      new MountItem() {
+-        @Override
+-        public void execute(@NonNull MountingManager mountingManager) {
+-          mMountingManager.measure(surfaceId, reactTag, callback);
+-        }
+-
+-        @Override
+-        public int getSurfaceId() {
+-          return surfaceId;
+-        }
+-
+-        @NonNull
+-        @Override
+-        public String toString() {
+-          return "MEASURE_VIEW";
+-        }
+-      });
+   }
+ 
+   @Override
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/MountingManager.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/MountingManager.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/MountingManager.java	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/MountingManager.java	2025-05-27 19:18:14
+@@ -10,18 +10,13 @@
+ import static com.facebook.infer.annotation.ThreadConfined.ANY;
+ import static com.facebook.infer.annotation.ThreadConfined.UI;
+ 
+-import android.graphics.Matrix;
+-import android.graphics.RectF;
+ import android.view.View;
+-import android.view.ViewParent;
+-
+ import androidx.annotation.AnyThread;
+ import androidx.annotation.NonNull;
+ import androidx.annotation.Nullable;
+ import androidx.annotation.UiThread;
+ import com.facebook.common.logging.FLog;
+ import com.facebook.infer.annotation.ThreadConfined;
+-import com.facebook.react.bridge.Callback;
+ import com.facebook.react.bridge.ReactContext;
+ import com.facebook.react.bridge.ReactSoftExceptionLogger;
+ import com.facebook.react.bridge.ReadableArray;
+@@ -35,16 +30,12 @@
+ import com.facebook.react.fabric.events.EventEmitterWrapper;
+ import com.facebook.react.fabric.mounting.mountitems.MountItem;
+ import com.facebook.react.touch.JSResponderHandler;
+-import com.facebook.react.uimanager.PixelUtil;
+-import com.facebook.react.uimanager.RootView;
+ import com.facebook.react.uimanager.RootViewManager;
+-import com.facebook.react.uimanager.RootViewUtil;
+ import com.facebook.react.uimanager.ThemedReactContext;
+ import com.facebook.react.uimanager.ViewManagerRegistry;
+ import com.facebook.react.uimanager.common.ViewUtil;
+ import com.facebook.react.uimanager.events.EventCategoryDef;
+ import com.facebook.yoga.YogaMeasureMode;
+-
+ import java.util.Map;
+ import java.util.Queue;
+ import java.util.concurrent.ConcurrentHashMap;
+@@ -480,71 +471,5 @@
+     return (surfaceId == ViewUtil.NO_SURFACE_ID
+         ? getSurfaceManagerForView(reactTag)
+         : getSurfaceManager(surfaceId));
+-  }
+-
+-  public synchronized void measure(int surfaceId, int reactTag, final Callback callback) {
+-    UiThreadUtil.assertOnUiThread();
+-    SurfaceMountingManager smm = getSurfaceMountingManager(surfaceId, reactTag);
+-    View view = smm.getView(reactTag);
+-    int[] mMeasureBuffer = new int[4];
+-    View rootView = smm.getRootViewIfAttached();
+-    if (rootView == null) {
+-      FLog.e(TAG, "Failed to get root view for surfaceId: %d", surfaceId);
+-      return; // Simply omit the measure call, we assume that we are in the process of tearing down
+-              // the surface and all its children, so we don't care at this point about delivering
+-    }
+-
+-    measure(rootView, view, mMeasureBuffer);
+-
+-    float x = PixelUtil.toDIPFromPixel(mMeasureBuffer[0]);
+-    float y = PixelUtil.toDIPFromPixel(mMeasureBuffer[1]);
+-    float width = PixelUtil.toDIPFromPixel(mMeasureBuffer[2]);
+-    float height = PixelUtil.toDIPFromPixel(mMeasureBuffer[3]);
+-    callback.invoke(0, 0, width, height, x, y);
+-  }
+-
+-  public synchronized void measure(View rootView, View v, int[] outputBuffer) {
+-    computeBoundingBox(rootView, outputBuffer);
+-    int rootX = outputBuffer[0];
+-    int rootY = outputBuffer[1];
+-    computeBoundingBox(v, outputBuffer);
+-    outputBuffer[0] -= rootX;
+-    outputBuffer[1] -= rootY;
+-  }
+-
+-  private void computeBoundingBox(View view, int[] outputBuffer) {
+-    RectF mBoundingBox = new RectF();
+-    mBoundingBox.set(0, 0, view.getWidth(), view.getHeight());
+-    mapRectFromViewToWindowCoords(view, mBoundingBox);
+-
+-    outputBuffer[0] = Math.round(mBoundingBox.left);
+-    outputBuffer[1] = Math.round(mBoundingBox.top);
+-    outputBuffer[2] = Math.round(mBoundingBox.right - mBoundingBox.left);
+-    outputBuffer[3] = Math.round(mBoundingBox.bottom - mBoundingBox.top);
+-  }
+-
+-  private void mapRectFromViewToWindowCoords(View view, RectF rect) {
+-    Matrix matrix = view.getMatrix();
+-    if (!matrix.isIdentity()) {
+-      matrix.mapRect(rect);
+-    }
+-
+-    rect.offset(view.getLeft(), view.getTop());
+-
+-    ViewParent parent = view.getParent();
+-    while (parent instanceof View) {
+-      View parentView = (View) parent;
+-
+-      rect.offset(-parentView.getScrollX(), -parentView.getScrollY());
+-
+-      matrix = parentView.getMatrix();
+-      if (!matrix.isIdentity()) {
+-        matrix.mapRect(rect);
+-      }
+-
+-      rect.offset(parentView.getLeft(), parentView.getTop());
+-
+-      parent = parentView.getParent();
+-    }
+   }
+ }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/SurfaceMountingManager.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/SurfaceMountingManager.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/SurfaceMountingManager.java	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/fabric/mounting/SurfaceMountingManager.java	2025-05-27 19:18:14
+@@ -121,17 +121,6 @@
+     return mSurfaceId;
+   }
+ 
+-  public @Nullable View getRootViewIfAttached() {
+-    ViewState viewState = getNullableViewState(mSurfaceId);
+-    if (viewState == null || viewState.mView == null) {
+-      return null;
+-    }
+-    if (!viewState.mIsRoot) {
+-      return null;
+-    }
+-    return viewState.mView;
+-  }
+-
+   public boolean isRootViewAttached() {
+     return mRootViewAttached;
+   }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/soloader/OpenSourceMergedSoMapping.kt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/soloader/OpenSourceMergedSoMapping.kt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/soloader/OpenSourceMergedSoMapping.kt	2025-06-09 13:49:39
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/soloader/OpenSourceMergedSoMapping.kt	2025-05-27 19:18:14
+@@ -36,7 +36,7 @@
+         "yoga" -> {
+           "reactnative"
+         }
+-        "SoLoader.loadLibrary(",
++        "hermes_executor",
+         "hermesinstancejni",
+         "jsijniprofiler" -> {
+           "hermestooling"
+@@ -52,7 +52,7 @@
+   override public fun invokeJniOnload(libraryName: String): Unit {
+     when (libraryName) {
+       "fabricjni" -> libfabricjni_so()
+-      "SoLoader.loadLibrary(" -> libhermes_executor_so()
++      "hermes_executor" -> libhermes_executor_so()
+       "hermesinstancejni" -> libhermesinstancejni_so()
+       "hermestooling" -> libhermestooling_so()
+       "jscexecutor" -> libjscexecutor_so()
+Only in ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager: UIManagerConstantsCache.java
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/UIManagerModule.java ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/UIManagerModule.java
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/UIManagerModule.java	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/react/uimanager/UIManagerModule.java	2025-06-05 12:00:08
+@@ -12,6 +12,7 @@
+ import static com.facebook.react.uimanager.common.UIManagerType.DEFAULT;
+ import static com.facebook.react.uimanager.common.UIManagerType.FABRIC;
+ 
++import android.util.Log;
+ import android.content.ComponentCallbacks2;
+ import android.content.res.Configuration;
+ import android.view.View;
+@@ -135,21 +136,44 @@
+       List<ViewManager> viewManagersList,
+       int minTimeLeftInFrameForNonBatchedOperationMs) {
+     super(reactContext);
++    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "UIManagerModule.init");
+     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
++    long startTime, endTime;
++
++    startTime = System.currentTimeMillis();
+     mEventDispatcher = new EventDispatcherImpl(reactContext);
++    endTime = System.currentTimeMillis();
++    Log.v(ReactConstants.TAG, "UIManagerModule: EventDispatcherImpl init took " + (endTime - startTime) + " ms");
++
++    startTime = System.currentTimeMillis();
+     mCustomDirectEvents = MapBuilder.newHashMap();
++    endTime = System.currentTimeMillis();
++    Log.v(ReactConstants.TAG, "UIManagerModule: CustomDirectEvents init took " + (endTime - startTime) + " ms");
++
++    startTime = System.currentTimeMillis();
+     mModuleConstants = createConstants(viewManagersList, null, mCustomDirectEvents);
++    endTime = System.currentTimeMillis();
++    Log.v(ReactConstants.TAG, "UIManagerModule: ModuleConstants init took " + (endTime - startTime) + " ms");
++
++    startTime = System.currentTimeMillis();
+     mViewManagerRegistry = new ViewManagerRegistry(viewManagersList);
++    endTime = System.currentTimeMillis();
++    Log.v(ReactConstants.TAG, "UIManagerModule: ViewManagerRegistry init took " + (endTime - startTime) + " ms");
++
++    startTime = System.currentTimeMillis();
+     mUIImplementation =
+-        new UIImplementation(
+-            reactContext,
+-            mViewManagerRegistry,
+-            mEventDispatcher,
+-            minTimeLeftInFrameForNonBatchedOperationMs);
++      new UIImplementation(
++        reactContext,
++        mViewManagerRegistry,
++        mEventDispatcher,
++        minTimeLeftInFrameForNonBatchedOperationMs);
++    endTime = System.currentTimeMillis();
++    Log.v(ReactConstants.TAG, "UIManagerModule: UIImplementation init took " + (endTime - startTime) + " ms");
+ 
+     reactContext.addLifecycleEventListener(this);
+     mEventDispatcher.registerEventEmitter(
+         DEFAULT, getReactApplicationContext().getJSModule(RCTEventEmitter.class));
++    Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+   }
+ 
+   /**
+@@ -248,8 +272,24 @@
+         .arg("Lazy", false)
+         .flush();
+     try {
+-      return UIManagerModuleConstantsHelper.createConstants(
++      // If the background load is still happening, this will wait. If it completed, returns immediately.
++      /*Map<String,Object> cached = UIManagerConstantsCache.getInstance().getCachedConstants();
++      Map<String,Object> cachedCustomBubblingEvents = UIManagerConstantsCache.getInstance().getCachedBubblingEventsTypes();
++      if (cached != null) {
++        if (customBubblingEvents != null) {
++          customBubblingEvents.putAll(cachedCustomBubblingEvents);
++        }
++
++        return cached;
++      }*/
++
++      // Otherwise, build fresh on this thread…
++      Map<String,Object> fresh = UIManagerModuleConstantsHelper.createConstants(
+           viewManagers, customBubblingEvents, customDirectEvents);
++
++      // …and save to MMKV in the background for next time:
++      //UIManagerConstantsCache.getInstance().saveConstantsAndBubblingEventsTypes(fresh, customBubblingEvents);
++      return fresh;
+     } finally {
+       Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
+       ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_CONSTANTS_END);
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/systrace/Systrace.kt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/systrace/Systrace.kt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/systrace/Systrace.kt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/java/com/facebook/systrace/Systrace.kt	2025-06-02 16:35:57
+@@ -18,17 +18,19 @@
+ @Suppress("UNUSED_PARAMETER")
+ public object Systrace {
+ 
+-  public const val TRACE_TAG_REACT_JAVA_BRIDGE: Long = 0L
+-  public const val TRACE_TAG_REACT_APPS: Long = 0L
+-  public const val TRACE_TAG_REACT_FRESCO: Long = 0L
+-  public const val TRACE_TAG_REACT_VIEW: Long = 0L
+-  public const val TRACE_TAG_REACT_JS_VM_CALLS: Long = 0L
++  public const val TRACE_TAG_REACT_JAVA_BRIDGE: Long = (1 shl 10).toLong()
++  public const val TRACE_TAG_REACT_APPS: Long = (1 shl 11).toLong()
++  public const val TRACE_TAG_REACT_FRESCO: Long = (1 shl 12).toLong()
++  public const val TRACE_TAG_REACT_VIEW: Long = (1 shl 13).toLong()
++  public const val TRACE_TAG_REACT_JS_VM_CALLS: Long = (1 shl 14).toLong()
+ 
+   @JvmStatic public fun registerListener(listener: TraceListener?): Unit = Unit
+ 
+   @JvmStatic public fun unregisterListener(listener: TraceListener?): Unit = Unit
+ 
+-  @JvmStatic public fun isTracing(tag: Long): Boolean = false
++  @JvmStatic public fun isTracing(tag: Long): Boolean {
++    return Trace.isEnabled()
++  }
+ 
+   @JvmStatic public fun traceInstant(tag: Long, title: String?, scope: EventScope?): Unit = Unit
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/CMakeLists.txt	2025-06-09 22:59:00
+@@ -148,6 +148,10 @@
+ # SoMerging Utils
+ include(${REACT_ANDROID_DIR}/src/main/jni/first-party/jni-lib-merge/SoMerging-utils.cmake)
+ 
++set(CMAKE_C_FLAGS   "${CMAKE_C_FLAGS}   -flto")
++set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -flto")
++set(CMAKE_EXE_LINKER_FLAGS    "${CMAKE_EXE_LINKER_FLAGS}    -flto")
++set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -flto")
+ # libreactnative.so Dependency
+ #
+ # The React Native Android Library (the .aar) should expose headers only via this target.
+@@ -225,6 +229,8 @@
+ )
+ target_merge_so(reactnative)
+ 
++
++
+ target_link_libraries(reactnative
+           PUBLIC
+             android
+@@ -239,6 +245,7 @@
+ 
+ target_include_directories(reactnative
+         PUBLIC
++        /Users/szymonkapala/work/perfetto/perfetto/sdk
+         $<TARGET_PROPERTY:bridgeless,INTERFACE_INCLUDE_DIRECTORIES>
+         $<TARGET_PROPERTY:bridgelessnativeviewconfig,INTERFACE_INCLUDE_DIRECTORIES>
+         $<TARGET_PROPERTY:callinvokerholder,INTERFACE_INCLUDE_DIRECTORIES>
+@@ -370,7 +377,7 @@
+   glog
+   glog_init
+   gtest_main
+-  hermes-engine::hermesvm
++  hermes-engine::hermesvm
+   hermes_inspector_modern
+   jserrorhandler
+   jsi
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/first-party/hermes/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/first-party/hermes/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/first-party/hermes/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/first-party/hermes/CMakeLists.txt	2025-05-27 23:14:01
+@@ -10,4 +10,4 @@
+ set_target_properties(hermes
+         PROPERTIES
+         IMPORTED_LOCATION
+-        ${CMAKE_CURRENT_SOURCE_DIR}/jni/${ANDROID_ABI}/libhermesvm.so)
++        ${CMAKE_CURRENT_SOURCE_DIR}/jni/${ANDROID_ABI}/libhermesvm.so)
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.cpp	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.cpp	2025-05-27 19:18:14
+@@ -21,8 +21,6 @@
+ #include <react/renderer/mounting/ShadowView.h>
+ #include <react/renderer/mounting/ShadowViewMutation.h>
+ 
+-#include <react/jni/JCallback.h>
+-
+ #include <fbjni/fbjni.h>
+ #include <glog/logging.h>
+ 
+@@ -1074,16 +1072,6 @@
+           "onAllAnimationsComplete");
+ 
+   allAnimationsCompleteJNI(javaUIManager_);
+-}
+-
+-void FabricMountingManager::measure(const facebook::react::ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) {
+-    static auto measureJNI =
+-        JFabricUIManager::javaClassStatic()->getMethod<void(jint, jint, jni::alias_ref<JCallback>)>(
+-        "measure");
+-
+-    auto javaCallback = JCxxCallbackImpl::newObjectCxxArgs(jsCallback);
+-
+-    measureJNI(javaUIManager_, shadowView.surfaceId, shadowView.tag, javaCallback);
+ }
+ 
+ } // namespace facebook::react
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.h ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricMountingManager.h	2025-05-27 19:18:14
+@@ -60,8 +60,6 @@
+ 
+   void onAllAnimationsComplete();
+ 
+-  void measure(const ShadowView& shadowView, std::function<void(folly::dynamic)> callback);
+-
+  private:
+   bool isOnMainThread();
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.cpp	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.cpp	2025-05-27 19:18:14
+@@ -611,14 +611,6 @@
+       shadowView, isJSResponder, blockNativeResponder);
+ }
+ 
+-void FabricUIManagerBinding::schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) {
+-  auto mountingManager = getMountingManager("schedulerMeasure");
+-  if (!mountingManager) {
+-    return;
+-  }
+-  mountingManager->measure(shadowView, jsCallback);
+-};
+-
+ void FabricUIManagerBinding::onAnimationStarted() {
+   auto mountingManager = getMountingManager("onAnimationStarted");
+   if (!mountingManager) {
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.h ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/fabric/FabricUIManagerBinding.h	2025-05-27 19:18:14
+@@ -120,8 +120,6 @@
+       bool isJSResponder,
+       bool blockNativeResponder) override;
+ 
+-  void schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) override;
+-
+   void setPixelDensity(float pointScaleFactor);
+ 
+   void driveCxxAnimations();
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/CMakeLists.txt	2025-05-28 09:06:18
+@@ -26,7 +26,7 @@
+ 
+ target_link_libraries(
+       jsijniprofiler
+-      hermes-engine::hermesvm
++      hermes-engine::hermesvm
+       jsi
+       reactnative
+ )
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/HermesSamplingProfiler.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/HermesSamplingProfiler.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/HermesSamplingProfiler.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/instrumentation/HermesSamplingProfiler.cpp	2025-05-28 11:51:27
+@@ -14,17 +14,23 @@
+ namespace jni {
+ 
+ void HermesSamplingProfiler::enable(jni::alias_ref<jclass>) {
+-  hermes::HermesRuntime::enableSamplingProfiler();
++    auto* hermesAPI =
++            castInterface<hermes::IHermesRootAPI>(hermes::makeHermesRootAPI());
++    hermesAPI->enableSamplingProfiler();
+ }
+ 
+ void HermesSamplingProfiler::disable(jni::alias_ref<jclass>) {
+-  hermes::HermesRuntime::disableSamplingProfiler();
++    auto* hermesAPI =
++            castInterface<hermes::IHermesRootAPI>(hermes::makeHermesRootAPI());
++    hermesAPI->disableSamplingProfiler();
+ }
+ 
+ void HermesSamplingProfiler::dumpSampledTraceToFile(
+     jni::alias_ref<jclass>,
+     std::string filename) {
+-  hermes::HermesRuntime::dumpSampledTraceToFile(filename);
++    auto* hermesAPI =
++            castInterface<hermes::IHermesRootAPI>(hermes::makeHermesRootAPI());
++    hermesAPI->dumpSampledTraceToFile(filename);
+ }
+ 
+ void HermesSamplingProfiler::registerNatives() {
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/CMakeLists.txt	2025-06-09 15:57:08
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/CMakeLists.txt	2025-05-28 09:06:18
+@@ -22,11 +22,11 @@
+         -fexceptions
+ )
+ target_merge_so(hermes_executor)
+-        target_include_directories(hermes_executor PRIVATE .)
++target_include_directories(hermes_executor PRIVATE .)
+ target_link_libraries(
+         hermes_executor
+         hermes_executor_common
+-        hermes-engine::hermesvm
++        hermes-engine::hermesvm
+         jsi
+         reactnative
+ )
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/OnLoad.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/OnLoad.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/OnLoad.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/reactexecutor/OnLoad.cpp	2025-05-30 19:01:01
+@@ -20,88 +20,103 @@
+ 
+ namespace facebook::react {
+ 
+-static void hermesFatalHandler(const std::string& reason) {
+-  LOG(ERROR) << "Hermes Fatal: " << reason << "\n";
+-  __android_log_assert(nullptr, "Hermes", "%s", reason.c_str());
++static void hermesFatalHandler(const std::string& reason)
++{
++    LOG(ERROR) << "Hermes Fatal: " << reason << "\n";
++    __android_log_assert(nullptr, "Hermes", "%s", reason.c_str());
+ }
+ 
+ static std::once_flag flag;
+ 
+-static ::hermes::vm::RuntimeConfig makeRuntimeConfig(jlong heapSizeMB) {
+-  namespace vm = ::hermes::vm;
+-  auto gcConfigBuilder = vm::GCConfig::Builder().withName("RN");
+-  if (heapSizeMB > 0) {
+-    gcConfigBuilder.withMaxHeapSize(heapSizeMB << 20);
+-  }
++static ::hermes::vm::RuntimeConfig makeRuntimeConfig(jlong heapSizeMB)
++{
++    namespace vm = ::hermes::vm;
++    auto gcConfigBuilder = vm::GCConfig::Builder().withName("RN");
++    if (heapSizeMB > 0) {
++        gcConfigBuilder.withMaxHeapSize(heapSizeMB << 20);
++    }
+ 
+-  return vm::RuntimeConfig::Builder()
++    bool isJITON = false;
++
++    LOG(INFO) << "Creating Hermes Runtime with JIT " << (isJITON ? "enabled" : "disabled");
++
++    return vm::RuntimeConfig::Builder()
++      .withEnableJIT(isJITON)
+       .withGCConfig(gcConfigBuilder.build())
+       .withEnableSampleProfiling(true)
+       .build();
+ }
+ 
+-static void installBindings(jsi::Runtime& runtime) {
+-  react::bindNativeLogger(runtime, &reactAndroidLoggingHook);
++static void installBindings(jsi::Runtime& runtime)
++{
++    react::bindNativeLogger(runtime, &reactAndroidLoggingHook);
+ }
+ 
+ class HermesExecutorHolder
+-    : public jni::HybridClass<HermesExecutorHolder, JavaScriptExecutorHolder> {
+- public:
+-  static constexpr auto kJavaDescriptor =
+-      "Lcom/facebook/hermes/reactexecutor/HermesExecutor;";
++  : public jni::HybridClass<HermesExecutorHolder, JavaScriptExecutorHolder> {
++public:
++    static constexpr auto kJavaDescriptor = "Lcom/facebook/hermes/reactexecutor/HermesExecutor;";
+ 
+-  static jni::local_ref<jhybriddata> initHybridDefaultConfig(
+-      jni::alias_ref<jclass>,
+-      bool enableDebugger,
+-      std::string debuggerName) {
+-    JReactMarker::setLogPerfMarkerIfNeeded();
++    static jni::local_ref<jhybriddata> initHybridDefaultConfig(jni::alias_ref<jclass>,
++                                                               bool enableDebugger,
++                                                               std::string debuggerName)
++    {
++        JReactMarker::setLogPerfMarkerIfNeeded();
+ 
+-    std::call_once(flag, []() {
+-      facebook::hermes::HermesRuntime::setFatalHandler(hermesFatalHandler);
+-    });
+-    auto factory = std::make_unique<HermesExecutorFactory>(installBindings);
+-    factory->setEnableDebugger(enableDebugger);
+-    if (!debuggerName.empty()) {
+-      factory->setDebuggerName(debuggerName);
++        std::call_once(flag, []() {
++            auto* fatalHandlerInterface = castInterface<facebook::hermes::ISetFatalHandler>(
++              facebook::hermes::makeHermesRootAPI());
++            if (fatalHandlerInterface) {
++                fatalHandlerInterface->setFatalHandler(hermesFatalHandler);
++            }
++        });
++        auto factory = std::make_unique<HermesExecutorFactory>(installBindings);
++        factory->setEnableDebugger(enableDebugger);
++        if (!debuggerName.empty()) {
++            factory->setDebuggerName(debuggerName);
++        }
++        return makeCxxInstance(std::move(factory));
+     }
+-    return makeCxxInstance(std::move(factory));
+-  }
+ 
+-  static jni::local_ref<jhybriddata> initHybrid(
+-      jni::alias_ref<jclass>,
+-      bool enableDebugger,
+-      std::string debuggerName,
+-      jlong heapSizeMB) {
+-    JReactMarker::setLogPerfMarkerIfNeeded();
+-    auto runtimeConfig = makeRuntimeConfig(heapSizeMB);
+-    std::call_once(flag, []() {
+-      facebook::hermes::HermesRuntime::setFatalHandler(hermesFatalHandler);
+-    });
+-    auto factory = std::make_unique<HermesExecutorFactory>(
+-        installBindings, JSIExecutor::defaultTimeoutInvoker, runtimeConfig);
+-    factory->setEnableDebugger(enableDebugger);
+-    if (!debuggerName.empty()) {
+-      factory->setDebuggerName(debuggerName);
++    static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jclass>,
++                                                  bool enableDebugger,
++                                                  std::string debuggerName,
++                                                  jlong heapSizeMB)
++    {
++        JReactMarker::setLogPerfMarkerIfNeeded();
++        auto runtimeConfig = makeRuntimeConfig(heapSizeMB);
++        std::call_once(flag, []() {
++            auto* fatalHandlerInterface = castInterface<facebook::hermes::ISetFatalHandler>(
++              facebook::hermes::makeHermesRootAPI());
++            if (fatalHandlerInterface) {
++                fatalHandlerInterface->setFatalHandler(hermesFatalHandler);
++            }
++        });
++        auto factory = std::make_unique<HermesExecutorFactory>(
++          installBindings, JSIExecutor::defaultTimeoutInvoker, runtimeConfig);
++        factory->setEnableDebugger(enableDebugger);
++        if (!debuggerName.empty()) {
++            factory->setDebuggerName(debuggerName);
++        }
++        return makeCxxInstance(std::move(factory));
+     }
+-    return makeCxxInstance(std::move(factory));
+-  }
+ 
+-  static void registerNatives() {
+-    registerHybrid(
+-        {makeNativeMethod("initHybrid", HermesExecutorHolder::initHybrid),
+-         makeNativeMethod(
+-             "initHybridDefaultConfig",
+-             HermesExecutorHolder::initHybridDefaultConfig)});
+-  }
++    static void registerNatives()
++    {
++        registerHybrid({makeNativeMethod("initHybrid", HermesExecutorHolder::initHybrid),
++                        makeNativeMethod("initHybridDefaultConfig",
++                                         HermesExecutorHolder::initHybridDefaultConfig)});
++    }
+ 
+- private:
+-  friend HybridBase;
+-  using HybridBase::HybridBase;
++private:
++    friend HybridBase;
++    using HybridBase::HybridBase;
+ };
+ 
+ } // namespace facebook::react
+ 
+-JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved) {
+-  return facebook::jni::initialize(
++JNIEXPORT jint JNICALL JNI_OnLoad(JavaVM* vm, void* reserved)
++{
++    return facebook::jni::initialize(
+       vm, [] { facebook::react::HermesExecutorHolder::registerNatives(); });
+ }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/tooling/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/tooling/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/tooling/CMakeLists.txt	2025-06-09 15:24:25
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/hermes/tooling/CMakeLists.txt	2025-05-28 09:06:18
+@@ -28,7 +28,7 @@
+         PUBLIC
+         reactnative
+         jsi
+-        hermes-engine::hermesvm
++        hermes-engine::hermesvm
+ )
+ target_include_directories(hermestooling
+         PUBLIC
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/CMakeLists.txt	2025-06-09 21:40:39
+@@ -6,11 +6,15 @@
+ cmake_minimum_required(VERSION 3.13)
+ set(CMAKE_VERBOSE_MAKEFILE on)
+ 
+-file(GLOB reactnativejni_SRC CONFIGURE_DEPENDS *.cpp)
++file(GLOB reactnativejni_SRC CONFIGURE_DEPENDS
++  *.cpp
++  ${REACT_COMMON_DIR}/reactperflogger/reactperflogger/ReactPerfetto.cpp
++  )
+ 
+ add_compile_options(
+         -fexceptions
+         -Wno-unused-lambda-capture
++        -DWITH_PERFETTO=1
+         -std=c++20)
+ 
+ ######################
+@@ -27,7 +31,9 @@
+ target_merge_so(reactnativejni)
+ 
+ # TODO This should not be ../../
+-target_include_directories(reactnativejni PUBLIC ../../)
++target_include_directories(reactnativejni PUBLIC ../../
++ /Users/szymonkapala/work/perfetto/perfetto/sdk
++)
+ 
+ target_link_libraries(reactnativejni
+         android
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/JavaModuleWrapper.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/JavaModuleWrapper.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/JavaModuleWrapper.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/JavaModuleWrapper.cpp	2025-06-04 12:04:49
+@@ -16,6 +16,7 @@
+ #include <cxxreact/NativeModule.h>
+ #include <fbjni/fbjni.h>
+ #include <folly/json.h>
++#include <cxxreact/TraceSection.h>
+ 
+ #ifdef WITH_FBSYSTRACE
+ #include <fbsystrace.h>
+@@ -100,12 +101,15 @@
+ }
+ 
+ folly::dynamic JavaNativeModule::getConstants() {
++  TraceSection s("JavaNativeModule::getConstants", "module", getName());
+   static auto constantsMethod =
+       wrapper_->getClass()->getMethod<NativeMap::javaobject()>("getConstants");
+   auto constants = constantsMethod(wrapper_);
+   if (!constants) {
+     return nullptr;
+   } else {
++    TraceSection s2(
++        "JavaNativeModule::getConstants::consume", "module", getName());
+     return cthis(constants)->consume();
+   }
+ }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/OnLoad.cpp ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/OnLoad.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/OnLoad.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/jni/OnLoad.cpp	2025-06-03 17:44:01
+@@ -25,6 +25,9 @@
+ #include "WritableNativeArray.h"
+ #include "WritableNativeMap.h"
+ 
++#include <android/log.h>
++#include <reactperflogger/ReactPerfetto.h>
++
+ #ifndef WITH_GLOGINIT
+ #define WITH_GLOGINIT 1
+ #endif
+@@ -71,6 +74,13 @@
+ } // namespace
+ 
+ extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
++   __android_log_print(ANDROID_LOG_DEBUG, "NativePerformance",
++                   "NativePerformance constructor called");
++    #ifdef WITH_PERFETTO
++     initializePerfetto();
++     __android_log_print(ANDROID_LOG_DEBUG, "NativePerformance",
++                   "NativePerformance constructor called and done with perfetto");
++    #endif
+ #ifdef WITH_XPLATINIT
+   return facebook::xplat::initialize(vm, [] {
+ #else
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/runtime/hermes/jni/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/runtime/hermes/jni/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactAndroid/src/main/jni/react/runtime/hermes/jni/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactAndroid/src/main/jni/react/runtime/hermes/jni/CMakeLists.txt	2025-05-28 09:06:18
+@@ -26,7 +26,7 @@
+ target_merge_so(hermesinstancejni)
+ 
+ target_link_libraries(hermesinstancejni
+-        hermes-engine::hermesvm
++        hermes-engine::hermesvm
+         fbjni
+         bridgelesshermes
+         reactnative
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/React-FabricComponents.podspec ../../../../discord/node_modules/react-native/ReactCommon/React-FabricComponents.podspec
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/React-FabricComponents.podspec	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/React-FabricComponents.podspec	2025-05-27 19:18:14
+@@ -113,9 +113,7 @@
+       sss.dependency             folly_dep_name, folly_version
+       sss.compiler_flags       = folly_compiler_flags
+       sss.source_files         = "react/renderer/components/modal/**/*.{m,mm,cpp,h}"
+-      sss.exclude_files        = "react/renderer/components/modal/tests",
+-                                 "react/renderer/components/modal/platform/android",
+-                                 "react/renderer/components/modal/platform/cxx"
++      sss.exclude_files        = "react/renderer/components/modal/tests"
+       sss.header_dir           = "react/renderer/components/modal"
+     end
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/CMakeLists.txt	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/CMakeLists.txt	2025-06-09 19:09:02
+@@ -11,12 +11,22 @@
+         -frtti
+         -std=c++20
+         -Wno-unused-lambda-capture
++        -DWITH_PERFETTO=1
+         -DLOG_TAG=\"ReactNative\")
+ 
+-file(GLOB react_cxxreact_SRC CONFIGURE_DEPENDS *.cpp)
++file(GLOB react_cxxreact_SRC CONFIGURE_DEPENDS
++        *.cpp
++         ${REACT_COMMON_DIR}/reactperflogger/reactperflogger/ReactPerfettoCategories.cpp
++        /Users/szymonkapala/work/perfetto/perfetto/sdk/perfetto.cc
++)
+ add_library(react_cxxreact OBJECT ${react_cxxreact_SRC})
+ 
+-target_include_directories(react_cxxreact PUBLIC ${REACT_COMMON_DIR})
++
++target_include_directories(react_cxxreact PUBLIC
++        ${REACT_COMMON_DIR}
++        /Users/szymonkapala/work/perfetto/perfetto/sdk
++        ${REACT_COMMON_DIR}/reactperflogger
++)
+ 
+ target_link_libraries(react_cxxreact
+         boost
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/ModuleRegistry.cpp ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/ModuleRegistry.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/ModuleRegistry.cpp	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/ModuleRegistry.cpp	2025-06-04 10:16:55
+@@ -17,222 +17,233 @@
+ 
+ namespace {
+ 
+-std::string normalizeName(std::string name) {
+-  // TODO mhorowitz #10487027: This is super ugly.  We should just
+-  // change iOS to emit normalized names, drop the "RK..." from
+-  // names hardcoded in Android, and then delete this and the
+-  // similar hacks in js.
+-  if (name.compare(0, 3, "RCT") == 0) {
+-    return name.substr(3);
+-  } else if (name.compare(0, 2, "RK") == 0) {
+-    return name.substr(2);
+-  }
+-  return name;
++std::string normalizeName(std::string name)
++{
++    // TODO mhorowitz #10487027: This is super ugly.  We should just
++    // change iOS to emit normalized names, drop the "RK..." from
++    // names hardcoded in Android, and then delete this and the
++    // similar hacks in js.
++    if (name.compare(0, 3, "RCT") == 0) {
++        return name.substr(3);
++    }
++    else if (name.compare(0, 2, "RK") == 0) {
++        return name.substr(2);
++    }
++    return name;
+ }
+ 
+ } // namespace
+ 
+-ModuleRegistry::ModuleRegistry(
+-    std::vector<std::unique_ptr<NativeModule>> modules,
+-    ModuleNotFoundCallback callback)
+-    : modules_{std::move(modules)}, moduleNotFoundCallback_{callback} {}
++ModuleRegistry::ModuleRegistry(std::vector<std::unique_ptr<NativeModule>> modules,
++                               ModuleNotFoundCallback callback)
++  : modules_{std::move(modules)}
++  , moduleNotFoundCallback_{callback}
++{
++}
+ 
+-void ModuleRegistry::updateModuleNamesFromIndex(size_t index) {
+-  for (; index < modules_.size(); index++) {
+-    std::string name = normalizeName(modules_[index]->getName());
+-    modulesByName_[name] = index;
+-  }
++void ModuleRegistry::updateModuleNamesFromIndex(size_t index)
++{
++    for (; index < modules_.size(); index++) {
++        std::string name = normalizeName(modules_[index]->getName());
++        modulesByName_[name] = index;
++    }
+ }
+ 
+-void ModuleRegistry::registerModules(
+-    std::vector<std::unique_ptr<NativeModule>> modules) {
+-  TraceSection s_("ModuleRegistry::registerModules");
+-  // Noop if there are no NativeModules to add
+-  if (modules.empty()) {
+-    return;
+-  }
++void ModuleRegistry::registerModules(std::vector<std::unique_ptr<NativeModule>> modules)
++{
++    TraceSection s_("ModuleRegistry::registerModules");
++    // Noop if there are no NativeModules to add
++    if (modules.empty()) {
++        return;
++    }
+ 
+-  if (modules_.empty() && unknownModules_.empty()) {
+-    modules_ = std::move(modules);
+-  } else {
+-    size_t modulesSize = modules_.size();
+-    size_t addModulesSize = modules.size();
+-    bool addToNames = !modulesByName_.empty();
+-    modules_.reserve(modulesSize + addModulesSize);
+-    std::move(modules.begin(), modules.end(), std::back_inserter(modules_));
+-    if (!unknownModules_.empty()) {
+-      for (size_t index = modulesSize; index < modulesSize + addModulesSize;
+-           index++) {
+-        std::string name = normalizeName(modules_[index]->getName());
+-        auto it = unknownModules_.find(name);
+-        if (it != unknownModules_.end()) {
+-          throw std::runtime_error(folly::to<std::string>(
+-              "module ",
+-              name,
+-              " was required without being registered and is now being registered."));
+-        } else if (addToNames) {
+-          modulesByName_[name] = index;
++    if (modules_.empty() && unknownModules_.empty()) {
++        modules_ = std::move(modules);
++    }
++    else {
++        size_t modulesSize = modules_.size();
++        size_t addModulesSize = modules.size();
++        bool addToNames = !modulesByName_.empty();
++        modules_.reserve(modulesSize + addModulesSize);
++        std::move(modules.begin(), modules.end(), std::back_inserter(modules_));
++        if (!unknownModules_.empty()) {
++            for (size_t index = modulesSize; index < modulesSize + addModulesSize; index++) {
++                std::string name = normalizeName(modules_[index]->getName());
++                auto it = unknownModules_.find(name);
++                if (it != unknownModules_.end()) {
++                    throw std::runtime_error(folly::to<std::string>(
++                      "module ",
++                      name,
++                      " was required without being registered and is now being registered."));
++                }
++                else if (addToNames) {
++                    modulesByName_[name] = index;
++                }
++            }
+         }
+-      }
+-    } else if (addToNames) {
+-      updateModuleNamesFromIndex(modulesSize);
++        else if (addToNames) {
++            updateModuleNamesFromIndex(modulesSize);
++        }
+     }
+-  }
+ }
+ 
+-std::vector<std::string> ModuleRegistry::moduleNames() {
+-  TraceSection s_("ModuleRegistry::moduleNames");
+-  std::vector<std::string> names;
+-  for (size_t i = 0; i < modules_.size(); i++) {
+-    std::string name = normalizeName(modules_[i]->getName());
+-    modulesByName_[name] = i;
+-    names.push_back(std::move(name));
+-  }
+-  return names;
++std::vector<std::string> ModuleRegistry::moduleNames()
++{
++    TraceSection s_("ModuleRegistry::moduleNames");
++    std::vector<std::string> names;
++    for (size_t i = 0; i < modules_.size(); i++) {
++        std::string name = normalizeName(modules_[i]->getName());
++        modulesByName_[name] = i;
++        names.push_back(std::move(name));
++    }
++    return names;
+ }
+ 
+-std::optional<ModuleConfig> ModuleRegistry::getConfig(const std::string& name) {
+-  TraceSection s("ModuleRegistry::getConfig", "module", name);
++std::optional<ModuleConfig> ModuleRegistry::getConfig(const std::string& name)
++{
++    TraceSection s("ModuleRegistry::getConfig", "module", name);
+ 
+-  // Initialize modulesByName_
+-  if (modulesByName_.empty() && !modules_.empty()) {
+-    moduleNames();
+-  }
++    // Initialize modulesByName_
++    if (modulesByName_.empty() && !modules_.empty()) {
++        moduleNames();
++    }
+ 
+-  auto it = modulesByName_.find(name);
++    auto it = modulesByName_.find(name);
+ 
+-  if (it == modulesByName_.end()) {
+-    if (unknownModules_.find(name) != unknownModules_.end()) {
+-      BridgeNativeModulePerfLogger::moduleJSRequireBeginningFail(name.c_str());
+-      BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
+-      return std::nullopt;
+-    }
++    if (it == modulesByName_.end()) {
++        if (unknownModules_.find(name) != unknownModules_.end()) {
++            BridgeNativeModulePerfLogger::moduleJSRequireBeginningFail(name.c_str());
++            BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
++            return std::nullopt;
++        }
+ 
+-    if (!moduleNotFoundCallback_) {
+-      unknownModules_.insert(name);
+-      BridgeNativeModulePerfLogger::moduleJSRequireBeginningFail(name.c_str());
+-      BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
+-      return std::nullopt;
+-    }
++        if (!moduleNotFoundCallback_) {
++            unknownModules_.insert(name);
++            BridgeNativeModulePerfLogger::moduleJSRequireBeginningFail(name.c_str());
++            BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
++            return std::nullopt;
++        }
+ 
+-    BridgeNativeModulePerfLogger::moduleJSRequireBeginningEnd(name.c_str());
++        BridgeNativeModulePerfLogger::moduleJSRequireBeginningEnd(name.c_str());
+ 
+-    bool wasModuleLazilyLoaded = moduleNotFoundCallback_(name);
+-    it = modulesByName_.find(name);
++        bool wasModuleLazilyLoaded = moduleNotFoundCallback_(name);
++        it = modulesByName_.find(name);
+ 
+-    bool wasModuleRegisteredWithRegistry =
+-        wasModuleLazilyLoaded && it != modulesByName_.end();
++        bool wasModuleRegisteredWithRegistry = wasModuleLazilyLoaded && it != modulesByName_.end();
+ 
+-    if (!wasModuleRegisteredWithRegistry) {
+-      BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
+-      unknownModules_.insert(name);
+-      return std::nullopt;
++        if (!wasModuleRegisteredWithRegistry) {
++            BridgeNativeModulePerfLogger::moduleJSRequireEndingStart(name.c_str());
++            unknownModules_.insert(name);
++            return std::nullopt;
++        }
+     }
+-  } else {
+-    BridgeNativeModulePerfLogger::moduleJSRequireBeginningEnd(name.c_str());
+-  }
++    else {
++        BridgeNativeModulePerfLogger::moduleJSRequireBeginningEnd(name.c_str());
++    }
+ 
+-  // If we've gotten this far, then we've signaled moduleJSRequireBeginningEnd
++    // If we've gotten this far, then we've signaled moduleJSRequireBeginningEnd
+ 
+-  size_t index = it->second;
++    size_t index = it->second;
+ 
+-  CHECK(index < modules_.size());
+-  NativeModule* module = modules_[index].get();
++    CHECK(index < modules_.size());
++    NativeModule* module = modules_[index].get();
+ 
+-  // string name, object constants, array methodNames (methodId is index),
+-  // [array promiseMethodIds], [array syncMethodIds]
+-  folly::dynamic config = folly::dynamic::array(name);
++    // string name, object constants, array methodNames (methodId is index),
++    // [array promiseMethodIds], [array syncMethodIds]
++    folly::dynamic config = folly::dynamic::array(name);
+ 
+-  {
+-    TraceSection s_("ModuleRegistry::getConstants", "module", name);
+-    /**
+-     * In the case that there are constants, we'll initialize the NativeModule,
+-     * and signal moduleJSRequireEndingStart. Otherwise, we'll simply signal the
+-     * event. The Module will be initialized when we invoke one of its
+-     * NativeModule methods.
+-     */
+-    config.push_back(module->getConstants());
+-  }
++    {
++        TraceSection s_("ModuleRegistry::getConstants", "module-kkk-", name);
++        /**
++         * In the case that there are constants, we'll initialize the NativeModule,
++         * and signal moduleJSRequireEndingStart. Otherwise, we'll simply signal the
++         * event. The Module will be initialized when we invoke one of its
++         * NativeModule methods.
++         */
+ 
+-  {
+-    TraceSection s_("ModuleRegistry::getMethods", "module", name);
+-    std::vector<MethodDescriptor> methods = module->getMethods();
++        config.push_back(module->getConstants());
++    }
+ 
+-    folly::dynamic methodNames = folly::dynamic::array;
+-    folly::dynamic promiseMethodIds = folly::dynamic::array;
+-    folly::dynamic syncMethodIds = folly::dynamic::array;
++    {
++        TraceSection s_("ModuleRegistry::getMethods", "module", name);
++        std::vector<MethodDescriptor> methods = module->getMethods();
+ 
+-    for (auto& descriptor : methods) {
+-      // TODO: #10487027 compare tags instead of doing string comparison?
+-      methodNames.push_back(std::move(descriptor.name));
+-      if (descriptor.type == "promise") {
+-        promiseMethodIds.push_back(methodNames.size() - 1);
+-      } else if (descriptor.type == "sync") {
+-        syncMethodIds.push_back(methodNames.size() - 1);
+-      }
+-    }
++        folly::dynamic methodNames = folly::dynamic::array;
++        folly::dynamic promiseMethodIds = folly::dynamic::array;
++        folly::dynamic syncMethodIds = folly::dynamic::array;
+ 
+-    if (!methodNames.empty()) {
+-      config.push_back(std::move(methodNames));
+-      if (!promiseMethodIds.empty() || !syncMethodIds.empty()) {
+-        config.push_back(std::move(promiseMethodIds));
+-        if (!syncMethodIds.empty()) {
+-          config.push_back(std::move(syncMethodIds));
++        for (auto& descriptor : methods) {
++            // TODO: #10487027 compare tags instead of doing string comparison?
++            methodNames.push_back(std::move(descriptor.name));
++            if (descriptor.type == "promise") {
++                promiseMethodIds.push_back(methodNames.size() - 1);
++            }
++            else if (descriptor.type == "sync") {
++                syncMethodIds.push_back(methodNames.size() - 1);
++            }
+         }
+-      }
++
++        if (!methodNames.empty()) {
++            config.push_back(std::move(methodNames));
++            if (!promiseMethodIds.empty() || !syncMethodIds.empty()) {
++                config.push_back(std::move(promiseMethodIds));
++                if (!syncMethodIds.empty()) {
++                    config.push_back(std::move(syncMethodIds));
++                }
++            }
++        }
+     }
+-  }
+ 
+-  if (config.size() == 2 && config[1].empty()) {
+-    // no constants or methods
+-    return std::nullopt;
+-  } else {
+-    return ModuleConfig{index, std::move(config)};
+-  }
++    if (config.size() == 2 && config[1].empty()) {
++        // no constants or methods
++        return std::nullopt;
++    }
++    else {
++        return ModuleConfig{index, std::move(config)};
++    }
+ }
+ 
+-std::string ModuleRegistry::getModuleName(unsigned int moduleId) {
+-  if (moduleId >= modules_.size()) {
+-    throw std::runtime_error(folly::to<std::string>(
+-        "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
+-  }
++std::string ModuleRegistry::getModuleName(unsigned int moduleId)
++{
++    if (moduleId >= modules_.size()) {
++        throw std::runtime_error(folly::to<std::string>(
++          "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
++    }
+ 
+-  return modules_[moduleId]->getName();
++    return modules_[moduleId]->getName();
+ }
+ 
+-std::string ModuleRegistry::getModuleSyncMethodName(
+-    unsigned int moduleId,
+-    unsigned int methodId) {
+-  if (moduleId >= modules_.size()) {
+-    throw std::runtime_error(folly::to<std::string>(
+-        "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
+-  }
++std::string ModuleRegistry::getModuleSyncMethodName(unsigned int moduleId, unsigned int methodId)
++{
++    if (moduleId >= modules_.size()) {
++        throw std::runtime_error(folly::to<std::string>(
++          "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
++    }
+ 
+-  return modules_[moduleId]->getSyncMethodName(methodId);
++    return modules_[moduleId]->getSyncMethodName(methodId);
+ }
+ 
+-void ModuleRegistry::callNativeMethod(
+-    unsigned int moduleId,
+-    unsigned int methodId,
+-    folly::dynamic&& params,
+-    int callId) {
+-  if (moduleId >= modules_.size()) {
+-    throw std::runtime_error(folly::to<std::string>(
+-        "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
+-  }
+-  modules_[moduleId]->invoke(methodId, std::move(params), callId);
++void ModuleRegistry::callNativeMethod(unsigned int moduleId,
++                                      unsigned int methodId,
++                                      folly::dynamic&& params,
++                                      int callId)
++{
++    if (moduleId >= modules_.size()) {
++        throw std::runtime_error(folly::to<std::string>(
++          "moduleId ", moduleId, " out of range [0..", modules_.size(), ")"));
++    }
++    modules_[moduleId]->invoke(methodId, std::move(params), callId);
+ }
+ 
+-MethodCallResult ModuleRegistry::callSerializableNativeHook(
+-    unsigned int moduleId,
+-    unsigned int methodId,
+-    folly::dynamic&& params) {
+-  if (moduleId >= modules_.size()) {
+-    throw std::runtime_error(folly::to<std::string>(
+-        "moduleId ", moduleId, "out of range [0..", modules_.size(), ")"));
+-  }
+-  return modules_[moduleId]->callSerializableNativeHook(
+-      methodId, std::move(params));
++MethodCallResult ModuleRegistry::callSerializableNativeHook(unsigned int moduleId,
++                                                            unsigned int methodId,
++                                                            folly::dynamic&& params)
++{
++    if (moduleId >= modules_.size()) {
++        throw std::runtime_error(
++          folly::to<std::string>("moduleId ", moduleId, "out of range [0..", modules_.size(), ")"));
++    }
++    return modules_[moduleId]->callSerializableNativeHook(methodId, std::move(params));
+ }
+ 
+ } // namespace facebook::react
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/TraceSection.h ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/TraceSection.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/cxxreact/TraceSection.h	2025-05-27 19:18:14
++++ ../../../../discord/node_modules/react-native/ReactCommon/cxxreact/TraceSection.h	2025-06-09 22:16:43
+@@ -7,12 +7,22 @@
+ 
+ #pragma once
+ 
++//#define WITH_PERFETTO 1
++
+ #ifdef WITH_FBSYSTRACE
+ #include <fbsystrace.h>
+ #endif
+ 
+ #ifdef WITH_PERFETTO
+-#include <perfetto.h>
++#if __has_include(<reactnative/perfetto.h>)
++# include <reactnative/perfetto.h>
++#elif __has_include(<perfetto.h>)
++# include <perfetto.h>
++#elif __has_include(<cxxreact/perfetto.h>)
++# include <cxxreact/perfetto.h>
++#else
++# error "Neither <reactnative/perfetto.h> nor <perfetto.h> could be found"
++#endif
+ #include <reactperflogger/ReactPerfettoCategories.h>
+ #endif
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/executor/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/hermes/executor/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/executor/CMakeLists.txt	2025-06-09 16:56:38
++++ ../../../../discord/node_modules/react-native/ReactCommon/hermes/executor/CMakeLists.txt	2025-05-28 09:06:18
+@@ -16,7 +16,7 @@
+ )
+ target_include_directories(hermes_executor_common PUBLIC .)
+ target_link_libraries(hermes_executor_common
+-        hermes-engine::hermesvm
++        hermes-engine::hermesvm
+         hermes_inspector_modern
+         jsi
+         reactnative
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/executor/HermesExecutorFactory.cpp ../../../../discord/node_modules/react-native/ReactCommon/hermes/executor/HermesExecutorFactory.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/executor/HermesExecutorFactory.cpp	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/hermes/executor/HermesExecutorFactory.cpp	2025-06-06 22:52:05
+@@ -14,9 +14,20 @@
+ #include <jsinspector-modern/InspectorFlags.h>
+ 
+ #include <hermes/inspector-modern/chrome/HermesRuntimeTargetDelegate.h>
+-#include <hermes/inspector-modern/chrome/Registration.h>
+-#include <hermes/inspector/RuntimeAdapter.h>
+ 
++#include <android/log.h>
++#include <perfetto.h>  // Your include path may differ!
++
++
++
++#define LOG_TAG "MyNativeModule"
++#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
++#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
++#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
++#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
++#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
++
++
+ using namespace facebook::hermes;
+ using namespace facebook::jsi;
+ 
+@@ -24,41 +35,108 @@
+ 
+ namespace {
+ 
+-#ifdef HERMES_ENABLE_DEBUGGER
++// Helper to parse an optional JS object {key: value, ...} to a C++ vector for TRACE_EVENT
++static std::vector<std::string> parseEventArgs(jsi::Runtime& rt, const jsi::Value& val) {
++    std::vector<std::string> args;
++    if (val.isObject()) {
++        auto obj = val.asObject(rt);
++        auto propNames = obj.getPropertyNames(rt);
++        for (size_t i = 0; i < propNames.size(rt); ++i) {
++            auto key = propNames.getValueAtIndex(rt, i).asString(rt).utf8(rt);
++            auto value = obj.getProperty(rt, key.c_str()).asString(rt).utf8(rt);
++            args.push_back(key);
++            args.push_back(value);
++        }
++    }
++    return args;
++}
+ 
+-class HermesExecutorRuntimeAdapter
+-    : public facebook::hermes::inspector_modern::RuntimeAdapter {
+- public:
+-  HermesExecutorRuntimeAdapter(
+-      std::shared_ptr<HermesRuntime> runtime,
+-      std::shared_ptr<MessageQueueThread> thread)
+-      : runtime_(runtime), thread_(std::move(thread)) {}
++void installSystraceJSIGlobals(jsi::Runtime& runtime) {
++    // is tracing
++    runtime.global().setProperty(
++        runtime, "nativeTraceIsTracing",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceIsTracing"), 1,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++                //int32_t traceTag = args[0].asNumber();
++                return true;//jsi::Value(traceTag == TRACE_TAG_REACT_APPS);
++            }));
+ 
+-  virtual ~HermesExecutorRuntimeAdapter() = default;
++    // beginEvent
++    runtime.global().setProperty(
++        runtime, "nativeTraceBeginSection",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceBeginSection"), 3,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++                auto eventName = args[1].asString(rt).utf8(rt);
++                auto argVec = parseEventArgs(rt, args[2]);
++                // Unpack pairs for TRACE_EVENT
++                if (argVec.empty()) {
++                    //TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()});
++                } else {
++                    // up to 2 custom args for demo
++                   // TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()},
++                    //    argVec[0].c_str(), argVec.size() > 1 ? argVec[1].c_str() : "");
++                }
++                return jsi::Value::undefined();
++            }));
+ 
+-  HermesRuntime& getRuntime() override {
+-    return *runtime_;
+-  }
++    // endEvent
++    runtime.global().setProperty(
++        runtime, "nativeTraceEndSection",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceEndSection"), 2,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++                //TRACE_EVENT_END("react-native");
++                return jsi::Value::undefined();
++            }));
+ 
+-  void tickleJs() override {
+-    thread_->runOnQueue(
+-        [weakRuntime = std::weak_ptr<HermesRuntime>(runtime_)]() {
+-          auto runtime = weakRuntime.lock();
+-          if (!runtime) {
+-            return;
+-          }
+-          jsi::Function func =
+-              runtime->global().getPropertyAsFunction(*runtime, "__tickleJs");
+-          func.call(*runtime);
+-        });
+-  }
++    // beginAsyncEvent
++    runtime.global().setProperty(
++        runtime, "nativeTraceBeginAsyncSection",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceBeginAsyncSection"), 4,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++                //auto eventName = args[1].asString(rt).utf8(rt);
++               // int32_t cookie = args[2].asNumber();
++                // NOTE: Perfetto async support may use different macros, demo below.
++               // TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()}, "cookie", std::to_string(cookie).c_str());
++                return jsi::Value::undefined();
++            }));
+ 
+- private:
+-  std::shared_ptr<HermesRuntime> runtime_;
++    // endAsyncEvent
++    runtime.global().setProperty(
++        runtime, "nativeTraceEndAsyncSection",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceEndAsyncSection"), 4,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++                //auto eventName = args[1].asString(rt).utf8(rt);
++                //int32_t cookie = args[2].asNumber();
++                // Again, cookie is not natively handled by TRACE_EVENT_END, just for symmetry.
++               // TRACE_EVENT_END("react-native");
++                return jsi::Value::undefined();
++            }));
+ 
+-  std::shared_ptr<MessageQueueThread> thread_;
+-};
++    // counterEvent
++    runtime.global().setProperty(
++        runtime, "nativeTraceCounter",
++        jsi::Function::createFromHostFunction(
++            runtime, jsi::PropNameID::forAscii(runtime, "nativeTraceCounter"), 3,
++            [](jsi::Runtime& rt, const jsi::Value&, const jsi::Value* args, size_t) {
++              //  auto eventName = args[1].asString(rt).utf8(rt);
++              //  double value = args[2].asNumber();
++                // Perfetto counters usually use TRACE_COUNTER for newer versions, not always present.
++                // You might need a custom macro here, or use a standard event for demo:
++             //   TRACE_EVENT_BEGIN("react-native", perfetto::DynamicString{eventName.c_str()}, "value", std::to_string(value).c_str());
++              //  TRACE_EVENT_END("react-native");
++                return jsi::Value::undefined();
++            }));
++}
+ 
++#ifdef HERMES_ENABLE_DEBUGGER
++
++
++
+ #endif // HERMES_ENABLE_DEBUGGER
+ 
+ struct ReentrancyCheck {
+@@ -145,14 +223,7 @@
+       : jsi::WithRuntimeDecorator<ReentrancyCheck>(*runtime, reentrancyCheck_),
+         runtime_(std::move(runtime)) {
+ #ifdef HERMES_ENABLE_DEBUGGER
+-    enableDebugger_ = enableDebugger;
+-    if (enableDebugger_) {
+-      std::shared_ptr<HermesRuntime> rt(runtime_, &hermesRuntime);
+-      auto adapter =
+-          std::make_unique<HermesExecutorRuntimeAdapter>(rt, jsQueue);
+-      debugToken_ = facebook::hermes::inspector_modern::chrome::enableDebugging(
+-          std::move(adapter), debuggerName);
+-    }
++
+ #else
+     (void)jsQueue;
+ #endif // HERMES_ENABLE_DEBUGGER
+@@ -160,9 +231,7 @@
+ 
+   ~DecoratedRuntime() {
+ #ifdef HERMES_ENABLE_DEBUGGER
+-    if (enableDebugger_) {
+-      facebook::hermes::inspector_modern::chrome::disableDebugging(debugToken_);
+-    }
++
+ #endif // HERMES_ENABLE_DEBUGGER
+   }
+ 
+@@ -177,8 +246,7 @@
+   std::shared_ptr<Runtime> runtime_;
+   ReentrancyCheck reentrancyCheck_;
+ #ifdef HERMES_ENABLE_DEBUGGER
+-  bool enableDebugger_;
+-  facebook::hermes::inspector_modern::chrome::DebugSessionToken debugToken_;
++
+ #endif // HERMES_ENABLE_DEBUGGER
+ };
+ 
+@@ -196,11 +264,17 @@
+     std::shared_ptr<ExecutorDelegate> delegate,
+     std::shared_ptr<MessageQueueThread> jsQueue) {
+   std::unique_ptr<HermesRuntime> hermesRuntime;
++
++  LOGD("Creating HermesRuntime with JIT enabled: %s",
++       runtimeConfig_.getEnableJIT() ? "true" : "false");
+   {
+     TraceSection s("makeHermesRuntime");
+     hermesRuntime = hermes::makeHermesRuntime(runtimeConfig_);
+   }
+ 
++  installSystraceJSIGlobals(*hermesRuntime);
++
++
+   HermesRuntime& hermesRuntimeRef = *hermesRuntime;
+   auto& inspectorFlags = jsinspector_modern::InspectorFlags::getInstance();
+   bool enableDebugger = !inspectorFlags.getFuseboxEnabled() && enableDebugger_;
+@@ -241,6 +315,9 @@
+ ::hermes::vm::RuntimeConfig HermesExecutorFactory::defaultRuntimeConfig() {
+   return ::hermes::vm::RuntimeConfig::Builder()
+       .withEnableSampleProfiling(true)
++      .withEnableJIT(false)
++      .withEnableHermesInternal(true)
++      .withOptimizedEval(true)
+       .build();
+ }
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/CMakeLists.txt	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/CMakeLists.txt	2025-05-28 09:06:18
+@@ -29,6 +29,6 @@
+ 
+ target_include_directories(hermes_inspector_modern PUBLIC ${REACT_COMMON_DIR})
+ target_link_libraries(hermes_inspector_modern
+-        hermes-engine::hermesvm
++        hermes-engine::hermesvm
+         jsi
+         reactnative)
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/chrome: ConnectionDemux.cpp
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/chrome: ConnectionDemux.h
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/chrome: Registration.cpp
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/hermes/inspector-modern/chrome: Registration.h
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/CMakeLists.txt	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/CMakeLists.txt	2025-05-28 09:05:53
+@@ -3,7 +3,7 @@
+ # This source code is licensed under the MIT license found in the
+ # LICENSE file in the root directory of this source tree.
+ 
+-set(CMAKE_CXX_STANDARD 14)
++set(CMAKE_CXX_STANDARD 17)
+ set(CMAKE_CXX_STANDARD_REQUIRED ON)
+ 
+ add_library(jsi
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/decorator.h ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/decorator.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/decorator.h	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/decorator.h	2025-05-28 08:59:10
+@@ -112,6 +112,10 @@
+     return plain_;
+   }
+ 
++  ICast* castInterface(const UUID& interfaceUUID) override {
++    return plain().castInterface(interfaceUUID);
++  }
++
+   Value evaluateJavaScript(
+       const std::shared_ptr<const Buffer>& buffer,
+       const std::string& sourceURL) override {
+@@ -182,6 +186,10 @@
+   PropNameID createPropNameIDFromString(const String& str) override {
+     return plain_.createPropNameIDFromString(str);
+   };
++  PropNameID createPropNameIDFromUtf16(const char16_t* utf16, size_t length)
++      override {
++    return plain_.createPropNameIDFromUtf16(utf16, length);
++  }
+   PropNameID createPropNameIDFromSymbol(const Symbol& sym) override {
+     return plain_.createPropNameIDFromSymbol(sym);
+   };
+@@ -221,6 +229,9 @@
+   String createStringFromUtf8(const uint8_t* utf8, size_t length) override {
+     return plain_.createStringFromUtf8(utf8, length);
+   };
++  String createStringFromUtf16(const char16_t* utf16, size_t length) override {
++    return plain_.createStringFromUtf16(utf16, length);
++  }
+   std::string utf8(const String& s) override {
+     return plain_.utf8(s);
+   }
+@@ -386,6 +397,17 @@
+     return plain_.callAsConstructor(f, args, count);
+   };
+ 
++  void setRuntimeDataImpl(
++      const UUID& uuid,
++      const void* data,
++      void (*deleter)(const void* data)) override {
++    return plain_.setRuntimeDataImpl(uuid, data, deleter);
++  }
++
++  const void* getRuntimeDataImpl(const UUID& uuid) override {
++    return plain_.getRuntimeDataImpl(uuid);
++  }
++
+   // Private data for managing scopes.
+   Runtime::ScopeState* pushScope() override {
+     return plain_.pushScope();
+@@ -569,6 +591,11 @@
+   // the derived class.
+   WithRuntimeDecorator(Plain& plain, With& with) : RD(plain), with_(with) {}
+ 
++  ICast* castInterface(const UUID& interfaceUUID) override {
++    Around around{with_};
++    return RD::castInterface(interfaceUUID);
++  }
++
+   Value evaluateJavaScript(
+       const std::shared_ptr<const Buffer>& buffer,
+       const std::string& sourceURL) override {
+@@ -649,6 +676,11 @@
+     Around around{with_};
+     return RD::createPropNameIDFromUtf8(utf8, length);
+   };
++  PropNameID createPropNameIDFromUtf16(const char16_t* utf16, size_t length)
++      override {
++    Around around{with_};
++    return RD::createPropNameIDFromUtf16(utf16, length);
++  }
+   PropNameID createPropNameIDFromString(const String& str) override {
+     Around around{with_};
+     return RD::createPropNameIDFromString(str);
+@@ -704,6 +736,10 @@
+     Around around{with_};
+     return RD::createStringFromUtf8(utf8, length);
+   };
++  String createStringFromUtf16(const char16_t* utf16, size_t length) override {
++    Around around{with_};
++    return RD::createStringFromUtf16(utf16, length);
++  }
+   std::string utf8(const String& s) override {
+     Around around{with_};
+     return RD::utf8(s);
+@@ -940,6 +976,19 @@
+     Around around{with_};
+     RD::setExternalMemoryPressure(obj, amount);
+   };
++
++  void setRuntimeDataImpl(
++      const UUID& uuid,
++      const void* data,
++      void (*deleter)(const void* data)) override {
++    Around around{with_};
++    RD::setRuntimeDataImpl(uuid, data, deleter);
++  }
++
++  const void* getRuntimeDataImpl(const UUID& uuid) override {
++    Around around{with_};
++    return RD::getRuntimeDataImpl(uuid);
++  }
+ 
+  private:
+   // Wrap an RAII type around With& to guarantee after always happens.
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi-inl.h ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi-inl.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi-inl.h	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi-inl.h	2025-05-28 08:59:10
+@@ -84,6 +84,20 @@
+   return value.data_.pointer.ptr_;
+ }
+ 
++inline void Runtime::setRuntimeData(
++    const UUID& uuid,
++    const std::shared_ptr<void>& data) {
++  auto* dataPtr = new std::shared_ptr<void>(data);
++  setRuntimeDataImpl(uuid, dataPtr, [](const void* data) {
++    delete (const std::shared_ptr<void>*)data;
++  });
++}
++
++inline std::shared_ptr<void> Runtime::getRuntimeData(const UUID& uuid) {
++  auto* data = (const std::shared_ptr<void>*)getRuntimeDataImpl(uuid);
++  return data ? *data : nullptr;
++}
++
+ Value Object::getPrototype(Runtime& runtime) const {
+   return runtime.getPrototypeOf(*this);
+ }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.cpp	2025-05-28 08:59:10
+@@ -8,6 +8,8 @@
+ #include <cassert>
+ #include <cmath>
+ #include <cstdlib>
++#include <map>
++#include <mutex>
+ #include <stdexcept>
+ 
+ #include <jsi/instrumentation.h>
+@@ -18,6 +20,63 @@
+ 
+ namespace {
+ 
++/// A global map used to store custom runtime data for VMs that do not provide
++/// their own default implementation of setRuntimeData and getRuntimeData.
++struct RuntimeDataGlobal {
++  /// Mutex protecting the Runtime data map
++  std::mutex mutex_{};
++  /// Maps a runtime pointer to a map of its custom data. At destruction of the
++  /// runtime, its entry will be removed from the global map.
++  std::unordered_map<
++      Runtime*,
++      std::unordered_map<
++          UUID,
++          std::pair<const void*, void (*)(const void* data)>,
++          UUID::Hash>>
++      dataMap_;
++};
++
++RuntimeDataGlobal& getRuntimeDataGlobal() {
++  static RuntimeDataGlobal runtimeData{};
++  return runtimeData;
++}
++
++/// A host object that, when destructed, will remove the runtime's custom data
++/// entry from the global map of custom data.
++class RemoveRuntimeDataHostObject : public jsi::HostObject {
++ public:
++  explicit RemoveRuntimeDataHostObject(Runtime* runtime) : runtime_(runtime) {}
++
++  RemoveRuntimeDataHostObject(const RemoveRuntimeDataHostObject&) = default;
++  RemoveRuntimeDataHostObject(RemoveRuntimeDataHostObject&&) = default;
++  RemoveRuntimeDataHostObject& operator=(const RemoveRuntimeDataHostObject&) =
++      default;
++  RemoveRuntimeDataHostObject& operator=(RemoveRuntimeDataHostObject&&) =
++      default;
++
++  ~RemoveRuntimeDataHostObject() override {
++    auto& runtimeDataGlobal = getRuntimeDataGlobal();
++    std::lock_guard<std::mutex> lock(runtimeDataGlobal.mutex_);
++    auto runtimeMapIt = runtimeDataGlobal.dataMap_.find(runtime_);
++    // We install the RemoveRuntimeDataHostObject only when the first custom
++    // data for the runtime is added, and only this object is responsible for
++    // clearing runtime data. Thus, we should always be able to find the data
++    // entry.
++    assert(
++        runtimeMapIt != runtimeDataGlobal.dataMap_.end() &&
++        "Custom runtime data not found for this runtime");
++
++    for (auto [_, entry] : runtimeMapIt->second) {
++      auto* deleter = entry.second;
++      deleter(entry.first);
++    }
++    runtimeDataGlobal.dataMap_.erase(runtime_);
++  }
++
++ private:
++  Runtime* runtime_;
++};
++
+ // This is used for generating short exception strings.
+ std::string kindToString(const Value& v, Runtime* rt = nullptr) {
+   if (v.isUndefined()) {
+@@ -163,6 +222,45 @@
+   return ret;
+ }
+ 
++// Given a unsigned number, which is less than 16, return the hex character.
++inline char hexDigit(unsigned x) {
++  return x < 10 ? '0' + x : 'A' + (x - 10);
++}
++
++// Given a sequence of UTF 16 code units, return true if all code units are
++// ASCII characters
++bool isAllASCII(const char16_t* utf16, size_t length) {
++  for (const char16_t* e = utf16 + length; utf16 != e; ++utf16) {
++    if (*utf16 > 0x7F)
++      return false;
++  }
++  return true;
++}
++
++// Given a sequences of UTF 16 code units, return a string that explicitly
++// expresses the code units
++std::string getUtf16CodeUnitString(const char16_t* utf16, size_t length) {
++  // Every character will need 4 hex digits + the character escape "\u".
++  // Plus 2 character for the opening and closing single quote.
++  std::string s = std::string(6 * length + 2, 0);
++  s.front() = '\'';
++
++  for (size_t i = 0; i != length; ++i) {
++    char16_t ch = utf16[i];
++    size_t start = (6 * i) + 1;
++
++    s[start] = '\\';
++    s[start + 1] = 'u';
++
++    s[start + 2] = hexDigit((ch >> 12) & 0x000f);
++    s[start + 3] = hexDigit((ch >> 8) & 0x000f);
++    s[start + 4] = hexDigit((ch >> 4) & 0x000f);
++    s[start + 5] = hexDigit(ch & 0x000f);
++  }
++  s.back() = '\'';
++  return s;
++}
++
+ } // namespace
+ 
+ Buffer::~Buffer() = default;
+@@ -188,6 +286,10 @@
+ 
+ Runtime::~Runtime() {}
+ 
++ICast* Runtime::castInterface(const UUID& /*interfaceUUID*/) {
++  return nullptr;
++}
++
+ Instrumentation& Runtime::instrumentation() {
+   class NoInstrumentation : public Instrumentation {
+     std::string getRecordedGCStats() override {
+@@ -248,6 +350,25 @@
+   return parseJson.call(*this, String::createFromUtf8(*this, json, length));
+ }
+ 
++String Runtime::createStringFromUtf16(const char16_t* utf16, size_t length) {
++  if (isAllASCII(utf16, length)) {
++    std::string buffer(utf16, utf16 + length);
++    return createStringFromAscii(buffer.data(), length);
++  }
++  auto s = getUtf16CodeUnitString(utf16, length);
++  return global()
++      .getPropertyAsFunction(*this, "eval")
++      .call(*this, s)
++      .getString(*this);
++}
++
++PropNameID Runtime::createPropNameIDFromUtf16(
++    const char16_t* utf16,
++    size_t length) {
++  auto jsString = createStringFromUtf16(utf16, length);
++  return createPropNameIDFromString(jsString);
++}
++
+ std::u16string Runtime::utf16(const PropNameID& sym) {
+   auto utf8Str = utf8(sym);
+   return convertUTF8ToUTF16(utf8Str);
+@@ -293,6 +414,62 @@
+                       .getPropertyAsObject(*this, "Object")
+                       .getPropertyAsFunction(*this, "create");
+   return createFn.call(*this, prototype).asObject(*this);
++}
++
++void Runtime::setRuntimeDataImpl(
++    const UUID& uuid,
++    const void* data,
++    void (*deleter)(const void* data)) {
++  auto& runtimeDataGlobal = getRuntimeDataGlobal();
++  std::lock_guard<std::mutex> lock(runtimeDataGlobal.mutex_);
++  if (auto it = runtimeDataGlobal.dataMap_.find(this);
++      it != runtimeDataGlobal.dataMap_.end()) {
++    auto& map = it->second;
++    if (auto entryIt = map.find(uuid); entryIt != map.end()) {
++      // Free the old data
++      auto oldData = entryIt->second.first;
++      auto oldDataDeleter = entryIt->second.second;
++      oldDataDeleter(oldData);
++    }
++    map[uuid] = {data, deleter};
++    return;
++  }
++  // No custom data entry exist for this runtime in the global map, so create
++  // one.
++  runtimeDataGlobal.dataMap_[this][uuid] = {data, deleter};
++
++  // The first time data is added for this runtime is added to the map, install
++  // a host object on the global object of the runtime. This host object is used
++  // to release the runtime's entry from the global custom data map when the
++  // runtime is destroyed.
++  // Also, try to protect the host object by making it non-configurable,
++  // non-enumerable, and non-writable. These JSI operations are purposely
++  // performed after runtime-specific data map is added and the host object is
++  // created to prevent data leaks if any operations fail.
++  Object ho = Object::createFromHostObject(
++      *this, std::make_shared<RemoveRuntimeDataHostObject>(this));
++  global().setProperty(*this, "_jsiRuntimeDataCleanUp", ho);
++  auto definePropertyFn = global()
++                              .getPropertyAsObject(*this, "Object")
++                              .getPropertyAsFunction(*this, "defineProperty");
++  auto desc = Object(*this);
++  desc.setProperty(*this, "configurable", Value(false));
++  desc.setProperty(*this, "enumerable", Value(false));
++  desc.setProperty(*this, "writable", Value(false));
++  definePropertyFn.call(*this, global(), "_jsiRuntimeDataCleanUp", desc);
++}
++
++const void* Runtime::getRuntimeDataImpl(const UUID& uuid) {
++  auto& runtimeDataGlobal = getRuntimeDataGlobal();
++  std::lock_guard<std::mutex> lock(runtimeDataGlobal.mutex_);
++  if (auto runtimeMapIt = runtimeDataGlobal.dataMap_.find(this);
++      runtimeMapIt != runtimeDataGlobal.dataMap_.end()) {
++    if (auto customDataIt = runtimeMapIt->second.find(uuid);
++        customDataIt != runtimeMapIt->second.end()) {
++      return customDataIt->second.first;
++    }
++  }
++  return nullptr;
+ }
+ 
+ Pointer& Pointer::operator=(Pointer&& other) noexcept {
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.h ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.h	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/jsi/jsi/jsi.h	2025-05-28 08:59:10
+@@ -31,6 +31,107 @@
+ namespace facebook {
+ namespace jsi {
+ 
++/// UUID version 1 implementation. This should be constructed with constant
++/// arguments to identify fixed UUIDs.
++class JSI_EXPORT UUID {
++ public:
++  // Construct from raw parts
++  constexpr UUID(
++      uint32_t timeLow,
++      uint16_t timeMid,
++      uint16_t timeHighAndVersion,
++      uint16_t variantAndClockSeq,
++      uint64_t node)
++      : high(
++            ((uint64_t)(timeLow) << 32) | ((uint64_t)(timeMid) << 16) |
++            ((uint64_t)(timeHighAndVersion))),
++        low(((uint64_t)(variantAndClockSeq) << 48) | node) {}
++
++  // Default constructor (zero UUID)
++  constexpr UUID() : high(0), low(0) {}
++
++  constexpr UUID(const UUID&) = default;
++  constexpr UUID& operator=(const UUID&) = default;
++
++  constexpr bool operator==(const UUID& other) const {
++    return high == other.high && low == other.low;
++  }
++  constexpr bool operator!=(const UUID& other) const {
++    return !(*this == other);
++  }
++
++  // Ordering (for std::map, sorting, etc.)
++  constexpr bool operator<(const UUID& other) const {
++    return (high < other.high) || (high == other.high && low < other.low);
++  }
++
++  // Hash support for UUID (for unordered_map compatibility)
++  struct Hash {
++    std::size_t operator()(const UUID& uuid) const noexcept {
++      return std::hash<uint64_t>{}(uuid.high) ^
++          (std::hash<uint64_t>{}(uuid.low) << 1);
++    }
++  };
++
++  // UUID format: 8-4-4-4-12
++  std::string toString() const {
++    std::string buffer(36, ' ');
++    std::snprintf(
++        buffer.data(),
++        buffer.size() + 1,
++        "%08x-%04x-%04x-%04x-%012llx",
++        getTimeLow(),
++        getTimeMid(),
++        getTimeHighAndVersion(),
++        getVariantAndClockSeq(),
++        (unsigned long long)getNode());
++    return buffer;
++  }
++
++  constexpr uint32_t getTimeLow() const {
++    return (uint32_t)(high >> 32);
++  }
++
++  constexpr uint16_t getTimeMid() const {
++    return (uint16_t)(high >> 16);
++  }
++
++  constexpr uint16_t getTimeHighAndVersion() const {
++    return (uint16_t)high;
++  }
++
++  constexpr uint16_t getVariantAndClockSeq() const {
++    return (uint16_t)(low >> 48);
++  }
++
++  constexpr uint64_t getNode() const {
++    return low & 0xFFFFFFFFFFFF;
++  }
++
++ private:
++  uint64_t high;
++  uint64_t low;
++};
++
++/// Base interface that all JSI interfaces inherit from. Users should not try to
++/// manipulate this base type directly, and should use castInterface to get the
++/// appropriate subtype.
++struct JSI_EXPORT ICast {
++  /// If the current object can be cast into the interface specified by \p
++  /// interfaceUUID, return a pointer to the object. Otherwise, return a null
++  /// pointer.
++  /// The returned interface has the same lifetime as the underlying object. It
++  /// does not need to be released when not needed.
++  virtual ICast* castInterface(const UUID& interfaceUUID) = 0;
++
++ protected:
++  /// Interfaces are not destructible, thus the destructor is intentionally
++  /// protected to prevent delete calls on the interface.
++  /// Additionally, the destructor is non-virtual to reduce the vtable
++  /// complexity from inheritance.
++  ~ICast() = default;
++};
++
+ /// Base class for buffers of data or bytecode that need to be passed to the
+ /// runtime. The buffer is expected to be fully immutable, so the result of
+ /// size(), data(), and the contents of the pointer returned by data() must not
+@@ -169,10 +270,12 @@
+ /// in a non-Runtime-managed object, and not clean it up before the Runtime
+ /// is shut down.  If your lifecycle is such that avoiding this is hard,
+ /// you will probably need to do use your own locks.
+-class JSI_EXPORT Runtime {
++class JSI_EXPORT Runtime : public ICast {
+  public:
+   virtual ~Runtime();
+ 
++  ICast* castInterface(const UUID& interfaceUUID) override;
++
+   /// Evaluates the given JavaScript \c buffer.  \c sourceURL is used
+   /// to annotate the stack trace if there is an exception.  The
+   /// contents may be utf8-encoded JS source code, or binary bytecode
+@@ -267,6 +370,16 @@
+   /// which returns no metrics.
+   virtual Instrumentation& instrumentation();
+ 
++  /// Stores the pointer \p data with the \p uuid in the runtime. This can be
++  /// used to store some custom data within the runtime. When the runtime is
++  /// destroyed, or if an entry at an existing key is overwritten, the runtime
++  /// will release its ownership of the held object.
++  void setRuntimeData(const UUID& uuid, const std::shared_ptr<void>& data);
++
++  /// Returns the data associated with the \p uuid in the runtime. If there's no
++  /// data associated with the uuid, return a null pointer.
++  std::shared_ptr<void> getRuntimeData(const UUID& uuid);
++
+  protected:
+   friend class Pointer;
+   friend class PropNameID;
+@@ -282,6 +395,19 @@
+   friend class Scope;
+   friend class JSError;
+ 
++  /// Stores the pointer \p data with the \p uuid in the runtime. This can be
++  /// used to store some custom data within the runtime. When the runtime is
++  /// destroyed, or if an entry at an existing key is overwritten, the runtime
++  /// will release its ownership by calling \p deleter.
++  virtual void setRuntimeDataImpl(
++      const UUID& uuid,
++      const void* data,
++      void (*deleter)(const void* data));
++
++  /// Returns the data associated with the \p uuid in the runtime. If there's no
++  /// data associated with the uuid, return a null pointer.
++  virtual const void* getRuntimeDataImpl(const UUID& uuid);
++
+   // Potential optimization: avoid the cloneFoo() virtual dispatch,
+   // and instead just fix the number of fields, and copy them, since
+   // in practice they are trivially copyable.  Sufficient use of
+@@ -306,6 +432,9 @@
+   virtual PropNameID createPropNameIDFromUtf8(
+       const uint8_t* utf8,
+       size_t length) = 0;
++  virtual PropNameID createPropNameIDFromUtf16(
++      const char16_t* utf16,
++      size_t length);
+   virtual PropNameID createPropNameIDFromString(const String& str) = 0;
+   virtual PropNameID createPropNameIDFromSymbol(const Symbol& sym) = 0;
+   virtual std::string utf8(const PropNameID&) = 0;
+@@ -322,6 +451,7 @@
+ 
+   virtual String createStringFromAscii(const char* str, size_t length) = 0;
+   virtual String createStringFromUtf8(const uint8_t* utf8, size_t length) = 0;
++  virtual String createStringFromUtf16(const char16_t* utf16, size_t length);
+   virtual std::string utf8(const String&) = 0;
+ 
+   // \return a \c Value created from a utf8-encoded JSON string. The default
+@@ -515,6 +645,21 @@
+         reinterpret_cast<const uint8_t*>(utf8.data()), utf8.size());
+   }
+ 
++  /// Given a series of UTF-16 encoded code units, create a PropNameId. The
++  /// input may contain unpaired surrogates, which will be interpreted as a code
++  /// point of the same value.
++  static PropNameID
++  forUtf16(Runtime& runtime, const char16_t* utf16, size_t length) {
++    return runtime.createPropNameIDFromUtf16(utf16, length);
++  }
++
++  /// Given a series of UTF-16 encoded code units stored inside std::u16string,
++  /// create a PropNameId.  The input may contain unpaired surrogates, which
++  /// will be interpreted as a code point of the same value.
++  static PropNameID forUtf16(Runtime& runtime, const std::u16string& str) {
++    return runtime.createPropNameIDFromUtf16(str.data(), str.size());
++  }
++
+   /// Create a PropNameID from a JS string.
+   static PropNameID forString(Runtime& runtime, const jsi::String& str) {
+     return runtime.createPropNameIDFromString(str);
+@@ -699,6 +844,21 @@
+         reinterpret_cast<const uint8_t*>(utf8.data()), utf8.length());
+   }
+ 
++  /// Given a series of UTF-16 encoded code units, create a JS String. The input
++  /// may contain unpaired surrogates, which will be interpreted as a code point
++  /// of the same value.
++  static String
++  createFromUtf16(Runtime& runtime, const char16_t* utf16, size_t length) {
++    return runtime.createStringFromUtf16(utf16, length);
++  }
++
++  /// Given a series of UTF-16 encoded code units stored inside std::u16string,
++  /// create a JS String. The input may contain unpaired surrogates, which will
++  /// be interpreted as a code point of the same value.
++  static String createFromUtf16(Runtime& runtime, const std::u16string& utf16) {
++    return runtime.createStringFromUtf16(utf16.data(), utf16.length());
++  }
++
+   /// \return whether a and b contain the same characters.
+   static bool strictEquals(Runtime& runtime, const String& a, const String& b) {
+     return runtime.strictEquals(a, b);
+@@ -1623,6 +1783,32 @@
+   std::string message_;
+   std::string stack_;
+ };
++
++/// Helper function to cast the object pointed to by \p ptr into an interface
++/// specified by \c U. If cast is successful, return a pointer to the object
++/// as a raw pointer of \c U. Otherwise, return nullptr.
++/// The returned interface same lifetime as the object referenced by \p ptr.
++template <typename U, typename T>
++U* castInterface(T* ptr) {
++  if (ptr) {
++    return static_cast<U*>(ptr->castInterface(U::uuid));
++  }
++  return nullptr;
++};
++
++/// Helper function to cast the object managed by the shared_ptr \p ptr into an
++/// interface specified by \c U. If the cast is successful, return a shared_ptr
++/// of type \c U to the object. Otherwise, return an empty pointer.
++/// The returned shared_ptr shares ownership of the object with \p ptr.
++template <typename U, typename T>
++std::shared_ptr<U> dynamicInterfaceCast(T&& ptr) {
++  auto* p = ptr->castInterface(U::uuid);
++  U* res = static_cast<U*>(p);
++  if (res) {
++    return std::shared_ptr<U>(std::forward<T>(ptr), res);
++  }
++  return nullptr;
++}
+ 
+ } // namespace jsi
+ } // namespace facebook
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/bridging/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/react/bridging/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/bridging/CMakeLists.txt	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/bridging/CMakeLists.txt	2025-06-09 21:44:51
+@@ -18,6 +18,7 @@
+ 
+ add_library(react_bridging OBJECT ${react_bridging_SRC})
+ 
+-target_include_directories(react_bridging PUBLIC ${REACT_COMMON_DIR})
++target_include_directories(react_bridging PUBLIC ${REACT_COMMON_DIR}
++/Users/szymonkapala/work/perfetto/perfetto/sdk/perfetto.cc)
+ 
+ target_link_libraries(react_bridging jsi callinvoker)
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/bridging/Class.h ../../../../discord/node_modules/react-native/ReactCommon/react/bridging/Class.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/bridging/Class.h	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/bridging/Class.h	2025-06-04 10:54:49
+@@ -8,83 +8,74 @@
+ #pragma once
+ 
+ #include <react/bridging/Base.h>
++#include <cxxreact/TraceSection.h>
+ 
+ namespace facebook::react::bridging {
+ 
+-template <
+-    typename T,
+-    typename C,
+-    typename R,
+-    typename... Args,
+-    typename... JSArgs>
+-T callFromJs(
+-    jsi::Runtime& rt,
+-    R (C::*method)(jsi::Runtime&, Args...),
+-    const std::shared_ptr<CallInvoker>& jsInvoker,
+-    C* instance,
+-    JSArgs&&... args) {
+-  static_assert(
+-      sizeof...(Args) == sizeof...(JSArgs), "Incorrect arguments length");
+-  static_assert(
+-      (supportsFromJs<Args, JSArgs> && ...), "Incompatible arguments");
++template <typename T, typename C, typename R, typename... Args, typename... JSArgs>
++T callFromJs(jsi::Runtime& rt,
++             R (C::*method)(jsi::Runtime&, Args...),
++             const std::shared_ptr<CallInvoker>& jsInvoker,
++             C* instance,
++             JSArgs&&... args)
++{
++    static_assert(sizeof...(Args) == sizeof...(JSArgs), "Incorrect arguments length");
++    static_assert((supportsFromJs<Args, JSArgs> && ...), "Incompatible arguments");
+ 
+-  if constexpr (std::is_void_v<T>) {
+-    (instance->*method)(
+-        rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
++    if constexpr (std::is_void_v<T>) {
++        (instance->*method)(rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
++    }
++    else if constexpr (std::is_void_v<R>) {
++        static_assert(std::is_same_v<T, jsi::Value>, "Void functions may only return undefined");
+ 
+-  } else if constexpr (std::is_void_v<R>) {
+-    static_assert(
+-        std::is_same_v<T, jsi::Value>,
+-        "Void functions may only return undefined");
++        (instance->*method)(rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
++        return jsi::Value();
++    }
++    else if constexpr (is_jsi_v<T>) {
++        static_assert(supportsToJs<R, T>, "Incompatible return type");
++        TraceSection s("callFromJs", "method", "method");
+ 
+-    (instance->*method)(
+-        rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
+-    return jsi::Value();
++        return toJs(
++          rt,
++          (instance->*method)(rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...),
++          jsInvoker);
++    }
++    else if constexpr (is_optional_jsi_v<T>) {
++        static_assert(is_optional_v<R>
++                        ? supportsToJs<typename R::value_type, typename T::value_type>
++                        : supportsToJs<R, typename T::value_type>,
++                      "Incompatible return type");
+ 
+-  } else if constexpr (is_jsi_v<T>) {
+-    static_assert(supportsToJs<R, T>, "Incompatible return type");
++        TraceSection s("callFromJs", "method", "method");
++        auto result =
++          toJs(rt,
++               (instance->*method)(rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...),
++               jsInvoker);
+ 
+-    return toJs(
+-        rt,
+-        (instance->*method)(
+-            rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...),
+-        jsInvoker);
++        if constexpr (std::is_same_v<decltype(result), jsi::Value>) {
++            if (result.isNull() || result.isUndefined()) {
++                return std::nullopt;
++            }
++        }
+ 
+-  } else if constexpr (is_optional_jsi_v<T>) {
+-    static_assert(
+-        is_optional_v<R>
+-            ? supportsToJs<typename R::value_type, typename T::value_type>
+-            : supportsToJs<R, typename T::value_type>,
+-        "Incompatible return type");
+-
+-    auto result = toJs(
+-        rt,
+-        (instance->*method)(
+-            rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...),
+-        jsInvoker);
+-
+-    if constexpr (std::is_same_v<decltype(result), jsi::Value>) {
+-      if (result.isNull() || result.isUndefined()) {
+-        return std::nullopt;
+-      }
++        return convert(rt, std::move(result));
+     }
+-
+-    return convert(rt, std::move(result));
+-  } else {
+-    static_assert(std::is_convertible_v<R, T>, "Incompatible return type");
+-    return (instance->*method)(
+-        rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
+-  }
++    else {
++        static_assert(std::is_convertible_v<R, T>, "Incompatible return type");
++        return (instance->*method)(rt, fromJs<Args>(rt, std::forward<JSArgs>(args), jsInvoker)...);
++    }
+ }
+ 
+ template <typename R, typename... Args>
+-constexpr size_t getParameterCount(R (*)(Args...)) {
+-  return sizeof...(Args);
++constexpr size_t getParameterCount(R (*)(Args...))
++{
++    return sizeof...(Args);
+ }
+ 
+ template <typename C, typename R, typename... Args>
+-constexpr size_t getParameterCount(R (C::*)(Args...)) {
+-  return sizeof...(Args);
++constexpr size_t getParameterCount(R (C::*)(Args...))
++{
++    return sizeof...(Args);
+ }
+ 
+ } // namespace facebook::react::bridging
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/nativemodule/webperformance/NativePerformance.cpp ../../../../discord/node_modules/react-native/ReactCommon/react/nativemodule/webperformance/NativePerformance.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/nativemodule/webperformance/NativePerformance.cpp	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/nativemodule/webperformance/NativePerformance.cpp	2025-06-03 16:20:38
+@@ -18,6 +18,7 @@
+ #include <react/performance/timeline/PerformanceEntryReporter.h>
+ #include <react/performance/timeline/PerformanceObserver.h>
+ #include <reactperflogger/ReactPerfettoLogger.h>
++#include <android/log.h>
+ 
+ #include "NativePerformance.h"
+ 
+@@ -30,9 +31,9 @@
+ #endif
+ 
+ std::shared_ptr<facebook::react::TurboModule> NativePerformanceModuleProvider(
+-    std::shared_ptr<facebook::react::CallInvoker> jsInvoker) {
+-  return std::make_shared<facebook::react::NativePerformance>(
+-      std::move(jsInvoker));
++  std::shared_ptr<facebook::react::CallInvoker> jsInvoker)
++{
++    return std::make_shared<facebook::react::NativePerformance>(std::move(jsInvoker));
+ }
+ 
+ namespace facebook::react {
+@@ -47,345 +48,339 @@
+ 
+ NO_DESTROY const std::string TRACK_PREFIX = "Track:";
+ 
+-std::tuple<std::optional<std::string>, std::string_view> parseTrackName(
+-    const std::string& name) {
+-  // Until there's a standard way to pass through track information, parse it
+-  // manually, e.g., "Track:Foo:Event name"
+-  // https://github.com/w3c/user-timing/issues/109
+-  std::optional<std::string> trackName;
+-  std::string_view eventName(name);
+-  if (name.starts_with(TRACK_PREFIX)) {
+-    const auto trackNameDelimiter = name.find(':', TRACK_PREFIX.length());
+-    if (trackNameDelimiter != std::string::npos) {
+-      trackName = name.substr(
+-          TRACK_PREFIX.length(), trackNameDelimiter - TRACK_PREFIX.length());
+-      eventName = std::string_view(name).substr(trackNameDelimiter + 1);
++std::tuple<std::optional<std::string>, std::string_view> parseTrackName(const std::string& name)
++{
++    // Until there's a standard way to pass through track information, parse it
++    // manually, e.g., "Track:Foo:Event name"
++    // https://github.com/w3c/user-timing/issues/109
++    std::optional<std::string> trackName;
++    std::string_view eventName(name);
++    if (name.starts_with(TRACK_PREFIX)) {
++        const auto trackNameDelimiter = name.find(':', TRACK_PREFIX.length());
++        if (trackNameDelimiter != std::string::npos) {
++            trackName =
++              name.substr(TRACK_PREFIX.length(), trackNameDelimiter - TRACK_PREFIX.length());
++            eventName = std::string_view(name).substr(trackNameDelimiter + 1);
++        }
+     }
+-  }
+ 
+-  return std::make_tuple(trackName, eventName);
++    return std::make_tuple(trackName, eventName);
+ }
+ 
+ class PerformanceObserverWrapper : public jsi::NativeState {
+- public:
+-  explicit PerformanceObserverWrapper(
+-      const std::shared_ptr<PerformanceObserver> observer)
+-      : observer(observer) {}
++public:
++    explicit PerformanceObserverWrapper(const std::shared_ptr<PerformanceObserver> observer)
++      : observer(observer)
++    {
++    }
+ 
+-  const std::shared_ptr<PerformanceObserver> observer;
++    const std::shared_ptr<PerformanceObserver> observer;
+ };
+ 
+-void sortEntries(std::vector<PerformanceEntry>& entries) {
+-  return std::stable_sort(
+-      entries.begin(), entries.end(), PerformanceEntrySorter{});
++void sortEntries(std::vector<PerformanceEntry>& entries)
++{
++    return std::stable_sort(entries.begin(), entries.end(), PerformanceEntrySorter{});
+ }
+ 
+ const std::array<PerformanceEntryType, 2> ENTRY_TYPES_AVAILABLE_FROM_TIMELINE{
+-    {PerformanceEntryType::MARK, PerformanceEntryType::MEASURE}};
++  {PerformanceEntryType::MARK, PerformanceEntryType::MEASURE}};
+ 
+-bool isAvailableFromTimeline(PerformanceEntryType entryType) {
+-  return entryType == PerformanceEntryType::MARK ||
+-      entryType == PerformanceEntryType::MEASURE;
++bool isAvailableFromTimeline(PerformanceEntryType entryType)
++{
++    return entryType == PerformanceEntryType::MARK || entryType == PerformanceEntryType::MEASURE;
+ }
+ 
+-std::shared_ptr<PerformanceObserver> tryGetObserver(
+-    jsi::Runtime& rt,
+-    jsi::Object& observerObj) {
+-  if (!observerObj.hasNativeState(rt)) {
+-    return nullptr;
+-  }
++std::shared_ptr<PerformanceObserver> tryGetObserver(jsi::Runtime& rt, jsi::Object& observerObj)
++{
++    if (!observerObj.hasNativeState(rt)) {
++        return nullptr;
++    }
+ 
+-  auto observerWrapper = std::dynamic_pointer_cast<PerformanceObserverWrapper>(
+-      observerObj.getNativeState(rt));
+-  return observerWrapper ? observerWrapper->observer : nullptr;
++    auto observerWrapper =
++      std::dynamic_pointer_cast<PerformanceObserverWrapper>(observerObj.getNativeState(rt));
++    return observerWrapper ? observerWrapper->observer : nullptr;
+ }
+ 
+ } // namespace
+ 
+ NativePerformance::NativePerformance(std::shared_ptr<CallInvoker> jsInvoker)
+-    : NativePerformanceCxxSpec(std::move(jsInvoker)) {
+-#ifdef WITH_PERFETTO
+-  initializePerfetto();
+-#endif
++  : NativePerformanceCxxSpec(std::move(jsInvoker))
++{
++  __android_log_print(ANDROID_LOG_DEBUG, "NativePerformance",
++                   "NativePerformance constructor called");
++    #ifdef WITH_PERFETTO
++     initializePerfetto();
++    #endif
+ }
+ 
+-double NativePerformance::now(jsi::Runtime& /*rt*/) {
+-  return JSExecutor::performanceNow();
++double NativePerformance::now(jsi::Runtime& /*rt*/)
++{
++    return JSExecutor::performanceNow();
+ }
+ 
+-double NativePerformance::markWithResult(
+-    jsi::Runtime& rt,
+-    std::string name,
+-    std::optional<double> startTime) {
+-  auto [trackName, eventName] = parseTrackName(name);
+-  auto entry =
+-      PerformanceEntryReporter::getInstance()->reportMark(name, startTime);
++double NativePerformance::markWithResult(jsi::Runtime& rt,
++                                         std::string name,
++                                         std::optional<double> startTime)
++{
++    auto [trackName, eventName] = parseTrackName(name);
++    auto entry = PerformanceEntryReporter::getInstance()->reportMark(name, startTime);
+ 
+-  ReactPerfettoLogger::mark(eventName, entry.startTime, trackName);
++    ReactPerfettoLogger::mark(eventName, entry.startTime, trackName);
+ 
+-  return entry.startTime;
++    return entry.startTime;
+ }
+ 
+ std::tuple<double, double> NativePerformance::measureWithResult(
+-    jsi::Runtime& rt,
+-    std::string name,
+-    double startTime,
+-    double endTime,
+-    std::optional<double> duration,
+-    std::optional<std::string> startMark,
+-    std::optional<std::string> endMark) {
+-  auto [trackName, eventName] = parseTrackName(name);
++  jsi::Runtime& rt,
++  std::string name,
++  double startTime,
++  double endTime,
++  std::optional<double> duration,
++  std::optional<std::string> startMark,
++  std::optional<std::string> endMark)
++{
++    auto [trackName, eventName] = parseTrackName(name);
+ 
+-  std::optional<jsinspector_modern::DevToolsTrackEntryPayload> trackMetadata;
++    std::optional<jsinspector_modern::DevToolsTrackEntryPayload> trackMetadata;
+ 
+-  if (trackName.has_value()) {
+-    trackMetadata = {.track = trackName.value()};
+-  }
++    if (trackName.has_value()) {
++        trackMetadata = {.track = trackName.value()};
++    }
+ 
+-  auto entry = PerformanceEntryReporter::getInstance()->reportMeasure(
+-      eventName,
+-      startTime,
+-      endTime,
+-      duration,
+-      startMark,
+-      endMark,
+-      trackMetadata);
++    auto entry = PerformanceEntryReporter::getInstance()->reportMeasure(
++      eventName, startTime, endTime, duration, startMark, endMark, trackMetadata);
+ 
+-  ReactPerfettoLogger::measure(
++    ReactPerfettoLogger::measure(
+       eventName, entry.startTime, entry.startTime + entry.duration, trackName);
+ 
+-  return std::tuple{entry.startTime, entry.duration};
++    return std::tuple{entry.startTime, entry.duration};
+ }
+ 
+-void NativePerformance::clearMarks(
+-    jsi::Runtime& /*rt*/,
+-    std::optional<std::string> entryName) {
+-  if (entryName) {
+-    PerformanceEntryReporter::getInstance()->clearEntries(
+-        PerformanceEntryType::MARK, *entryName);
+-  } else {
+-    PerformanceEntryReporter::getInstance()->clearEntries(
+-        PerformanceEntryType::MARK);
+-  }
++void NativePerformance::clearMarks(jsi::Runtime& /*rt*/, std::optional<std::string> entryName)
++{
++    if (entryName) {
++        PerformanceEntryReporter::getInstance()->clearEntries(PerformanceEntryType::MARK,
++                                                              *entryName);
++    }
++    else {
++        PerformanceEntryReporter::getInstance()->clearEntries(PerformanceEntryType::MARK);
++    }
+ }
+ 
+-void NativePerformance::clearMeasures(
+-    jsi::Runtime& /*rt*/,
+-    std::optional<std::string> entryName) {
+-  if (entryName) {
+-    PerformanceEntryReporter::getInstance()->clearEntries(
+-        PerformanceEntryType::MEASURE, *entryName);
+-  } else {
+-    PerformanceEntryReporter::getInstance()->clearEntries(
+-        PerformanceEntryType::MEASURE);
+-  }
++void NativePerformance::clearMeasures(jsi::Runtime& /*rt*/, std::optional<std::string> entryName)
++{
++    if (entryName) {
++        PerformanceEntryReporter::getInstance()->clearEntries(PerformanceEntryType::MEASURE,
++                                                              *entryName);
++    }
++    else {
++        PerformanceEntryReporter::getInstance()->clearEntries(PerformanceEntryType::MEASURE);
++    }
+ }
+ 
+-std::vector<PerformanceEntry> NativePerformance::getEntries(
+-    jsi::Runtime& /*rt*/) {
+-  std::vector<PerformanceEntry> entries;
++std::vector<PerformanceEntry> NativePerformance::getEntries(jsi::Runtime& /*rt*/)
++{
++    std::vector<PerformanceEntry> entries;
+ 
+-  for (auto entryType : ENTRY_TYPES_AVAILABLE_FROM_TIMELINE) {
+-    PerformanceEntryReporter::getInstance()->getEntries(entries, entryType);
+-  }
++    for (auto entryType : ENTRY_TYPES_AVAILABLE_FROM_TIMELINE) {
++        PerformanceEntryReporter::getInstance()->getEntries(entries, entryType);
++    }
+ 
+-  sortEntries(entries);
++    sortEntries(entries);
+ 
+-  return entries;
++    return entries;
+ }
+ 
+ std::vector<PerformanceEntry> NativePerformance::getEntriesByName(
+-    jsi::Runtime& /*rt*/,
+-    std::string entryName,
+-    std::optional<PerformanceEntryType> entryType) {
+-  std::vector<PerformanceEntry> entries;
++  jsi::Runtime& /*rt*/,
++  std::string entryName,
++  std::optional<PerformanceEntryType> entryType)
++{
++    std::vector<PerformanceEntry> entries;
+ 
+-  if (entryType) {
+-    if (isAvailableFromTimeline(*entryType)) {
+-      PerformanceEntryReporter::getInstance()->getEntries(
+-          entries, *entryType, entryName);
++    if (entryType) {
++        if (isAvailableFromTimeline(*entryType)) {
++            PerformanceEntryReporter::getInstance()->getEntries(entries, *entryType, entryName);
++        }
+     }
+-  } else {
+-    for (auto type : ENTRY_TYPES_AVAILABLE_FROM_TIMELINE) {
+-      PerformanceEntryReporter::getInstance()->getEntries(
+-          entries, type, entryName);
++    else {
++        for (auto type : ENTRY_TYPES_AVAILABLE_FROM_TIMELINE) {
++            PerformanceEntryReporter::getInstance()->getEntries(entries, type, entryName);
++        }
+     }
+-  }
+ 
+-  sortEntries(entries);
++    sortEntries(entries);
+ 
+-  return entries;
++    return entries;
+ }
+ 
+-std::vector<PerformanceEntry> NativePerformance::getEntriesByType(
+-    jsi::Runtime& /*rt*/,
+-    PerformanceEntryType entryType) {
+-  std::vector<PerformanceEntry> entries;
++std::vector<PerformanceEntry> NativePerformance::getEntriesByType(jsi::Runtime& /*rt*/,
++                                                                  PerformanceEntryType entryType)
++{
++    std::vector<PerformanceEntry> entries;
+ 
+-  if (isAvailableFromTimeline(entryType)) {
+-    PerformanceEntryReporter::getInstance()->getEntries(entries, entryType);
+-  }
++    if (isAvailableFromTimeline(entryType)) {
++        PerformanceEntryReporter::getInstance()->getEntries(entries, entryType);
++    }
+ 
+-  sortEntries(entries);
++    sortEntries(entries);
+ 
+-  return entries;
++    return entries;
+ }
+ 
+ std::vector<std::pair<std::string, uint32_t>> NativePerformance::getEventCounts(
+-    jsi::Runtime& /*rt*/) {
+-  const auto& eventCounts =
+-      PerformanceEntryReporter::getInstance()->getEventCounts();
+-  return {eventCounts.begin(), eventCounts.end()};
++  jsi::Runtime& /*rt*/)
++{
++    const auto& eventCounts = PerformanceEntryReporter::getInstance()->getEventCounts();
++    return {eventCounts.begin(), eventCounts.end()};
+ }
+ 
+-std::unordered_map<std::string, double> NativePerformance::getSimpleMemoryInfo(
+-    jsi::Runtime& rt) {
+-  auto heapInfo = rt.instrumentation().getHeapInfo(false);
+-  std::unordered_map<std::string, double> heapInfoToJs;
+-  for (auto& entry : heapInfo) {
+-    heapInfoToJs[entry.first] = static_cast<double>(entry.second);
+-  }
+-  return heapInfoToJs;
++std::unordered_map<std::string, double> NativePerformance::getSimpleMemoryInfo(jsi::Runtime& rt)
++{
++    auto heapInfo = rt.instrumentation().getHeapInfo(false);
++    std::unordered_map<std::string, double> heapInfoToJs;
++    for (auto& entry : heapInfo) {
++        heapInfoToJs[entry.first] = static_cast<double>(entry.second);
++    }
++    return heapInfoToJs;
+ }
+ 
+-std::unordered_map<std::string, double>
+-NativePerformance::getReactNativeStartupTiming(jsi::Runtime& rt) {
+-  std::unordered_map<std::string, double> result;
++std::unordered_map<std::string, double> NativePerformance::getReactNativeStartupTiming(
++  jsi::Runtime& rt)
++{
++    std::unordered_map<std::string, double> result;
+ 
+-  ReactMarker::StartupLogger& startupLogger =
+-      ReactMarker::StartupLogger::getInstance();
+-  if (!std::isnan(startupLogger.getAppStartupStartTime())) {
+-    result["startTime"] = startupLogger.getAppStartupStartTime();
+-  } else if (!std::isnan(startupLogger.getInitReactRuntimeStartTime())) {
+-    result["startTime"] = startupLogger.getInitReactRuntimeStartTime();
+-  }
++    ReactMarker::StartupLogger& startupLogger = ReactMarker::StartupLogger::getInstance();
++    if (!std::isnan(startupLogger.getAppStartupStartTime())) {
++        result["startTime"] = startupLogger.getAppStartupStartTime();
++    }
++    else if (!std::isnan(startupLogger.getInitReactRuntimeStartTime())) {
++        result["startTime"] = startupLogger.getInitReactRuntimeStartTime();
++    }
+ 
+-  if (!std::isnan(startupLogger.getInitReactRuntimeStartTime())) {
+-    result["initializeRuntimeStart"] =
+-        startupLogger.getInitReactRuntimeStartTime();
+-  }
++    if (!std::isnan(startupLogger.getInitReactRuntimeStartTime())) {
++        result["initializeRuntimeStart"] = startupLogger.getInitReactRuntimeStartTime();
++    }
+ 
+-  if (!std::isnan(startupLogger.getRunJSBundleStartTime())) {
+-    result["executeJavaScriptBundleEntryPointStart"] =
+-        startupLogger.getRunJSBundleStartTime();
+-  }
++    if (!std::isnan(startupLogger.getRunJSBundleStartTime())) {
++        result["executeJavaScriptBundleEntryPointStart"] = startupLogger.getRunJSBundleStartTime();
++    }
+ 
+-  if (!std::isnan(startupLogger.getRunJSBundleEndTime())) {
+-    result["executeJavaScriptBundleEntryPointEnd"] =
+-        startupLogger.getRunJSBundleEndTime();
+-  }
++    if (!std::isnan(startupLogger.getRunJSBundleEndTime())) {
++        result["executeJavaScriptBundleEntryPointEnd"] = startupLogger.getRunJSBundleEndTime();
++    }
+ 
+-  if (!std::isnan(startupLogger.getInitReactRuntimeEndTime())) {
+-    result["initializeRuntimeEnd"] = startupLogger.getInitReactRuntimeEndTime();
+-  }
++    if (!std::isnan(startupLogger.getInitReactRuntimeEndTime())) {
++        result["initializeRuntimeEnd"] = startupLogger.getInitReactRuntimeEndTime();
++    }
+ 
+-  if (!std::isnan(startupLogger.getAppStartupEndTime())) {
+-    result["endTime"] = startupLogger.getAppStartupEndTime();
+-  }
++    if (!std::isnan(startupLogger.getAppStartupEndTime())) {
++        result["endTime"] = startupLogger.getAppStartupEndTime();
++    }
+ 
+-  return result;
++    return result;
+ }
+ 
+-jsi::Object NativePerformance::createObserver(
+-    jsi::Runtime& rt,
+-    NativePerformancePerformanceObserverCallback callback) {
+-  // The way we dispatch performance observer callbacks is a bit different from
+-  // the spec. The specification requires us to queue a single task that
+-  // dispatches observer callbacks. Instead, we are queuing all callbacks as
+-  // separate tasks in the scheduler.
+-  PerformanceObserverCallback cb = [callback = std::move(callback)]() {
+-    callback.callWithPriority(SchedulerPriority::IdlePriority);
+-  };
++jsi::Object NativePerformance::createObserver(jsi::Runtime& rt,
++                                              NativePerformancePerformanceObserverCallback callback)
++{
++    // The way we dispatch performance observer callbacks is a bit different from
++    // the spec. The specification requires us to queue a single task that
++    // dispatches observer callbacks. Instead, we are queuing all callbacks as
++    // separate tasks in the scheduler.
++    PerformanceObserverCallback cb = [callback = std::move(callback)]() {
++        callback.callWithPriority(SchedulerPriority::IdlePriority);
++    };
+ 
+-  auto& registry =
+-      PerformanceEntryReporter::getInstance()->getObserverRegistry();
++    auto& registry = PerformanceEntryReporter::getInstance()->getObserverRegistry();
+ 
+-  auto observer = PerformanceObserver::create(registry, std::move(cb));
+-  auto observerWrapper = std::make_shared<PerformanceObserverWrapper>(observer);
+-  jsi::Object observerObj{rt};
+-  observerObj.setNativeState(rt, observerWrapper);
+-  return observerObj;
++    auto observer = PerformanceObserver::create(registry, std::move(cb));
++    auto observerWrapper = std::make_shared<PerformanceObserverWrapper>(observer);
++    jsi::Object observerObj{rt};
++    observerObj.setNativeState(rt, observerWrapper);
++    return observerObj;
+ }
+ 
+-double NativePerformance::getDroppedEntriesCount(
+-    jsi::Runtime& rt,
+-    jsi::Object observerObj) {
+-  auto observer = tryGetObserver(rt, observerObj);
++double NativePerformance::getDroppedEntriesCount(jsi::Runtime& rt, jsi::Object observerObj)
++{
++    auto observer = tryGetObserver(rt, observerObj);
+ 
+-  if (!observer) {
+-    return 0;
+-  }
++    if (!observer) {
++        return 0;
++    }
+ 
+-  return observer->getDroppedEntriesCount();
++    return observer->getDroppedEntriesCount();
+ }
+ 
+-void NativePerformance::observe(
+-    jsi::Runtime& rt,
+-    jsi::Object observerObj,
+-    NativePerformancePerformanceObserverObserveOptions options) {
+-  auto observer = tryGetObserver(rt, observerObj);
++void NativePerformance::observe(jsi::Runtime& rt,
++                                jsi::Object observerObj,
++                                NativePerformancePerformanceObserverObserveOptions options)
++{
++    auto observer = tryGetObserver(rt, observerObj);
+ 
+-  if (!observer) {
+-    return;
+-  }
++    if (!observer) {
++        return;
++    }
+ 
+-  auto durationThreshold = options.durationThreshold.value_or(0.0);
++    auto durationThreshold = options.durationThreshold.value_or(0.0);
+ 
+-  // observer of type multiple
+-  if (options.entryTypes.has_value()) {
+-    std::unordered_set<PerformanceEntryType> entryTypes;
+-    auto rawTypes = options.entryTypes.value();
++    // observer of type multiple
++    if (options.entryTypes.has_value()) {
++        std::unordered_set<PerformanceEntryType> entryTypes;
++        auto rawTypes = options.entryTypes.value();
+ 
+-    for (auto rawType : rawTypes) {
+-      entryTypes.insert(Bridging<PerformanceEntryType>::fromJs(rt, rawType));
+-    }
++        for (auto rawType : rawTypes) {
++            entryTypes.insert(Bridging<PerformanceEntryType>::fromJs(rt, rawType));
++        }
+ 
+-    observer->observe(entryTypes);
+-  } else { // single
+-    auto buffered = options.buffered.value_or(false);
+-    if (options.type.has_value()) {
+-      observer->observe(
+-          static_cast<PerformanceEntryType>(options.type.value()),
+-          {.buffered = buffered, .durationThreshold = durationThreshold});
++        observer->observe(entryTypes);
+     }
+-  }
++    else { // single
++        auto buffered = options.buffered.value_or(false);
++        if (options.type.has_value()) {
++            observer->observe(static_cast<PerformanceEntryType>(options.type.value()),
++                              {.buffered = buffered, .durationThreshold = durationThreshold});
++        }
++    }
+ }
+ 
+-void NativePerformance::disconnect(jsi::Runtime& rt, jsi::Object observerObj) {
+-  auto observerWrapper = std::dynamic_pointer_cast<PerformanceObserverWrapper>(
+-      observerObj.getNativeState(rt));
++void NativePerformance::disconnect(jsi::Runtime& rt, jsi::Object observerObj)
++{
++    auto observerWrapper =
++      std::dynamic_pointer_cast<PerformanceObserverWrapper>(observerObj.getNativeState(rt));
+ 
+-  if (!observerWrapper) {
+-    return;
+-  }
++    if (!observerWrapper) {
++        return;
++    }
+ 
+-  auto observer = observerWrapper->observer;
+-  observer->disconnect();
++    auto observer = observerWrapper->observer;
++    observer->disconnect();
+ }
+ 
+-std::vector<PerformanceEntry> NativePerformance::takeRecords(
+-    jsi::Runtime& rt,
+-    jsi::Object observerObj,
+-    bool sort) {
+-  auto observerWrapper = std::dynamic_pointer_cast<PerformanceObserverWrapper>(
+-      observerObj.getNativeState(rt));
++std::vector<PerformanceEntry> NativePerformance::takeRecords(jsi::Runtime& rt,
++                                                             jsi::Object observerObj,
++                                                             bool sort)
++{
++    auto observerWrapper =
++      std::dynamic_pointer_cast<PerformanceObserverWrapper>(observerObj.getNativeState(rt));
+ 
+-  if (!observerWrapper) {
+-    return {};
+-  }
++    if (!observerWrapper) {
++        return {};
++    }
+ 
+-  auto observer = observerWrapper->observer;
+-  auto records = observer->takeRecords();
+-  if (sort) {
+-    sortEntries(records);
+-  }
+-  return records;
++    auto observer = observerWrapper->observer;
++    auto records = observer->takeRecords();
++    if (sort) {
++        sortEntries(records);
++    }
++    return records;
+ }
+ 
+-std::vector<PerformanceEntryType>
+-NativePerformance::getSupportedPerformanceEntryTypes(jsi::Runtime& /*rt*/) {
+-  auto supportedEntryTypes = PerformanceEntryReporter::getSupportedEntryTypes();
+-  return {supportedEntryTypes.begin(), supportedEntryTypes.end()};
++std::vector<PerformanceEntryType> NativePerformance::getSupportedPerformanceEntryTypes(
++  jsi::Runtime& /*rt*/)
++{
++    auto supportedEntryTypes = PerformanceEntryReporter::getSupportedEntryTypes();
++    return {supportedEntryTypes.begin(), supportedEntryTypes.end()};
+ }
+ 
+ } // namespace facebook::react
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.cpp	2025-05-27 19:18:15
+@@ -312,13 +312,6 @@
+   }
+ }
+ 
+-void Scheduler::uiManagerMeasure(const ShadowNode::Shared& shadowNode, std::function<void(folly::dynamic)> jsCallback) {
+-  if (delegate_ != nullptr) {
+-    auto shadowView = ShadowView(*shadowNode);
+-    delegate_->schedulerMeasure(shadowView, jsCallback);
+-  }
+-};
+-
+ /*
+  * Set JS responder for a view.
+  */
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/Scheduler.h	2025-05-27 19:18:15
+@@ -95,7 +95,6 @@
+       const ShadowNode::Shared& shadowNode,
+       bool isJSResponder,
+       bool blockNativeResponder) override;
+-  void uiManagerMeasure(const ShadowNode::Shared& shadowNode, std::function<void(folly::dynamic)> jsCallback) override;
+ 
+ #pragma mark - ContextContainer
+   ContextContainer::Shared getContextContainer() const;
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/SchedulerDelegate.h ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/SchedulerDelegate.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/SchedulerDelegate.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/scheduler/SchedulerDelegate.h	2025-05-27 19:18:15
+@@ -64,8 +64,6 @@
+       bool isJSResponder,
+       bool blockNativeResponder) = 0;
+ 
+-  virtual void schedulerMeasure(const ShadowView& shadowView, std::function<void(folly::dynamic)> jsCallback) = 0;
+-
+   virtual ~SchedulerDelegate() noexcept = default;
+ };
+ 
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerBinding.cpp ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerBinding.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerBinding.cpp	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerBinding.cpp	2025-05-27 19:18:15
+@@ -619,7 +619,6 @@
+           auto shadowNode = shadowNodeFromValue(runtime, arguments[0]);
+           auto callbackFunction =
+               arguments[1].getObject(runtime).getFunction(runtime);
+-          auto measureOnUI = count == 2 ? false : arguments[2].getBool();
+ 
+           auto currentRevision =
+               uiManager->getShadowTreeRevisionProvider()->getCurrentRevision(
+@@ -628,38 +627,17 @@
+             callbackFunction.call(runtime, {0, 0, 0, 0, 0, 0});
+             return jsi::Value::undefined();
+           }
+-              
+-          if (measureOnUI) {
+-            auto sharedCallback = std::make_shared<jsi::Function>(std::move(callbackFunction));
+-            auto runtimeExecutor = uiManager->runtimeExecutor_;
+-            std::function<void(folly::dynamic)> jsCallback = [sharedCallback, runtimeExecutor](folly::dynamic args) {
+-              // Schedule call on JS
+-              runtimeExecutor([sharedCallback, args](jsi::Runtime& jsRuntime) {
+-                // Invoke the actual callback we got from JS
+-                sharedCallback->call(jsRuntime, {
+-                                                  jsi::Value{jsRuntime, args.at(0).getDouble()},
+-                                                  jsi::Value{jsRuntime, args.at(1).getDouble()},
+-                                                  jsi::Value{jsRuntime, args.at(2).getDouble()},
+-                                                  jsi::Value{jsRuntime, args.at(3).getDouble()},
+-                                                  jsi::Value{jsRuntime, args.at(4).getDouble()},
+-                                                  jsi::Value{jsRuntime, args.at(5).getDouble()},
+-                                              });
+-              });
+-            };
+-            // Ask the delegate to measure on the native platform hierarchy:
+-            uiManager->getDelegate()->uiManagerMeasure(shadowNode, std::move(jsCallback));
+-          } else {
+-            auto measureRect = dom::measure(currentRevision, *shadowNode);
+-            callbackFunction.call(
+-                runtime,
+-                {jsi::Value{runtime, measureRect.x},
+-                 jsi::Value{runtime, measureRect.y},
+-                 jsi::Value{runtime, measureRect.width},
+-                 jsi::Value{runtime, measureRect.height},
+-                 jsi::Value{runtime, measureRect.pageX},
+-                 jsi::Value{runtime, measureRect.pageY}});
+-          }
+ 
++          auto measureRect = dom::measure(currentRevision, *shadowNode);
++
++          callbackFunction.call(
++              runtime,
++              {jsi::Value{runtime, measureRect.x},
++               jsi::Value{runtime, measureRect.y},
++               jsi::Value{runtime, measureRect.width},
++               jsi::Value{runtime, measureRect.height},
++               jsi::Value{runtime, measureRect.pageX},
++               jsi::Value{runtime, measureRect.pageY}});
+           return jsi::Value::undefined();
+         });
+   }
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerDelegate.h ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerDelegate.h
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerDelegate.h	2025-06-05 10:45:26
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/renderer/uimanager/UIManagerDelegate.h	2025-05-27 19:18:15
+@@ -41,8 +41,6 @@
+       const std::string& commandName,
+       const folly::dynamic& args) = 0;
+ 
+-  virtual void uiManagerMeasure(const ShadowNode::Shared& shadowNode, std::function<void(folly::dynamic)> jsCallback) = 0;
+-
+   /*
+    * Called when UIManager wants to dispatch some accessibility event
+    * to the mounting layer. eventType is platform-specific and not all
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/runtime/hermes/CMakeLists.txt ../../../../discord/node_modules/react-native/ReactCommon/react/runtime/hermes/CMakeLists.txt
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/runtime/hermes/CMakeLists.txt	2025-06-09 13:50:10
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/runtime/hermes/CMakeLists.txt	2025-05-30 18:47:28
+@@ -8,6 +8,13 @@
+ 
+ add_compile_options(-std=c++20)
+ 
++
++ # grab the Android log library
++ find_library(
++   log-lib      # variable name
++   log          # library to search for: liblog.so
++)
++
+ file(GLOB_RECURSE bridgeless_hermes_SRC CONFIGURE_DEPENDS *.cpp)
+ add_library(
+         bridgelesshermes
+@@ -17,12 +24,13 @@
+ target_include_directories(bridgelesshermes PUBLIC .)
+ 
+ target_link_libraries(bridgelesshermes
+-        hermes-engine::hermesvm
+-        hermes_executor
++        hermes-engine::hermesvm
++        hermes_executor_common
+         hermes_inspector_modern
+         jsi
+         jsinspector
+         reactnative
++        ${log-lib}
+ )
+ 
+ if(${CMAKE_BUILD_TYPE} MATCHES Debug)
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/runtime/hermes/HermesInstance.cpp ../../../../discord/node_modules/react-native/ReactCommon/react/runtime/hermes/HermesInstance.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/react/runtime/hermes/HermesInstance.cpp	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/react/runtime/hermes/HermesInstance.cpp	2025-05-30 22:34:32
+@@ -7,14 +7,22 @@
+ 
+ #include "HermesInstance.h"
+ 
++#include <android/log.h>
++
++#define LOG_TAG "MyNativeModule"
++#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
++#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
++#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
++#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
++#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
++
+ #include <hermes/inspector-modern/chrome/HermesRuntimeTargetDelegate.h>
+ #include <jsi/jsilib.h>
+ #include <jsinspector-modern/InspectorFlags.h>
+ #include <react/featureflags/ReactNativeFeatureFlags.h>
+ 
+ #ifdef HERMES_ENABLE_DEBUGGER
+-#include <hermes/inspector-modern/chrome/Registration.h>
+-#include <hermes/inspector/RuntimeAdapter.h>
++
+ #include <jsi/decorator.h>
+ #endif
+ 
+@@ -37,140 +45,89 @@
+ // If Adapter doesn't share ownership over jsi::Runtime, the runtime can be
+ // deleted before Connection::Impl cleans up all its jsi:: Objects. This will
+ // lead to a runtime crash.
+-class HermesInstanceRuntimeAdapter : public inspector_modern::RuntimeAdapter {
+- public:
+-  HermesInstanceRuntimeAdapter(
+-      std::shared_ptr<HermesRuntime> hermesRuntime,
+-      std::shared_ptr<MessageQueueThread> msgQueueThread)
+-      : hermesRuntime_(std::move(hermesRuntime)),
+-        messageQueueThread_(std::move(msgQueueThread)) {}
+-  virtual ~HermesInstanceRuntimeAdapter() = default;
+ 
+-  HermesRuntime& getRuntime() override {
+-    return *hermesRuntime_;
+-  }
+-
+-  void tickleJs() override {
+-    std::weak_ptr<HermesRuntime> weakRuntime(hermesRuntime_);
+-    messageQueueThread_->runOnQueue([weakRuntime]() {
+-      auto runtime = weakRuntime.lock();
+-      if (!runtime) {
+-        return;
+-      }
+-      jsi::Function func =
+-          runtime->global().getPropertyAsFunction(*runtime, "__tickleJs");
+-      func.call(*runtime);
+-    });
+-  }
+-
+- private:
+-  std::shared_ptr<HermesRuntime> hermesRuntime_;
+-  std::shared_ptr<MessageQueueThread> messageQueueThread_;
+-};
+-
+-class DecoratedRuntime : public jsi::RuntimeDecorator<jsi::Runtime> {
+- public:
+-  DecoratedRuntime(
+-      std::unique_ptr<HermesRuntime> runtime,
+-      std::shared_ptr<MessageQueueThread> msgQueueThread)
+-      : RuntimeDecorator<jsi::Runtime>(*runtime), runtime_(std::move(runtime)) {
+-    auto adapter = std::make_unique<HermesInstanceRuntimeAdapter>(
+-        runtime_, msgQueueThread);
+-
+-    debugToken_ = inspector_modern::chrome::enableDebugging(
+-        std::move(adapter), "Hermes Bridgeless React Native");
+-  }
+-
+-  ~DecoratedRuntime() {
+-    inspector_modern::chrome::disableDebugging(debugToken_);
+-  }
+-
+- private:
+-  std::shared_ptr<HermesRuntime> runtime_;
+-  inspector_modern::chrome::DebugSessionToken debugToken_;
+-};
+-
+ #endif
+ 
+ class HermesJSRuntime : public JSRuntime {
+- public:
+-  HermesJSRuntime(std::unique_ptr<HermesRuntime> runtime)
+-      : runtime_(std::move(runtime)) {}
++public:
++    HermesJSRuntime(std::unique_ptr<HermesRuntime> runtime)
++      : runtime_(std::move(runtime))
++    {
++    }
+ 
+-  jsi::Runtime& getRuntime() noexcept override {
+-    return *runtime_;
+-  }
++    jsi::Runtime& getRuntime() noexcept override { return *runtime_; }
+ 
+-  jsinspector_modern::RuntimeTargetDelegate& getRuntimeTargetDelegate()
+-      override {
+-    if (!targetDelegate_) {
+-      targetDelegate_.emplace(runtime_);
++    jsinspector_modern::RuntimeTargetDelegate& getRuntimeTargetDelegate() override
++    {
++        if (!targetDelegate_) {
++            targetDelegate_.emplace(runtime_);
++        }
++        return *targetDelegate_;
+     }
+-    return *targetDelegate_;
+-  }
+ 
+-  void unstable_initializeOnJsThread() override {
+-    runtime_->registerForProfiling();
+-  }
++    void unstable_initializeOnJsThread() override { runtime_->registerForProfiling(); }
+ 
+- private:
+-  std::shared_ptr<HermesRuntime> runtime_;
+-  std::optional<jsinspector_modern::HermesRuntimeTargetDelegate>
+-      targetDelegate_;
++private:
++    std::shared_ptr<HermesRuntime> runtime_;
++    std::optional<jsinspector_modern::HermesRuntimeTargetDelegate> targetDelegate_;
+ };
+ 
+ std::unique_ptr<JSRuntime> HermesInstance::createJSRuntime(
+-    std::shared_ptr<::hermes::vm::CrashManager> crashManager,
+-    std::shared_ptr<MessageQueueThread> msgQueueThread,
+-    bool allocInOldGenBeforeTTI) noexcept {
+-  assert(msgQueueThread != nullptr);
++  std::shared_ptr<::hermes::vm::CrashManager> crashManager,
++  std::shared_ptr<MessageQueueThread> msgQueueThread,
++  bool allocInOldGenBeforeTTI) noexcept
++{
++    assert(4 == 6);
++    LOGE("Creating Hermes JS Runtime JIT");
++    LOGI("Creating Hermes JS Runtime JIT");
++    assert(msgQueueThread != nullptr);
+ 
+-  auto gcConfig = ::hermes::vm::GCConfig::Builder()
+-                      // Default to 3GB
+-                      .withMaxHeapSize(3072 << 20)
+-                      .withName("RNBridgeless");
++      auto gcConfig = ::hermes::vm::GCConfig::Builder()
++                        // Default to 3GB
++                        .withMaxHeapSize(3072 << 20)
++                        .withName("RNBridgeless");
+ 
+-  if (allocInOldGenBeforeTTI) {
+-    // For the next two arguments: avoid GC before TTI
+-    // by initializing the runtime to allocate directly
+-    // in the old generation, but revert to normal
+-    // operation when we reach the (first) TTI point.
+-    gcConfig.withAllocInYoung(false).withRevertToYGAtTTI(true);
+-  }
++    if (allocInOldGenBeforeTTI) {
++        // For the next two arguments: avoid GC before TTI
++        // by initializing the runtime to allocate directly
++        // in the old generation, but revert to normal
++        // operation when we reach the (first) TTI point.
++        gcConfig.withAllocInYoung(false).withRevertToYGAtTTI(true);
++    }
+ 
+-  ::hermes::vm::RuntimeConfig::Builder runtimeConfigBuilder =
++    bool isOn = false;
++
++    ::hermes::vm::RuntimeConfig::Builder runtimeConfigBuilder =
+       ::hermes::vm::RuntimeConfig::Builder()
+-          .withGCConfig(gcConfig.build())
+-          .withEnableSampleProfiling(true)
+-          .withMicrotaskQueue(
+-              ReactNativeFeatureFlags::enableBridgelessArchitecture() &&
+-              !ReactNativeFeatureFlags::disableEventLoopOnBridgeless());
++        .withGCConfig(gcConfig.build())
++        .withEnableSampleProfiling(true)
++        .withEnableJIT(isOn)
++        .withMicrotaskQueue(ReactNativeFeatureFlags::enableBridgelessArchitecture() &&
++                            !ReactNativeFeatureFlags::disableEventLoopOnBridgeless());
+ 
+-  if (crashManager) {
+-    runtimeConfigBuilder.withCrashMgr(crashManager);
+-  }
++    // log using android log
++    LOGI("Creating runtime and JIT is %s", isOn ? "enabled" : "disabled");
+ 
+-  std::unique_ptr<HermesRuntime> hermesRuntime =
++    assert(4 == 5);
++    if (crashManager) {
++        runtimeConfigBuilder.withCrashMgr(crashManager);
++    }
++
++    std::unique_ptr<HermesRuntime> hermesRuntime =
+       hermes::makeHermesRuntime(runtimeConfigBuilder.build());
+ 
+-  auto errorPrototype = hermesRuntime->global()
++    auto errorPrototype = hermesRuntime->global()
+                             .getPropertyAsObject(*hermesRuntime, "Error")
+                             .getPropertyAsObject(*hermesRuntime, "prototype");
+-  errorPrototype.setProperty(*hermesRuntime, "jsEngine", "hermes");
++    errorPrototype.setProperty(*hermesRuntime, "jsEngine", "hermes");
+ 
+ #ifdef HERMES_ENABLE_DEBUGGER
+-  auto& inspectorFlags = jsinspector_modern::InspectorFlags::getInstance();
+-  if (!inspectorFlags.getFuseboxEnabled()) {
+-    std::unique_ptr<DecoratedRuntime> decoratedRuntime =
+-        std::make_unique<DecoratedRuntime>(
+-            std::move(hermesRuntime), msgQueueThread);
+-    return std::make_unique<JSIRuntimeHolder>(std::move(decoratedRuntime));
+-  }
++
+ #else
+-  (void)msgQueueThread;
++    (void)msgQueueThread;
+ #endif
+ 
+-  return std::make_unique<HermesJSRuntime>(std::move(hermesRuntime));
++    return std::make_unique<HermesJSRuntime>(std::move(hermesRuntime));
+ }
+ 
+ } // namespace facebook::react
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/reactperflogger/reactperflogger/ReactPerfetto.cpp ../../../../discord/node_modules/react-native/ReactCommon/reactperflogger/reactperflogger/ReactPerfetto.cpp
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/ReactCommon/reactperflogger/reactperflogger/ReactPerfetto.cpp	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/ReactCommon/reactperflogger/reactperflogger/ReactPerfetto.cpp	2025-06-03 18:02:47
+@@ -19,74 +19,80 @@
+ namespace facebook::react {
+ 
+ std::once_flag perfettoInit;
+-void initializePerfetto() {
+-  std::call_once(perfettoInit, []() {
+-    perfetto::TracingInitArgs args;
+-    // Raise the size of the shared memory buffer. Since this
+-    // is only used in tracing build, large buffers are okay
+-    // for now.
+-    args.shmem_size_hint_kb = 20 * 1024;
+-    args.backends |= perfetto::kSystemBackend;
+-    args.use_monotonic_clock = true;
+-    perfetto::Tracing::Initialize(args);
+-    perfetto::TrackEvent::Register();
+-  });
++void initializePerfetto()
++{
++    std::call_once(perfettoInit, []() {
++        perfetto::TracingInitArgs args;
++        // Raise the size of the shared memory buffer. Since this
++        // is only used in tracing build, large buffers are okay
++        // for now.
++        args.shmem_size_hint_kb = 20 * 1024;
++        args.backends |= perfetto::kSystemBackend;
++        args.use_monotonic_clock = true;
++        perfetto::Tracing::Initialize(args);
++        perfetto::TrackEvent::Register();
++    });
+ 
+-  HermesPerfettoDataSource::RegisterDataSource();
+-  FuseboxPerfettoDataSource::RegisterDataSource();
++    //HermesPerfettoDataSource::RegisterDataSource();
++    //FuseboxPerfettoDataSource::RegisterDataSource();
+ }
+ 
+-static perfetto::Track createTrack(const std::string& trackName) {
+-  // Offset for custom perfetto tracks
+-  static uint64_t trackId = 0x5F3759DF;
+-  auto track = perfetto::Track(trackId++);
+-  auto desc = track.Serialize();
+-  desc.set_name(trackName);
+-  perfetto::TrackEvent::SetTrackDescriptor(track, desc);
+-  return track;
++static perfetto::Track createTrack(const std::string& trackName)
++{
++    // Offset for custom perfetto tracks
++    static uint64_t trackId = 0x5F3759DF;
++    auto track = perfetto::Track(trackId++);
++    auto desc = track.Serialize();
++    desc.set_name(trackName);
++    perfetto::TrackEvent::SetTrackDescriptor(track, desc);
++    return track;
+ }
+ 
+-perfetto::Track getPerfettoWebPerfTrackSync(const std::string& trackName) {
+-  // In the case of marks we can reuse the same track saving some resources,
+-  // because there's no risk of partial overlap that would break the timings.
+-  static std::unordered_map<std::string, perfetto::Track> tracks;
++perfetto::Track getPerfettoWebPerfTrackSync(const std::string& trackName)
++{
++    // In the case of marks we can reuse the same track saving some resources,
++    // because there's no risk of partial overlap that would break the timings.
++    static std::unordered_map<std::string, perfetto::Track> tracks;
+ 
+-  auto it = tracks.find(trackName);
+-  if (it == tracks.end()) {
+-    auto track = createTrack(trackName);
+-    tracks.emplace(trackName, track);
+-    return track;
+-  } else {
+-    return it->second;
+-  }
++    auto it = tracks.find(trackName);
++    if (it == tracks.end()) {
++        auto track = createTrack(trackName);
++        tracks.emplace(trackName, track);
++        return track;
++    }
++    else {
++        return it->second;
++    }
+ }
+ 
+-perfetto::Track getPerfettoWebPerfTrackAsync(const std::string& trackName) {
+-  // Note that, in the case of measures, we don't cache and reuse a track for a
+-  // given name because Perfetto does not support partially overlapping measures
+-  // in the same track.
+-  //
+-  // E.g.:
+-  //   [.....]
+-  //     [......]
+-  // In that case, Perfetto would just cut subsequent measures as:
+-  //  [.....]
+-  //     [..]    <-- Part of this section is gone, so the timing is incorrect.
+-  //
+-  // There's a solution though. Perfetto does group different tracks with the
+-  // same name together, so having a separate track for each async event allows
+-  // overlap.
+-  return createTrack(trackName);
++perfetto::Track getPerfettoWebPerfTrackAsync(const std::string& trackName)
++{
++    // Note that, in the case of measures, we don't cache and reuse a track for a
++    // given name because Perfetto does not support partially overlapping measures
++    // in the same track.
++    //
++    // E.g.:
++    //   [.....]
++    //     [......]
++    // In that case, Perfetto would just cut subsequent measures as:
++    //  [.....]
++    //     [..]    <-- Part of this section is gone, so the timing is incorrect.
++    //
++    // There's a solution though. Perfetto does group different tracks with the
++    // same name together, so having a separate track for each async event allows
++    // overlap.
++    return createTrack(trackName);
+ }
+ 
+ // Perfetto's monotonic clock seems to match the std::chrono::steady_clock we
+ // use in JSExecutor::performanceNow on Android platforms, but if that
+ // assumption is incorrect we may need to manually offset perfetto timestamps.
+-uint64_t performanceNowToPerfettoTraceTime(double perfNowTime) {
+-  if (perfNowTime == 0) {
+-    return perfetto::TrackEvent::GetTraceTimeNs();
+-  }
+-  return static_cast<uint64_t>(perfNowTime * 1.e6);
++uint64_t performanceNowToPerfettoTraceTime(double perfNowTime)
++{
++    if (perfNowTime == 0) {
++        return perfetto::TrackEvent::GetTraceTimeNs();
++    }
++    return static_cast<uint64_t>(perfNowTime * 1.e6);
+ }
+ 
+ } // namespace facebook::react
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/node_modules/.bin/semver ../../../../discord/node_modules/react-native/node_modules/.bin/semver
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/node_modules/.bin/semver	2025-06-09 16:51:24
++++ ../../../../discord/node_modules/react-native/node_modules/.bin/semver	2025-06-06 18:27:01
+@@ -6,9 +6,9 @@
+ esac
+ 
+ if [ -z "$NODE_PATH" ]; then
+-  export NODE_PATH="/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/bin/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/node_modules"
++  export NODE_PATH="/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/bin/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/node_modules"
+ else
+-  export NODE_PATH="/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/bin/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/semver@7.6.3/node_modules:/Users/szymonkapala/work/discord_new_arch/discord/node_modules/.pnpm/node_modules:$NODE_PATH"
++  export NODE_PATH="/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/bin/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules/semver/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/semver@7.6.3/node_modules:/Users/szymonkapala/work/discord/node_modules/.pnpm/node_modules:$NODE_PATH"
+ fi
+ if [ -x "$basedir/node" ]; then
+   exec "$basedir/node"  "$basedir/../../../semver/bin/semver.js" "$@"
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/sdks: download
+Only in /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/sdks: hermes
+diff --color -ur -x build -x .cxx /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/src/private/specs/modules/NativeUIManager.js ../../../../discord/node_modules/react-native/src/private/specs/modules/NativeUIManager.js
+--- /Users/szymonkapala/work/discord_new_arch/discord/node_modules/react-native/src/private/specs/modules/NativeUIManager.js	2025-05-27 19:18:15
++++ ../../../../discord/node_modules/react-native/src/private/specs/modules/NativeUIManager.js	2025-06-04 09:30:31
+@@ -12,6 +12,7 @@
+ import type {TurboModule} from '../../../../Libraries/TurboModule/RCTExport';
+ 
+ import * as TurboModuleRegistry from '../../../../Libraries/TurboModule/TurboModuleRegistry';
++//import Systrace from '../../../../Libraries/Performance/Systrace';
+ 
+ export interface Spec extends TurboModule {
+   +getConstants: () => Object;
+@@ -108,4 +109,6 @@
+   +blur?: (reactTag: number) => void;
+ }
+ 
++//Systrace.beginEvent('NativeUIManager.getConstants');
+ export default (TurboModuleRegistry.getEnforcing<Spec>('UIManager'): Spec);
++//Systrace.endEvent();

@@ -12,6 +12,8 @@
 #include <fb/glog_init.h>
 #include <fbjni/fbjni.h>
 
+#include <reactperflogger/ReactPerfetto.h>
+
 #include "CatalystInstanceImpl.h"
 #include "CxxModuleWrapperBase.h"
 #include "InspectorNetworkRequestListener.h"
@@ -71,6 +73,9 @@ class ProxyJavaScriptExecutorHolder
 } // namespace
 
 extern "C" JNIEXPORT jint JNI_OnLoad(JavaVM* vm, void* reserved) {
+   #ifdef WITH_PERFETTO
+     initializePerfetto();
+    #endif
 #ifdef WITH_XPLATINIT
   return facebook::xplat::initialize(vm, [] {
 #else
