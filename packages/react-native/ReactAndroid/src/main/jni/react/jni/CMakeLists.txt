@@ -6,11 +6,14 @@
 cmake_minimum_required(VERSION 3.13)
 set(CMAKE_VERBOSE_MAKEFILE on)
 
-file(GLOB reactnativejni_SRC CONFIGURE_DEPENDS *.cpp)
+file(GLOB reactnativejni_SRC CONFIGURE_DEPENDS *.cpp
+${REACT_COMMON_DIR}/reactperflogger/reactperflogger/ReactPerfetto.cpp
+)
 
 add_compile_options(
         -fexceptions
         -Wno-unused-lambda-capture
+        -DWITH_PERFETTO=1
         -std=c++20)
 
 ######################
@@ -27,7 +30,9 @@ add_library(
 target_merge_so(reactnativejni)
 
 # TODO This should not be ../../
-target_include_directories(reactnativejni PUBLIC ../../)
+target_include_directories(reactnativejni PUBLIC ../../
+/Users/szymonkapala/work/perfetto/perfetto/sdk
+)
 
 target_link_libraries(reactnativejni
         android

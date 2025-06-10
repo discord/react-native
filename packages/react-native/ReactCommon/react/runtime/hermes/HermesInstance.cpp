@@ -7,14 +7,22 @@
 
 #include "HermesInstance.h"
 
+#include <android/log.h>
+
+#define LOG_TAG "MyNativeModule"
+#define LOGV(...) __android_log_print(ANDROID_LOG_VERBOSE, LOG_TAG, __VA_ARGS__)
+#define LOGD(...) __android_log_print(ANDROID_LOG_DEBUG, LOG_TAG, __VA_ARGS__)
+#define LOGI(...) __android_log_print(ANDROID_LOG_INFO, LOG_TAG, __VA_ARGS__)
+#define LOGW(...) __android_log_print(ANDROID_LOG_WARN, LOG_TAG, __VA_ARGS__)
+#define LOGE(...) __android_log_print(ANDROID_LOG_ERROR, LOG_TAG, __VA_ARGS__)
+
 #include <hermes/inspector-modern/chrome/HermesRuntimeTargetDelegate.h>
 #include <jsi/jsilib.h>
 #include <jsinspector-modern/InspectorFlags.h>
 #include <react/featureflags/ReactNativeFeatureFlags.h>
 
 #ifdef HERMES_ENABLE_DEBUGGER
-#include <hermes/inspector-modern/chrome/Registration.h>
-#include <hermes/inspector/RuntimeAdapter.h>
+
 #include <jsi/decorator.h>
 #endif
 
@@ -37,140 +45,89 @@ namespace facebook::react {
 // If Adapter doesn't share ownership over jsi::Runtime, the runtime can be
 // deleted before Connection::Impl cleans up all its jsi:: Objects. This will
 // lead to a runtime crash.
-class HermesInstanceRuntimeAdapter : public inspector_modern::RuntimeAdapter {
- public:
-  HermesInstanceRuntimeAdapter(
-      std::shared_ptr<HermesRuntime> hermesRuntime,
-      std::shared_ptr<MessageQueueThread> msgQueueThread)
-      : hermesRuntime_(std::move(hermesRuntime)),
-        messageQueueThread_(std::move(msgQueueThread)) {}
-  virtual ~HermesInstanceRuntimeAdapter() = default;
-
-  HermesRuntime& getRuntime() override {
-    return *hermesRuntime_;
-  }
-
-  void tickleJs() override {
-    std::weak_ptr<HermesRuntime> weakRuntime(hermesRuntime_);
-    messageQueueThread_->runOnQueue([weakRuntime]() {
-      auto runtime = weakRuntime.lock();
-      if (!runtime) {
-        return;
-      }
-      jsi::Function func =
-          runtime->global().getPropertyAsFunction(*runtime, "__tickleJs");
-      func.call(*runtime);
-    });
-  }
-
- private:
-  std::shared_ptr<HermesRuntime> hermesRuntime_;
-  std::shared_ptr<MessageQueueThread> messageQueueThread_;
-};
-
-class DecoratedRuntime : public jsi::RuntimeDecorator<jsi::Runtime> {
- public:
-  DecoratedRuntime(
-      std::unique_ptr<HermesRuntime> runtime,
-      std::shared_ptr<MessageQueueThread> msgQueueThread)
-      : RuntimeDecorator<jsi::Runtime>(*runtime), runtime_(std::move(runtime)) {
-    auto adapter = std::make_unique<HermesInstanceRuntimeAdapter>(
-        runtime_, msgQueueThread);
-
-    debugToken_ = inspector_modern::chrome::enableDebugging(
-        std::move(adapter), "Hermes Bridgeless React Native");
-  }
-
-  ~DecoratedRuntime() {
-    inspector_modern::chrome::disableDebugging(debugToken_);
-  }
-
- private:
-  std::shared_ptr<HermesRuntime> runtime_;
-  inspector_modern::chrome::DebugSessionToken debugToken_;
-};
 
 #endif
 
 class HermesJSRuntime : public JSRuntime {
- public:
-  HermesJSRuntime(std::unique_ptr<HermesRuntime> runtime)
-      : runtime_(std::move(runtime)) {}
-
-  jsi::Runtime& getRuntime() noexcept override {
-    return *runtime_;
-  }
-
-  jsinspector_modern::RuntimeTargetDelegate& getRuntimeTargetDelegate()
-      override {
-    if (!targetDelegate_) {
-      targetDelegate_.emplace(runtime_);
+public:
+    HermesJSRuntime(std::unique_ptr<HermesRuntime> runtime)
+      : runtime_(std::move(runtime))
+    {
     }
-    return *targetDelegate_;
-  }
 
-  void unstable_initializeOnJsThread() override {
-    runtime_->registerForProfiling();
-  }
+    jsi::Runtime& getRuntime() noexcept override { return *runtime_; }
 
- private:
-  std::shared_ptr<HermesRuntime> runtime_;
-  std::optional<jsinspector_modern::HermesRuntimeTargetDelegate>
-      targetDelegate_;
+    jsinspector_modern::RuntimeTargetDelegate& getRuntimeTargetDelegate() override
+    {
+        if (!targetDelegate_) {
+            targetDelegate_.emplace(runtime_);
+        }
+        return *targetDelegate_;
+    }
+
+    void unstable_initializeOnJsThread() override { runtime_->registerForProfiling(); }
+
+private:
+    std::shared_ptr<HermesRuntime> runtime_;
+    std::optional<jsinspector_modern::HermesRuntimeTargetDelegate> targetDelegate_;
 };
 
 std::unique_ptr<JSRuntime> HermesInstance::createJSRuntime(
-    std::shared_ptr<::hermes::vm::CrashManager> crashManager,
-    std::shared_ptr<MessageQueueThread> msgQueueThread,
-    bool allocInOldGenBeforeTTI) noexcept {
-  assert(msgQueueThread != nullptr);
+  std::shared_ptr<::hermes::vm::CrashManager> crashManager,
+  std::shared_ptr<MessageQueueThread> msgQueueThread,
+  bool allocInOldGenBeforeTTI) noexcept
+{
+    assert(4 == 6);
+    LOGE("Creating Hermes JS Runtime JIT");
+    LOGI("Creating Hermes JS Runtime JIT");
+    assert(msgQueueThread != nullptr);
 
-  auto gcConfig = ::hermes::vm::GCConfig::Builder()
-                      // Default to 3GB
-                      .withMaxHeapSize(3072 << 20)
-                      .withName("RNBridgeless");
+      auto gcConfig = ::hermes::vm::GCConfig::Builder()
+                        // Default to 3GB
+                        .withMaxHeapSize(3072 << 20)
+                        .withName("RNBridgeless");
 
-  if (allocInOldGenBeforeTTI) {
-    // For the next two arguments: avoid GC before TTI
-    // by initializing the runtime to allocate directly
-    // in the old generation, but revert to normal
-    // operation when we reach the (first) TTI point.
-    gcConfig.withAllocInYoung(false).withRevertToYGAtTTI(true);
-  }
+    if (allocInOldGenBeforeTTI) {
+        // For the next two arguments: avoid GC before TTI
+        // by initializing the runtime to allocate directly
+        // in the old generation, but revert to normal
+        // operation when we reach the (first) TTI point.
+        gcConfig.withAllocInYoung(false).withRevertToYGAtTTI(true);
+    }
 
-  ::hermes::vm::RuntimeConfig::Builder runtimeConfigBuilder =
+    bool isOn = false;
+
+    ::hermes::vm::RuntimeConfig::Builder runtimeConfigBuilder =
       ::hermes::vm::RuntimeConfig::Builder()
-          .withGCConfig(gcConfig.build())
-          .withEnableSampleProfiling(true)
-          .withMicrotaskQueue(
-              ReactNativeFeatureFlags::enableBridgelessArchitecture() &&
-              !ReactNativeFeatureFlags::disableEventLoopOnBridgeless());
+        .withGCConfig(gcConfig.build())
+        .withEnableSampleProfiling(true)
+        .withEnableJIT(isOn)
+        .withMicrotaskQueue(ReactNativeFeatureFlags::enableBridgelessArchitecture() &&
+                            !ReactNativeFeatureFlags::disableEventLoopOnBridgeless());
 
-  if (crashManager) {
-    runtimeConfigBuilder.withCrashMgr(crashManager);
-  }
+    // log using android log
+    LOGI("Creating runtime and JIT is %s", isOn ? "enabled" : "disabled");
 
-  std::unique_ptr<HermesRuntime> hermesRuntime =
+    assert(4 == 5);
+    if (crashManager) {
+        runtimeConfigBuilder.withCrashMgr(crashManager);
+    }
+
+    std::unique_ptr<HermesRuntime> hermesRuntime =
       hermes::makeHermesRuntime(runtimeConfigBuilder.build());
 
-  auto errorPrototype = hermesRuntime->global()
+    auto errorPrototype = hermesRuntime->global()
                             .getPropertyAsObject(*hermesRuntime, "Error")
                             .getPropertyAsObject(*hermesRuntime, "prototype");
-  errorPrototype.setProperty(*hermesRuntime, "jsEngine", "hermes");
+    errorPrototype.setProperty(*hermesRuntime, "jsEngine", "hermes");
 
 #ifdef HERMES_ENABLE_DEBUGGER
-  auto& inspectorFlags = jsinspector_modern::InspectorFlags::getInstance();
-  if (!inspectorFlags.getFuseboxEnabled()) {
-    std::unique_ptr<DecoratedRuntime> decoratedRuntime =
-        std::make_unique<DecoratedRuntime>(
-            std::move(hermesRuntime), msgQueueThread);
-    return std::make_unique<JSIRuntimeHolder>(std::move(decoratedRuntime));
-  }
+
 #else
-  (void)msgQueueThread;
+    (void)msgQueueThread;
 #endif
 
-  return std::make_unique<HermesJSRuntime>(std::move(hermesRuntime));
+    return std::make_unique<HermesJSRuntime>(std::move(hermesRuntime));
 }
 
 } // namespace facebook::react

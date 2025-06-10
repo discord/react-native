@@ -17,7 +17,7 @@ import java.util.Locale
 // rather than the device locale. This is challenging because getApplicationLocale() is only
 // available via DI.
 @DoNotStrip
-public object AndroidUnicodeUtils {
+public object AndroidUnicodeUtils2 {
 
   @DoNotStrip
   @JvmStatic

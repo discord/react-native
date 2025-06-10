@@ -11,6 +11,8 @@
 import type {TurboModule} from './RCTExport';
 
 import invariant from 'invariant';
+import * as Systrace from '../Performance/Systrace';
+
 
 const NativeModules = require('../BatchedBridge/NativeModules');
 
@@ -43,7 +45,12 @@ export function get<T: TurboModule>(name: string): ?T {
 }
 
 export function getEnforcing<T: TurboModule>(name: string): T {
+  Systrace.beginEvent(
+    'TurboModuleRegistry.getEnforcing',
+    {name},
+  );
   const module = requireModule<T>(name);
+  Systrace.endEvent();
   invariant(
     module != null,
     `TurboModuleRegistry.getEnforcing(...): '${name}' could not be found. ` +

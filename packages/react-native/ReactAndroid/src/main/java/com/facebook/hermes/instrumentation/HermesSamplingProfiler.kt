@@ -12,7 +12,7 @@ import com.facebook.soloader.SoLoader
 /** Hermes sampling profiler static JSI API. */
 public object HermesSamplingProfiler {
   init {
-    SoLoader.loadLibrary("jsijniprofiler")
+    System.loadLibrary("hermestooling")
   }
 
   /** Start sample profiling. */

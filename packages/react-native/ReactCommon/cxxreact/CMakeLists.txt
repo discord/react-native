@@ -11,12 +11,19 @@ add_compile_options(
         -frtti
         -std=c++20
         -Wno-unused-lambda-capture
+        -DWITH_PERFETTO=1
         -DLOG_TAG=\"ReactNative\")
 
-file(GLOB react_cxxreact_SRC CONFIGURE_DEPENDS *.cpp)
+file(GLOB react_cxxreact_SRC CONFIGURE_DEPENDS *.cpp
+${REACT_COMMON_DIR}/reactperflogger/reactperflogger/ReactPerfettoCategories.cpp
+        /Users/szymonkapala/work/perfetto/perfetto/sdk/perfetto.cc
+)
 add_library(react_cxxreact OBJECT ${react_cxxreact_SRC})
 
-target_include_directories(react_cxxreact PUBLIC ${REACT_COMMON_DIR})
+target_include_directories(react_cxxreact PUBLIC ${REACT_COMMON_DIR}
+        /Users/szymonkapala/work/perfetto/perfetto/sdk
+        ${REACT_COMMON_DIR}/reactperflogger
+)
 
 target_link_libraries(react_cxxreact
         boost

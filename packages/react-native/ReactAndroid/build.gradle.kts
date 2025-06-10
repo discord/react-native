@@ -463,7 +463,7 @@ val packageReactNdkLibsForBuck by
       // Shared libraries (.so) are copied from the merged_native_libs folder instead
       from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
       exclude("**/libjsc.so")
-      exclude("**/libhermes.so")
+      exclude("**/libhermesvm.so")
       into("src/main/jni/prebuilt/lib")
     }
 
@@ -474,7 +474,7 @@ val packageReactNdkDebugLibsForDiscord by
       // Shared libraries (.so) are copied from the merged_native_libs folder instead
       from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
       exclude("**/libjsc.so")
-      exclude("**/libhermes.so")
+      exclude("**/libhermesvm.so")
       into("src/main/jni/prebuilt/lib/debug")
     }
 
@@ -485,7 +485,7 @@ val packageReactNdkReleaseLibsForDiscord by
         // Shared libraries (.so) are copied from the merged_native_libs folder instead
         from("$buildDir/intermediates/merged_native_libs/release/out/lib/")
         exclude("**/libjsc.so")
-        exclude("**/libhermes.so")
+        exclude("**/libhermesvm.so")
         into("src/main/jni/prebuilt/lib/release")
     }
 
@@ -561,7 +561,7 @@ android {
     buildConfigField("boolean", "IS_INTERNAL_BUILD", "false")
     buildConfigField("int", "EXOPACKAGE_FLAGS", "0")
     buildConfigField("boolean", "UNSTABLE_ENABLE_FUSEBOX_RELEASE", "false")
-    buildConfigField("boolean", "ENABLE_PERFETTO", "false")
+    buildConfigField("boolean", "ENABLE_PERFETTO", "true")
 
     resValue("integer", "react_native_dev_server_port", reactNativeDevServerPort())
 
@@ -650,7 +650,7 @@ android {
     // we produce. The reason behind this is that we want to allow users to pick the
     // JS engine by specifying a dependency on either `hermes-engine` or `android-jsc`
     // that will include the necessary .so files to load.
-    jniLibs.excludes.add("**/libhermes.so")
+    jniLibs.excludes.add("**/libhermesvm.so")
     jniLibs.excludes.add("**/libjsc.so")
   }
 
@@ -683,6 +683,7 @@ android {
 tasks.withType<KotlinCompile>().configureEach { exclude("com/facebook/annotationprocessors/**") }
 
 dependencies {
+  implementation("com.tencent:mmkv-static:1.2.14")
   api(libs.androidx.appcompat)
   api(libs.androidx.appcompat.resources)
   api(libs.androidx.autofill)
