@@ -12,6 +12,7 @@ import static com.facebook.react.bridge.ReactMarkerConstants.CREATE_UI_MANAGER_M
 import static com.facebook.react.uimanager.common.UIManagerType.DEFAULT;
 import static com.facebook.react.uimanager.common.UIManagerType.FABRIC;
 
+import android.util.Log;
 import android.content.ComponentCallbacks2;
 import android.content.res.Configuration;
 import android.view.View;
@@ -135,17 +136,9 @@ public class UIManagerModule extends ReactContextBaseJavaModule
       List<ViewManager> viewManagersList,
       int minTimeLeftInFrameForNonBatchedOperationMs) {
     super(reactContext);
+    Systrace.beginSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE, "UIManagerModule.init");
     DisplayMetricsHolder.initDisplayMetricsIfNotInitialized(reactContext);
-    mEventDispatcher = new EventDispatcherImpl(reactContext);
-    mCustomDirectEvents = MapBuilder.newHashMap();
-    mModuleConstants = createConstants(viewManagersList, null, mCustomDirectEvents);
-    mViewManagerRegistry = new ViewManagerRegistry(viewManagersList);
-    mUIImplementation =
-        new UIImplementation(
-            reactContext,
-            mViewManagerRegistry,
-            mEventDispatcher,
-            minTimeLeftInFrameForNonBatchedOperationMs);
+    long startTime, endTime;
 
     reactContext.addLifecycleEventListener(this);
     mEventDispatcher.registerEventEmitter(
@@ -248,8 +241,24 @@ public class UIManagerModule extends ReactContextBaseJavaModule
         .arg("Lazy", false)
         .flush();
     try {
-      return UIManagerModuleConstantsHelper.createConstants(
+      // If the background load is still happening, this will wait. If it completed, returns immediately.
+      Map<String,Object> cached = UIManagerConstantsCache.getInstance().getCachedConstants();
+      Map<String,Object> cachedCustomBubblingEvents = UIManagerConstantsCache.getInstance().getCachedBubblingEventsTypes();
+      if (cached != null) {
+        if (customBubblingEvents != null) {
+          customBubblingEvents.putAll(cachedCustomBubblingEvents);
+        }
+
+        return cached;
+      }
+
+      // Otherwise, build fresh on this thread…
+      Map<String,Object> fresh = UIManagerModuleConstantsHelper.createConstants(
           viewManagers, customBubblingEvents, customDirectEvents);
+
+      // …and save to MMKV in the background for next time:
+      UIManagerConstantsCache.getInstance().saveConstantsAndBubblingEventsTypes(fresh, customBubblingEvents);
+      return fresh;
     } finally {
       Systrace.endSection(Systrace.TRACE_TAG_REACT_JAVA_BRIDGE);
       ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_CONSTANTS_END);
