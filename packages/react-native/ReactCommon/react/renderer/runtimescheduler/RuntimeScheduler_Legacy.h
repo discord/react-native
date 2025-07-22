@@ -169,6 +169,14 @@ class RuntimeScheduler_Legacy final : public RuntimeSchedulerBase {
   std::atomic<ShadowTreeRevisionConsistencyManager *> shadowTreeRevisionConsistencyManager_{nullptr};
 
   RuntimeSchedulerTaskErrorHandler onTaskError_;
+
+  /*
+   * This allows the C++ code to trigger microtask flushing from JavaScript.
+   */
+  void performMicrotaskCheckpoint(jsi::Runtime& runtime) noexcept;
+
+  private:
+    bool performingMicrotaskCheckpoint_{false};
 };
 
 } // namespace facebook::react
