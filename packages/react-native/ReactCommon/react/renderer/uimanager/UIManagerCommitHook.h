@@ -69,6 +69,11 @@ class UIManagerCommitHook {
   {
   }
 
+  // Discord - Called after a commit is known to succeed, however, still under the commit lock
+  virtual void shadowTreeCommitSucceeded(const ShadowTreeCommitOptions& commitOptions) {}
+  // Discord - Will be called in each case once we are done with the current commit attempt
+  virtual void shadowTreeCommitFinalized(const ShadowTreeCommitOptions& commitOptions) {}
+
   virtual ~UIManagerCommitHook() noexcept = default;
 };
 
