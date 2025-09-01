@@ -21,6 +21,16 @@
 #include "ShadowTreeDelegate.h"
 #include <glog/logging.h>
 
+// Discord - Wrap with ScopeGuard for a function to run on the end of the scope:
+#include <functional>
+struct ScopeGuard {
+  std::function<void()> fn;
+  ~ScopeGuard() { fn(); }
+};
+#define CONCAT_IMPL(x, y) x##y
+#define CONCAT(x, y) CONCAT_IMPL(x, y)
+#define defer(code) ScopeGuard CONCAT(defer, LINE)([&](){code;})
+
 namespace facebook::react {
 
 namespace {
@@ -403,6 +413,7 @@ CommitStatus ShadowTree::tryCommit(
       *this, oldRootShadowNode, newRootShadowNode, commitOptions);
 
   if (!newRootShadowNode) {
+    delegate_.shadowTreeCommitFinalized(commitOptions);
     return CommitStatus::Cancelled;
   }
 
@@ -424,6 +435,7 @@ CommitStatus ShadowTree::tryCommit(
     // Updating `currentRevision_` in unique manner if it hasn't changed.
     UniqueLock lock = uniqueRevisionLock(
         /*defer*/ isReactBranch);
+    defer(delegate_.shadowTreeCommitFinalized(commitOptions));
 
     if (!isReactBranch && currentRevision_.number != oldRevision.number) {
       return CommitStatus::Failed;
@@ -432,6 +444,8 @@ CommitStatus ShadowTree::tryCommit(
     auto newRevisionNumber = isReactBranch
         ? oldRevisionForStateProgression.number + 1
         : currentRevision_.number + 1;
+
+    delegate_.shadowTreeCommitSucceeded(commitOptions);
 
     {
       std::scoped_lock dispatchLock(EventEmitter::DispatchMutex());
