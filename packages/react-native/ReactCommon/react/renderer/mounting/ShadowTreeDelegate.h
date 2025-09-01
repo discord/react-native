@@ -49,6 +49,11 @@ class ShadowTreeDelegate {
    */
   virtual void shadowTreeDidPromoteReactRevision(const ShadowTree &shadowTree) const = 0;
 
+  // Called after a commit is known to succeed, however, still under the commit lock
+  virtual void shadowTreeCommitSucceeded(const ShadowTreeCommitOptions& commitOptions) const {}
+  // Will be called in each case once we are done with the current commit attempt
+  virtual void shadowTreeCommitFinalized(const ShadowTreeCommitOptions& commitOptions) const {}
+
   virtual ~ShadowTreeDelegate() noexcept = default;
 };
 
