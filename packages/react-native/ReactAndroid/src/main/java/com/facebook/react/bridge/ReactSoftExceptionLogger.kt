@@ -19,7 +19,7 @@ import com.facebook.react.bridge.ReactSoftExceptionLogger.Categories.SURFACE_MOU
 import java.util.concurrent.CopyOnWriteArrayList
 
 @DoNotStrip
-object ReactSoftExceptionLogger {
+public object ReactSoftExceptionLogger {
   @Retention(AnnotationRetention.SOURCE)
   @StringDef(
       RVG_ADD_CHILDREN_FOR_ACCESSIBILITY,
@@ -29,17 +29,17 @@ object ReactSoftExceptionLogger {
       SOFT_ASSERTIONS,
       SURFACE_MOUNTING_MANAGER_MISSING_VIEWSTATE,
   )
-  annotation class CategoryMode
+  public annotation class CategoryMode
 
   /** Constants that listeners can utilize for custom category-based behavior. */
-  object Categories {
-    const val RVG_ADD_CHILDREN_FOR_ACCESSIBILITY: String =
+  public object Categories {
+    public const val RVG_ADD_CHILDREN_FOR_ACCESSIBILITY: String =
         "ReactViewGroup.addChildrenForAccessibility"
-    const val RVG_IS_VIEW_CLIPPED: String = "ReactViewGroup.isViewClipped"
-    const val RVG_ON_VIEW_REMOVED: String = "ReactViewGroup.onViewRemoved"
-    const val CLIPPING_PROHIBITED_VIEW: String = "ReactClippingProhibitedView"
-    const val SOFT_ASSERTIONS: String = "SoftAssertions"
-    const val SURFACE_MOUNTING_MANAGER_MISSING_VIEWSTATE: String =
+    public const val RVG_IS_VIEW_CLIPPED: String = "ReactViewGroup.isViewClipped"
+    public const val RVG_ON_VIEW_REMOVED: String = "ReactViewGroup.onViewRemoved"
+    public const val CLIPPING_PROHIBITED_VIEW: String = "ReactClippingProhibitedView"
+    public const val SOFT_ASSERTIONS: String = "SoftAssertions"
+    public const val SURFACE_MOUNTING_MANAGER_MISSING_VIEWSTATE: String =
         "SurfaceMountingManager:MissingViewState"
   }
 
@@ -49,24 +49,24 @@ object ReactSoftExceptionLogger {
   private val listeners: MutableList<ReactSoftExceptionListener> = CopyOnWriteArrayList()
 
   @JvmStatic
-  fun addListener(listener: ReactSoftExceptionListener) {
+  public fun addListener(listener: ReactSoftExceptionListener): Unit {
     if (!listeners.contains(listener)) {
       listeners.add(listener)
     }
   }
 
   @JvmStatic
-  fun removeListener(listener: ReactSoftExceptionListener) {
+  public fun removeListener(listener: ReactSoftExceptionListener): Unit {
     listeners.remove(listener)
   }
 
   @JvmStatic
-  fun logSoftExceptionVerbose(@CategoryMode category: String, cause: Throwable) {
+  public fun logSoftExceptionVerbose(@CategoryMode category: String, cause: Throwable): Unit {
     logSoftException("${category}|${cause.javaClass.simpleName}:${cause.message}", cause)
   }
 
   @JvmStatic
-  fun logSoftException(@CategoryMode category: String, cause: Throwable) {
+  public fun logSoftException(@CategoryMode category: String, cause: Throwable): Unit {
     if (listeners.isNotEmpty()) {
       for (listener in listeners) {
         listener.logSoftException(category, cause)
@@ -82,7 +82,7 @@ object ReactSoftExceptionLogger {
     logSoftException(category, ReactNoCrashSoftException(message))
   }
 
-  fun interface ReactSoftExceptionListener {
-    fun logSoftException(category: String, cause: Throwable)
+  public fun interface ReactSoftExceptionListener {
+    public fun logSoftException(category: String, cause: Throwable): Unit
   }
 }
