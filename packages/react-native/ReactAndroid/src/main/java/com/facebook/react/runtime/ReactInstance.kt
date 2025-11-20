@@ -78,6 +78,7 @@ import java.util.HashMap
 import java.util.HashSet
 import kotlin.collections.Collection
 import kotlin.jvm.JvmStatic
+import android.util.Log
 
 /**
  * A replacement for [com.facebook.react.bridge.CatalystInstance] responsible for creating and
@@ -223,19 +224,23 @@ internal class ReactInstance(
             getConstantsForViewManager(viewManager, customDirectEvents)
           },
           {
-            UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap()
-                ?: run {
-                  val viewManagers: List<ViewManager<*, *>> =
-                      ArrayList(viewManagerResolver.eagerViewManagerMap.values)
-                  val constants = createConstants(viewManagers, customDirectEvents)
+            val uiManagerConstants = UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap()
+            if (uiManagerConstants != null) {
+              Log.v(TAG, "UIManagerConstantsCache is initialized, reusing cached constants")
+              uiManagerConstants
+            } else {
+              Log.v(TAG, "UIManagerConstantsCache is not initialized yet, creating constants 123")
+              val viewManagers: List<ViewManager<*, *>> =
+                  ArrayList(viewManagerResolver.eagerViewManagerMap.values)
+              val constants = createConstants(viewManagers, customDirectEvents)
 
-                  val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
-                  if (!lazyViewManagers.isEmpty()) {
-                    constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
-                    constants["LazyViewManagersEnabled"] = true
-                  }
-                  Arguments.makeNativeMap(constants)
-                }
+              val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
+              if (!lazyViewManagers.isEmpty()) {
+                constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
+                constants["LazyViewManagersEnabled"] = true
+              }
+              Arguments.makeNativeMap(constants)
+            }
           })
     }
 
@@ -583,8 +588,21 @@ internal class ReactInstance(
           .arg("Lazy", false)
           .flush()
       try {
-        return UIManagerModuleConstantsHelper.createConstants(
+        // If the background load is still happening, this will wait. If it completed, returns immediately.
+        val cached = UIManagerConstantsCache.getInstance().getCachedConstants()
+        if (cached != null) {
+          return cached
+        }
+
+        // Otherwise, build fresh on this thread…
+        val fresh = UIManagerModuleConstantsHelper.createConstants(
             viewManagers, null, customDirectEvents)
+
+        // …and save to MMKV in the background for next time:
+        UIManagerConstantsCache.getInstance().saveConstantsAndBubblingEventsTypes(fresh, null)
+        return fresh
+        /*return UIManagerModuleConstantsHelper.createConstants(
+            viewManagers, null, customDirectEvents)*/
       } finally {
         Systrace.endSection(Systrace.TRACE_TAG_REACT)
         ReactMarker.logMarker(ReactMarkerConstants.CREATE_UI_MANAGER_MODULE_CONSTANTS_END)
