@@ -19,6 +19,7 @@
 #include "updateMountedFlag.h"
 
 #include "ShadowTreeDelegate.h"
+#include <glog/logging.h>
 
 namespace facebook::react {
 
