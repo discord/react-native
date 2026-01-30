@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<e1f1d7f314a1cba0205a504d254f08c4>>
+ * @generated SignedSource<<124a5f1d04c0fdb7d2d3e6ca855908c9>>
  */
 
 /**
@@ -188,6 +188,8 @@ public interface ReactNativeFeatureFlagsProvider {
   @DoNotStrip public fun useNestedScrollViewAndroid(): Boolean
 
   @DoNotStrip public fun useSharedAnimatedBackend(): Boolean
+
+  @DoNotStrip public fun useSilenceErrorSMMViewNotFound(): Boolean
 
   @DoNotStrip public fun useTraitHiddenOnAndroid(): Boolean
 

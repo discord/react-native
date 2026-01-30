@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<13ade5a05e955da8b848b77007f2c0a1>>
+ * @generated SignedSource<<5636ea473cb991b14d3c1a542c4af3d0>>
  * @flow strict
  * @noformat
  */
@@ -132,6 +132,7 @@ export type ReactNativeFeatureFlags = Readonly<{
   useNativeViewConfigsInBridgelessMode: Getter<boolean>,
   useNestedScrollViewAndroid: Getter<boolean>,
   useSharedAnimatedBackend: Getter<boolean>,
+  useSilenceErrorSMMViewNotFound: Getter<boolean>,
   useTraitHiddenOnAndroid: Getter<boolean>,
   useTraitHiddenOnIOS: Getter<boolean>,
   useTurboModuleInterop: Getter<boolean>,
@@ -547,6 +548,10 @@ export const useNestedScrollViewAndroid: Getter<boolean> = createNativeFlagGette
  * Use shared animation backend in C++ Animated
  */
 export const useSharedAnimatedBackend: Getter<boolean> = createNativeFlagGetter('useSharedAnimatedBackend', false);
+/**
+ * Don't hard crash in SurfaceMountingManager when a view is not found. Instead, log a soft error.
+ */
+export const useSilenceErrorSMMViewNotFound: Getter<boolean> = createNativeFlagGetter('useSilenceErrorSMMViewNotFound', false);
 /**
  * Use Trait::hidden on Android
  */

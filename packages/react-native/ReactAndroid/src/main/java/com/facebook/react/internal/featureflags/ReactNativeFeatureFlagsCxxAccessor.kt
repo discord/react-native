@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<13a64f1884c29af2d3c20c675d911b83>>
+ * @generated SignedSource<<24f759b00aabf63584e578ad964cb6e0>>
  */
 
 /**
@@ -103,6 +103,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var useNativeViewConfigsInBridgelessModeCache: Boolean? = null
   private var useNestedScrollViewAndroidCache: Boolean? = null
   private var useSharedAnimatedBackendCache: Boolean? = null
+  private var useSilenceErrorSMMViewNotFoundCache: Boolean? = null
   private var useTraitHiddenOnAndroidCache: Boolean? = null
   private var useTraitHiddenOnIOSCache: Boolean? = null
   private var useTurboModuleInteropCache: Boolean? = null
@@ -854,6 +855,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.useSharedAnimatedBackend()
       useSharedAnimatedBackendCache = cached
+    }
+    return cached
+  }
+
+  override fun useSilenceErrorSMMViewNotFound(): Boolean {
+    var cached = useSilenceErrorSMMViewNotFoundCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.useSilenceErrorSMMViewNotFound()
+      useSilenceErrorSMMViewNotFoundCache = cached
     }
     return cached
   }

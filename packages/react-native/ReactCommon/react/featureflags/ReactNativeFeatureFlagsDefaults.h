@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2190294a1b4d25e7295e9fb03d6ba477>>
+ * @generated SignedSource<<7e5e740b6f00b27be8997c68a76c4fff>>
  */
 
 /**
@@ -358,6 +358,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool useSharedAnimatedBackend() override {
+    return false;
+  }
+
+  bool useSilenceErrorSMMViewNotFound() override {
     return false;
   }
 

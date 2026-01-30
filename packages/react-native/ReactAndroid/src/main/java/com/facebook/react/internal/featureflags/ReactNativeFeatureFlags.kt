@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9e4ced13a36c5a6c491eb7d9fe2ba699>>
+ * @generated SignedSource<<82d88c9c439b89de869039ebf597f3a2>>
  */
 
 /**
@@ -527,6 +527,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun useSharedAnimatedBackend(): Boolean = accessor.useSharedAnimatedBackend()
+
+  /**
+   * Don't hard crash in SurfaceMountingManager when a view is not found. Instead, log a soft error.
+   */
+  @JvmStatic
+  public fun useSilenceErrorSMMViewNotFound(): Boolean = accessor.useSilenceErrorSMMViewNotFound()
 
   /**
    * Use Trait::hidden on Android

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<0e7fd60442c1311a4bc0072eace88b71>>
+ * @generated SignedSource<<6e76bf3f479d488bcd6e0a349894aad4>>
  */
 
 /**
@@ -203,6 +203,8 @@ class NativeReactNativeFeatureFlags
   bool useNestedScrollViewAndroid(jsi::Runtime& runtime);
 
   bool useSharedAnimatedBackend(jsi::Runtime& runtime);
+
+  bool useSilenceErrorSMMViewNotFound(jsi::Runtime& runtime);
 
   bool useTraitHiddenOnAndroid(jsi::Runtime& runtime);
 

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<e0b1e6f41308aba4cfb1c3daf091c1f0>>
+ * @generated SignedSource<<1a315e5bfbc8634bad82fb2075f85a6b>>
  */
 
 /**
@@ -1523,6 +1523,24 @@ bool ReactNativeFeatureFlagsAccessor::useSharedAnimatedBackend() {
   return flagValue.value();
 }
 
+bool ReactNativeFeatureFlagsAccessor::useSilenceErrorSMMViewNotFound() {
+  auto flagValue = useSilenceErrorSMMViewNotFound_.load();
+
+  if (!flagValue.has_value()) {
+    // This block is not exclusive but it is not necessary.
+    // If multiple threads try to initialize the feature flag, we would only
+    // be accessing the provider multiple times but the end state of this
+    // instance and the returned flag value would be the same.
+
+    markFlagAsAccessed(83, "useSilenceErrorSMMViewNotFound");
+
+    flagValue = currentProvider_->useSilenceErrorSMMViewNotFound();
+    useSilenceErrorSMMViewNotFound_ = flagValue;
+  }
+
+  return flagValue.value();
+}
+
 bool ReactNativeFeatureFlagsAccessor::useTraitHiddenOnAndroid() {
   auto flagValue = useTraitHiddenOnAndroid_.load();
 
@@ -1532,7 +1550,7 @@ bool ReactNativeFeatureFlagsAccessor::useTraitHiddenOnAndroid() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(83, "useTraitHiddenOnAndroid");
+    markFlagAsAccessed(84, "useTraitHiddenOnAndroid");
 
     flagValue = currentProvider_->useTraitHiddenOnAndroid();
     useTraitHiddenOnAndroid_ = flagValue;
@@ -1550,7 +1568,7 @@ bool ReactNativeFeatureFlagsAccessor::useTraitHiddenOnIOS() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(84, "useTraitHiddenOnIOS");
+    markFlagAsAccessed(85, "useTraitHiddenOnIOS");
 
     flagValue = currentProvider_->useTraitHiddenOnIOS();
     useTraitHiddenOnIOS_ = flagValue;
@@ -1568,7 +1586,7 @@ bool ReactNativeFeatureFlagsAccessor::useTurboModuleInterop() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(85, "useTurboModuleInterop");
+    markFlagAsAccessed(86, "useTurboModuleInterop");
 
     flagValue = currentProvider_->useTurboModuleInterop();
     useTurboModuleInterop_ = flagValue;
@@ -1586,7 +1604,7 @@ double ReactNativeFeatureFlagsAccessor::viewCullingOutsetRatio() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(86, "viewCullingOutsetRatio");
+    markFlagAsAccessed(87, "viewCullingOutsetRatio");
 
     flagValue = currentProvider_->viewCullingOutsetRatio();
     viewCullingOutsetRatio_ = flagValue;
@@ -1604,7 +1622,7 @@ bool ReactNativeFeatureFlagsAccessor::viewTransitionEnabled() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(87, "viewTransitionEnabled");
+    markFlagAsAccessed(88, "viewTransitionEnabled");
 
     flagValue = currentProvider_->viewTransitionEnabled();
     viewTransitionEnabled_ = flagValue;
@@ -1622,7 +1640,7 @@ bool ReactNativeFeatureFlagsAccessor::viewTransitionUseHardwareBitmapAndroid() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(88, "viewTransitionUseHardwareBitmapAndroid");
+    markFlagAsAccessed(89, "viewTransitionUseHardwareBitmapAndroid");
 
     flagValue = currentProvider_->viewTransitionUseHardwareBitmapAndroid();
     viewTransitionUseHardwareBitmapAndroid_ = flagValue;
@@ -1640,7 +1658,7 @@ double ReactNativeFeatureFlagsAccessor::virtualViewPrerenderRatio() {
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(89, "virtualViewPrerenderRatio");
+    markFlagAsAccessed(90, "virtualViewPrerenderRatio");
 
     flagValue = currentProvider_->virtualViewPrerenderRatio();
     virtualViewPrerenderRatio_ = flagValue;

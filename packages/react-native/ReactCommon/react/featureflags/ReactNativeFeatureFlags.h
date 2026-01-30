@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<6f626e55c9f36d3d13ecc61547a10b2e>>
+ * @generated SignedSource<<7c0d44ed2b82e02068f6be0d9ee84c7b>>
  */
 
 /**
@@ -455,6 +455,11 @@ class ReactNativeFeatureFlags {
    * Use shared animation backend in C++ Animated
    */
   RN_EXPORT static bool useSharedAnimatedBackend();
+
+  /**
+   * Don't hard crash in SurfaceMountingManager when a view is not found. Instead, log a soft error.
+   */
+  RN_EXPORT static bool useSilenceErrorSMMViewNotFound();
 
   /**
    * Use Trait::hidden on Android
