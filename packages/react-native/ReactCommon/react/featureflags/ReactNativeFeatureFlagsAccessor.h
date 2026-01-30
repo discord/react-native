@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8a95a3b2d032a130ac25a3af45d28d38>>
+ * @generated SignedSource<<ac9fdfecb94498c2c8c9c37b49f478e7>>
  */
 
 /**
@@ -117,6 +117,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool useNativeViewConfigsInBridgelessMode();
   bool useNestedScrollViewAndroid();
   bool useSharedAnimatedBackend();
+  bool useSilenceErrorSMMViewNotFound();
   bool useTraitHiddenOnAndroid();
   bool useTraitHiddenOnIOS();
   bool useTurboModuleInterop();
@@ -135,7 +136,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 90> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 91> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -220,6 +221,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> useNativeViewConfigsInBridgelessMode_;
   std::atomic<std::optional<bool>> useNestedScrollViewAndroid_;
   std::atomic<std::optional<bool>> useSharedAnimatedBackend_;
+  std::atomic<std::optional<bool>> useSilenceErrorSMMViewNotFound_;
   std::atomic<std::optional<bool>> useTraitHiddenOnAndroid_;
   std::atomic<std::optional<bool>> useTraitHiddenOnIOS_;
   std::atomic<std::optional<bool>> useTurboModuleInterop_;
