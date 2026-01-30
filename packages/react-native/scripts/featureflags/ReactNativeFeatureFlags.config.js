@@ -975,6 +975,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'experimental',
     },
+    useSilenceErrorSMMViewNotFound: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-01-30',
+        description:
+          'Don\'t hard crash in SurfaceMountingManager when a view is not found. Instead, log a soft error.',
+        expectedReleaseValue: false,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     useTraitHiddenOnAndroid: {
       defaultValue: false,
       metadata: {

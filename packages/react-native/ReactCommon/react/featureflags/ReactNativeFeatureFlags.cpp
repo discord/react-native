@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c3b28855536e25d3a0b188db8a630de8>>
+ * @generated SignedSource<<0402e4cff168382c1ccc15dc6a028bf9>>
  */
 
 /**
@@ -372,6 +372,10 @@ bool ReactNativeFeatureFlags::useOptimizedViewRegistryOnAndroid() {
 
 bool ReactNativeFeatureFlags::useSharedAnimatedBackend() {
   return getAccessor().useSharedAnimatedBackend();
+}
+
+bool ReactNativeFeatureFlags::useSilenceErrorSMMViewNotFound() {
+  return getAccessor().useSilenceErrorSMMViewNotFound();
 }
 
 bool ReactNativeFeatureFlags::useTraitHiddenOnAndroid() {

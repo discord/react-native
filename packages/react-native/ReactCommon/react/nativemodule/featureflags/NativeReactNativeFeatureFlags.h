@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8bc415773b83afcc4083ecffbd15d390>>
+ * @generated SignedSource<<1cc509f070f934caafb518c4efa368fd>>
  */
 
 /**
@@ -209,6 +209,8 @@ class NativeReactNativeFeatureFlags
   bool useOptimizedViewRegistryOnAndroid(jsi::Runtime& runtime);
 
   bool useSharedAnimatedBackend(jsi::Runtime& runtime);
+
+  bool useSilenceErrorSMMViewNotFound(jsi::Runtime& runtime);
 
   bool useTraitHiddenOnAndroid(jsi::Runtime& runtime);
 

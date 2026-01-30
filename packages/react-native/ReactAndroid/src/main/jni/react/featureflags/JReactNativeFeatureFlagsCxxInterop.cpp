@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<48470b00d1d9d7241fd20b5b58f6339d>>
+ * @generated SignedSource<<636e5ad2dca08c7bbe80fe7b03e5ca74>>
  */
 
 /**
@@ -561,6 +561,12 @@ class ReactNativeFeatureFlagsJavaProvider
     return method(javaProvider_);
   }
 
+  bool useSilenceErrorSMMViewNotFound() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useSilenceErrorSMMViewNotFound");
+    return method(javaProvider_);
+  }
+
   bool useTraitHiddenOnAndroid() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useTraitHiddenOnAndroid");
@@ -1048,6 +1054,11 @@ bool JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend(
   return ReactNativeFeatureFlags::useSharedAnimatedBackend();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::useSilenceErrorSMMViewNotFound(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::useSilenceErrorSMMViewNotFound();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::useTraitHiddenOnAndroid();
@@ -1380,6 +1391,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "useSharedAnimatedBackend",
         JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend),
+      makeNativeMethod(
+        "useSilenceErrorSMMViewNotFound",
+        JReactNativeFeatureFlagsCxxInterop::useSilenceErrorSMMViewNotFound),
       makeNativeMethod(
         "useTraitHiddenOnAndroid",
         JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnAndroid),

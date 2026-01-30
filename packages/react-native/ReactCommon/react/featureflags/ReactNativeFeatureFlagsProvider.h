@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4bc280a5abd55978dddf9b8ff8f58d4e>>
+ * @generated SignedSource<<fc87e4728f852aa8dd481b3a511947cc>>
  */
 
 /**
@@ -112,6 +112,7 @@ class ReactNativeFeatureFlagsProvider {
   virtual bool useNestedScrollViewAndroid() = 0;
   virtual bool useOptimizedViewRegistryOnAndroid() = 0;
   virtual bool useSharedAnimatedBackend() = 0;
+  virtual bool useSilenceErrorSMMViewNotFound() = 0;
   virtual bool useTraitHiddenOnAndroid() = 0;
   virtual bool useTraitHiddenOnIOS() = 0;
   virtual bool useTurboModuleInterop() = 0;
