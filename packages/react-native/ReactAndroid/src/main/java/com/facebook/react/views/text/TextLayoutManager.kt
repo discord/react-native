@@ -972,6 +972,10 @@ internal object TextLayoutManager {
     val calculatedHeight =
         calculateHeight(layout, height, heightYogaMeasureMode, calculatedLineCount)
 
+    // Reserve stroke halo padding on both axes - see [applyStrokePadding].
+    val paddedWidth = applyStrokePadding(calculatedWidth, text, width, widthYogaMeasureMode)
+    val paddedHeight = applyStrokePadding(calculatedHeight, text, height, heightYogaMeasureMode)
+
     if (attachmentsPositions != null) {
       var attachmentIndex = 0
       var lastAttachmentFoundInSpan: Int
@@ -981,7 +985,7 @@ internal object TextLayoutManager {
       while (i < text.length) {
         lastAttachmentFoundInSpan =
             nextAttachmentMetrics(
-                layout, text, calculatedWidth, calculatedLineCount, i, 0f, metrics)
+                layout, text, paddedWidth, calculatedLineCount, i, 0f, metrics)
         if (metrics.wasFound) {
           attachmentsPositions[attachmentIndex] = metrics.top.pxToDp()
           attachmentsPositions[attachmentIndex + 1] = metrics.left.pxToDp()
@@ -991,8 +995,8 @@ internal object TextLayoutManager {
       }
     }
 
-    val widthInSP = calculatedWidth.pxToDp()
-    val heightInSP = calculatedHeight.pxToDp()
+    val widthInSP = paddedWidth.pxToDp()
+    val heightInSP = paddedHeight.pxToDp()
 
     return YogaMeasureOutput.make(widthInSP, heightInSP)
   }
@@ -1015,9 +1019,12 @@ internal object TextLayoutManager {
     val calculatedHeight =
         calculateHeight(layout, height, heightYogaMeasureMode, calculatedLineCount)
 
+    val paddedWidth = applyStrokePadding(calculatedWidth, text, width, widthYogaMeasureMode)
+    val paddedHeight = applyStrokePadding(calculatedHeight, text, height, heightYogaMeasureMode)
+
     val retList = ArrayList<Float>()
-    retList.add(calculatedWidth.pxToDp())
-    retList.add(calculatedHeight.pxToDp())
+    retList.add(paddedWidth.pxToDp())
+    retList.add(paddedHeight.pxToDp())
 
     val metrics = AttachmentMetrics()
     var lastAttachmentFoundInSpan: Int
@@ -1028,7 +1035,7 @@ internal object TextLayoutManager {
             nextAttachmentMetrics(
                 layout,
                 text,
-                calculatedWidth,
+                paddedWidth,
                 calculatedLineCount,
                 i,
                 preparedLayout.verticalOffset,
@@ -1062,28 +1069,54 @@ internal object TextLayoutManager {
             paragraphAttributes.getString(PA_KEY_TEXT_ALIGN_VERTICAL)
         else null
 
-    if (textAlignVertical == null) {
+    val text = layout.text as? Spanned
+    val strokeWidth = StrokeStyleSpan.getStrokeWidth(text)
+
+    // Fast-path for the common case: no stroke halo to shift and no custom vertical alignment.
+    if (strokeWidth <= 0f && textAlignVertical == null) {
       return 0f
     }
 
     val textHeight = layout.height
     val calculatedLineCount = calculateLineCount(layout, maximumNumberOfLines)
-    val boxHeight = calculateHeight(layout, height, heightMeasureMode, calculatedLineCount)
+    // Use the padded box height so slack matches the view bounds [PreparedLayoutTextView] draws
+    // into.
+    val boxHeight =
+        applyStrokePadding(
+            calculateHeight(layout, height, heightMeasureMode, calculatedLineCount),
+            text ?: SpannableString(""),
+            height,
+            heightMeasureMode)
 
     if (textHeight > boxHeight) {
       return 0f
     }
 
-    when (textAlignVertical) {
-      "auto",
-      "top" -> return 0f
-      "center" -> return (boxHeight - textHeight) / 2f
-      "bottom" -> return boxHeight - textHeight
-      else -> {
-        FLog.w(ReactConstants.TAG, "Invalid textAlignVertical: $textAlignVertical")
-        return 0f
-      }
+    val baseOffset: Float =
+        when (textAlignVertical) {
+          null, "auto", "top" -> 0f
+          "center" -> (boxHeight - textHeight) / 2f
+          "bottom" -> boxHeight - textHeight
+          else -> {
+            FLog.w(ReactConstants.TAG, "Invalid textAlignVertical: $textAlignVertical")
+            0f
+          }
+        }
+
+    if (strokeWidth <= 0f) {
+      return baseOffset
     }
+
+    // Shift text down by up to `strokeWidth/2` so the top halo reserved by [applyStrokePadding]
+    // fits inside the view bounds, clamped so tight boxes don't push glyphs out of view.
+    val slack = boxHeight - textHeight
+    val target =
+        if (slack >= strokeWidth) {
+          baseOffset.coerceIn(strokeWidth / 2f, slack - strokeWidth / 2f)
+        } else {
+          slack / 2f
+        }
+    return target
   }
 
   private fun calculateLineCount(layout: Layout, maximumNumberOfLines: Int): Int =
@@ -1123,6 +1156,28 @@ internal object TextLayoutManager {
       }
     }
     return calculatedHeight
+  }
+
+  /**
+   * Expands a measured text dimension by the stroke width so the outline isn't clipped. Width
+   * expansion mirrors iOS (`RCTTextShadowView.mm`); height expansion is Android-specific because
+   * `layout.getLineBottom(...)` doesn't include the outward stroke on the last line.
+   *
+   * Returns [dimension] unchanged for [YogaMeasureMode.EXACTLY] or when no [StrokeStyleSpan] is
+   * present. Shared with [ReactTextShadowNode] so Paper and Fabric measurement agree.
+   */
+  @JvmStatic
+  internal fun applyStrokePadding(
+      dimension: Float,
+      text: Spanned,
+      constraint: Float,
+      measureMode: YogaMeasureMode
+  ): Float {
+    if (measureMode == YogaMeasureMode.EXACTLY) return dimension
+    val strokeWidth = StrokeStyleSpan.getStrokeWidth(text)
+    if (strokeWidth <= 0f) return dimension
+    val padded = dimension + strokeWidth
+    return if (measureMode == YogaMeasureMode.AT_MOST) min(padded, constraint) else padded
   }
 
   private fun nextAttachmentMetrics(

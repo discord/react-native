@@ -234,6 +234,16 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
         text.getSpans(0, text.length(), TextInlineViewPlaceholderSpan.class);
     int textViewWidth = textViewRight - textViewLeft;
     int textViewHeight = textViewBottom - textViewTop;
+    // Match the draw-time top-halo shift applied in [onDraw] so attachments track the text.
+    int strokeShift =
+        Math.round(
+            StrokeStyleSpan.strokeShift(
+                StrokeStyleSpan.getStrokeSpan(text),
+                layout,
+                getHeight(),
+                getPaddingTop(),
+                getPaddingBottom(),
+                getGravity()));
 
     for (TextInlineViewPlaceholderSpan placeholder : placeholders) {
       View child = uiManager.resolveView(placeholder.getReactTag());
@@ -320,8 +330,10 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
 
         int left = textViewLeft + leftRelativeToTextView;
 
-        // Vertically align the inline view to the baseline of the line of text.
-        int topRelativeToTextView = getTotalPaddingTop() + layout.getLineBaseline(line) - height;
+        // Vertically align the inline view to the baseline of the line of text. `strokeShift`
+        // matches the translation applied in [onDraw] so attachments track the text.
+        int topRelativeToTextView =
+            getTotalPaddingTop() + strokeShift + layout.getLineBaseline(line) - height;
         int top = textViewTop + topRelativeToTextView;
 
         boolean isFullyClipped =
@@ -371,10 +383,28 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
       CharSequence text = getText();
       StrokeStyleSpan strokeSpan =
           text instanceof Spanned ? StrokeStyleSpan.getStrokeSpan((Spanned) text) : null;
+
+      float strokeShift =
+          StrokeStyleSpan.strokeShift(
+              strokeSpan,
+              getLayout(),
+              getHeight(),
+              getPaddingTop(),
+              getPaddingBottom(),
+              getGravity());
+      boolean applyStrokeShift = strokeShift != 0f;
+      if (applyStrokeShift) {
+        canvas.save();
+        canvas.translate(0f, strokeShift);
+      }
+
       if (strokeSpan == null || !strokeSpan.draw(getPaint(), () -> super.onDraw(canvas))) {
         super.onDraw(canvas);
       }
 
+      if (applyStrokeShift) {
+        canvas.restore();
+      }
       if (mOverflow != Overflow.VISIBLE) {
         canvas.restore();
       }

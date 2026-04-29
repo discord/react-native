@@ -144,6 +144,11 @@ public constructor(reactTextViewManagerCallback: ReactTextViewManagerCallback? =
         layoutHeight = height
       }
     }
+
+    // Reserve stroke halo padding via the shared helper so Paper matches Fabric measurement.
+    layoutWidth = TextLayoutManager.applyStrokePadding(layoutWidth, text, width, widthMode)
+    layoutHeight = TextLayoutManager.applyStrokePadding(layoutHeight, text, height, heightMode)
+
     YogaMeasureOutput.make(layoutWidth, layoutHeight)
   }
 
