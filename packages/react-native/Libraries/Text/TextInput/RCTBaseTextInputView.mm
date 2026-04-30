@@ -7,6 +7,8 @@
 
 #import <React/RCTBaseTextInputView.h>
 
+#import <react/featureflags/ReactNativeFeatureFlags.h>
+
 #import <React/RCTBridge.h>
 #import <React/RCTConvert.h>
 #import <React/RCTEventDispatcherProtocol.h>
@@ -14,6 +16,7 @@
 #import <React/RCTUIManager.h>
 #import <React/RCTUtils.h>
 #import <React/UIView+React.h>
+#import <React/UIViewController+React.h>
 
 #import <React/RCTInputAccessoryView.h>
 #import <React/RCTInputAccessoryViewContent.h>
@@ -24,12 +27,17 @@
 static const CGFloat kSingleLineKeyboardBottomOffset = 15.0;
 static NSSet<NSNumber *> *returnKeyTypesSet;
 
+@interface RCTBaseTextInputView () <RCTViewControllerAppearanceListener>
+@end
+
 @implementation RCTBaseTextInputView {
   __weak RCTBridge *_bridge;
   __weak id<RCTEventDispatcherProtocol> _eventDispatcher;
   BOOL _hasInputAccessoryView;
   NSString *_Nullable _predictedText;
   BOOL _didMoveToWindow;
+  BOOL _didAutoFocus;
+  __weak UIViewController *_viewController;
   NSArray<UIBarButtonItemGroup *> *_initialValueLeadingBarButtonGroups;
   NSArray<UIBarButtonItemGroup *> *_initialValueTrailingBarButtonGroups;
 }
@@ -663,16 +671,44 @@ RCT_NOT_IMPLEMENTED(-(instancetype)initWithFrame : (CGRect)frame)
   [self.backedTextInputView reactBlur];
 }
 
-- (void)didMoveToWindow
+- (void)tryAutoFocus
 {
-  if (self.autoFocus && !_didMoveToWindow) {
+  if (self.autoFocus && !_didAutoFocus) {
+    _didAutoFocus = YES;
     [self.backedTextInputView reactFocus];
     [self initializeReturnKeyType];
-  } else {
-    [self.backedTextInputView reactFocusIfNeeded];
+  }
+}
+
+- (void)reactViewControllerDidAppear:(UIViewController *)viewController animated:(BOOL)animated
+{
+  [self tryAutoFocus];
+}
+
+- (void)didMoveToWindow
+{
+  bool enableNewAutoFocusImpl = facebook::react::ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
+  if (!enableNewAutoFocusImpl) {
+    if (self.autoFocus && !_didMoveToWindow) {
+      [self tryAutoFocus];
+    } else {
+      [self.backedTextInputView reactFocusIfNeeded];
+    }
+
+    _didMoveToWindow = YES;
+    return;
   }
 
-  _didMoveToWindow = YES;
+  [_viewController reactRemoveViewControllerAppearanceListener:self];
+  _viewController = self.window ? [self reactViewController] : nil;
+  [_viewController reactAddViewControllerAppearanceListener:self];
+
+  if (self.window && !_didMoveToWindow) {
+    _didMoveToWindow = YES;
+    [self initializeReturnKeyType];
+  }
+
+  [self.backedTextInputView reactFocusIfNeeded];
 }
 
 #pragma mark - Custom Input Accessory View
