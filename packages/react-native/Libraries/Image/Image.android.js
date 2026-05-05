@@ -16,7 +16,6 @@ import type {AbstractImageAndroid, ImageAndroid} from './ImageTypes.flow';
 
 import flattenStyle from '../StyleSheet/flattenStyle';
 import StyleSheet from '../StyleSheet/StyleSheet';
-import TextAncestorContext from '../Text/TextAncestorContext';
 import ImageAnalyticsTagContext from './ImageAnalyticsTagContext';
 import {
   unstable_getImageComponentDecorator,
@@ -29,7 +28,6 @@ import NativeImageLoaderAndroid, {
   type ImageSize,
 } from './NativeImageLoaderAndroid';
 import resolveAssetSource from './resolveAssetSource';
-import TextInlineImageNativeComponent from './TextInlineImageNativeComponent';
 import * as React from 'react';
 
 let _requestId = 1;
@@ -221,31 +219,14 @@ let BaseImage: AbstractImageAndroid = ({
                 internal_analyticTag: analyticTag,
               }
             : nativeProps;
+        // Discord note: When upgrading to RN 0.85+ and you're getting conflicts here
+        // just accept the RN/upstream solution. Our changes just applied https://github.com/facebook/react-native/commit/36182241e69
         return (
-          <TextAncestorContext.Consumer>
-            {hasTextAncestor => {
-              if (hasTextAncestor) {
-                return (
-                  <TextInlineImageNativeComponent
-                    // $FlowFixMe[incompatible-type]
-                    style={style}
-                    resizeMode={resizeMode}
-                    headers={nativeProps.headers}
-                    src={sources}
-                    ref={actualRef}
-                  />
-                );
-              }
-
-              return (
-                <ImageViewNativeComponent
-                  {...nativePropsWithAnalytics}
-                  resizeMode={resizeMode}
-                  ref={actualRef}
-                />
-              );
-            }}
-          </TextAncestorContext.Consumer>
+          <ImageViewNativeComponent
+            {...nativePropsWithAnalytics}
+            resizeMode={resizeMode}
+            ref={actualRef}
+          />
         );
       }}
     </ImageAnalyticsTagContext.Consumer>
