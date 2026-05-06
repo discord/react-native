@@ -246,12 +246,6 @@ void RuntimeScheduler_Legacy::setIntersectionObserverDelegate(
   // No-op in the legacy scheduler
 }
 
-void RuntimeScheduler_Legacy::clear() noexcept {
-  // No-op: the legacy scheduler runs rendering updates synchronously in
-  // `scheduleRenderingUpdate`, so there is no queue to drain. See the header
-  // for details.
-}
-
 #pragma mark - Private
 
 void RuntimeScheduler_Legacy::scheduleWorkLoopIfNecessary() {

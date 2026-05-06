@@ -7,8 +7,6 @@
 
 #include "RuntimeScheduler_Modern.h"
 
-#include <glog/logging.h>
-
 #include <ReactCommon/RuntimeExecutorSyncUIThreadUtils.h>
 #include <cxxreact/TraceSection.h>
 #include <jsinspector-modern/tracing/EventLoopReporter.h>
@@ -191,7 +189,6 @@ void RuntimeScheduler_Modern::scheduleRenderingUpdate(
     RuntimeSchedulerRenderingUpdate&& renderingUpdate) {
   TraceSection s("RuntimeScheduler::scheduleRenderingUpdate");
 
-  std::lock_guard lock(renderingUpdatesMutex_);
   surfaceIdsWithPendingRenderingUpdates_.insert(surfaceId);
   pendingRenderingUpdates_.push(renderingUpdate);
 }
@@ -216,23 +213,6 @@ void RuntimeScheduler_Modern::setIntersectionObserverDelegate(
     RuntimeSchedulerIntersectionObserverDelegate*
         intersectionObserverDelegate) {
   intersectionObserverDelegate_ = intersectionObserverDelegate;
-}
-
-void RuntimeScheduler_Modern::clear() noexcept {
-  TraceSection s("RuntimeScheduler::clear");
-
-  // Drop any pending rendering updates. The callbacks captured here may
-  // reference state owned by the caller (e.g. the `Scheduler`'s delegate);
-  // dropping them here guarantees they cannot be invoked on the JS thread
-  // after that state is destroyed.
-  std::lock_guard lock(renderingUpdatesMutex_);
-  auto droppedUpdates = pendingRenderingUpdates_.size();
-  auto droppedSurfaces = surfaceIdsWithPendingRenderingUpdates_.size();
-  pendingRenderingUpdates_ = {};
-  surfaceIdsWithPendingRenderingUpdates_.clear();
-  LOG(WARNING) << "RuntimeScheduler_Modern::clear() dropped "
-               << droppedUpdates << " pending rendering update(s) across "
-               << droppedSurfaces << " surface(s).";
 }
 
 #pragma mark - Private
@@ -351,13 +331,6 @@ void RuntimeScheduler_Modern::runEventLoopTick(
  */
 void RuntimeScheduler_Modern::updateRendering() {
   TraceSection s("RuntimeScheduler::updateRendering");
-
-  // Hold the lock across the entire step so that `clear()` (called from
-  // another thread during `Scheduler` destruction) blocks until we are done
-  // running the callbacks. Otherwise `clear()` could return while we are
-  // still about to invoke lambdas that capture raw pointers into the
-  // now-destroyed `Scheduler`'s delegate.
-  std::lock_guard lock(renderingUpdatesMutex_);
 
   // This is the integration of the Event Timing API in the Event Loop.
   // See https://w3c.github.io/event-timing/#sec-modifications-HTML

@@ -27,7 +27,8 @@ namespace facebook::react {
 Scheduler::Scheduler(
     const SchedulerToolbox& schedulerToolbox,
     UIManagerAnimationDelegate* animationDelegate,
-    SchedulerDelegate* delegate) {
+    SchedulerDelegate* delegate)
+    : delegateInvalidated_(std::make_shared<std::atomic<bool>>(false)) {
   runtimeExecutor_ = schedulerToolbox.runtimeExecutor;
   contextContainer_ = schedulerToolbox.contextContainer;
 
@@ -142,6 +143,12 @@ Scheduler::~Scheduler() {
   LOG(WARNING) << "Scheduler::~Scheduler() was called (address: " << this
                << ").";
 
+  // Invalidate any lambdas already queued via scheduleRenderingUpdate that
+  // captured a raw delegate_ pointer; without this they'd dereference a
+  // dangling SchedulerDelegate after Scheduler teardown. (No replacement
+  // token is allocated here - Scheduler is going away.)
+  *delegateInvalidated_ = true;
+
   auto weakRuntimeScheduler =
       contextContainer_->find<std::weak_ptr<RuntimeScheduler>>(
           RuntimeSchedulerKey);
@@ -164,23 +171,6 @@ Scheduler::~Scheduler() {
   // The thread-safety of this operation is guaranteed by this requirement.
   uiManager_->setDelegate(nullptr);
   uiManager_->setAnimationDelegate(nullptr);
-
-  // After detaching from UIManager, no more calls can be made into this
-  // Scheduler, so nothing new will be pushed into the RuntimeScheduler's
-  // rendering-update queue. Drop whatever is still queued: those lambdas
-  // capture raw pointers to this Scheduler's delegate (via
-  // `uiManagerDidDispatchCommand` / `uiManagerDidFinishTransaction`), and
-  // would otherwise fire on the JS thread after the delegate is destroyed.
-  // `clear()` blocks until any in-flight `updateRendering` finishes, so it
-  // is safe to destroy the delegate after this point.
-#if __APPLE__
-  if (runtimeScheduler) {
-    LOG(WARNING)
-        << "Scheduler::~Scheduler() clearing RuntimeScheduler rendering-update queue (address: "
-        << this << ").";
-    runtimeScheduler->clear();
-  }
-#endif
 
   // Then, let's verify that the requirement was satisfied.
   auto surfaceIds = std::vector<SurfaceId>{};
@@ -240,6 +230,19 @@ Scheduler::findComponentDescriptorByHandle_DO_NOT_USE_THIS_IS_BROKEN(
 #pragma mark - Delegate
 
 void Scheduler::setDelegate(SchedulerDelegate* delegate) {
+  if (delegate_ != delegate) {
+    // Mark the *current* token invalid: any rendering-update lambda already
+    // queued holds a shared_ptr to this atomic and will observe `true` on
+    // its next read, so it no-ops instead of calling into the previous
+    // delegate (which the caller is about to drop).
+    *delegateInvalidated_ = true;
+    // Then install a *fresh* token (a new atomic) so lambdas captured
+    // against the new delegate use their own non-invalidated flag.
+    // Reusing the previous atomic and flipping it back to `false` would
+    // re-arm the in-flight lambdas - exactly the use-after-free we're
+    // trying to prevent - because they share the same shared_ptr.
+    delegateInvalidated_ = std::make_shared<std::atomic<bool>>(false);
+  }
   delegate_ = delegate;
 }
 
@@ -271,7 +274,13 @@ void Scheduler::uiManagerDidFinishTransaction(
       runtimeScheduler_->scheduleRenderingUpdate(
           surfaceId,
           [delegate = delegate_,
+           invalidated = delegateInvalidated_,
            mountingCoordinator = std::move(mountingCoordinator)]() {
+            if (*invalidated) {
+              LOG(WARNING)
+                  << "[Scheduler] skipped deferred transaction because delegate token was invalidated";
+              return;
+            }
             delegate->schedulerShouldRenderTransactions(mountingCoordinator);
           });
     } else {
@@ -297,9 +306,17 @@ void Scheduler::uiManagerDidDispatchCommand(
     runtimeScheduler_->scheduleRenderingUpdate(
         shadowNode->getSurfaceId(),
         [delegate = delegate_,
+         invalidated = delegateInvalidated_,
          shadowView = std::move(shadowView),
          commandName,
          args]() {
+          if (*invalidated) {
+            LOG(WARNING)
+                << "[Scheduler] skipped deferred command because delegate token was invalidated"
+                << " componentName=" << shadowView.componentName
+                << " command=" << commandName;
+            return;
+          }
 #if __APPLE__
           LOG(WARNING) << "[Scheduler] uiManagerDidDispatchCommand componentName=" << shadowView.componentName << " command=" << commandName;
 #endif

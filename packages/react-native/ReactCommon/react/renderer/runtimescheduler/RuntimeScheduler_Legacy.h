@@ -138,8 +138,6 @@ class RuntimeScheduler_Legacy final : public RuntimeSchedulerBase {
       RuntimeSchedulerIntersectionObserverDelegate*
           intersectionObserverDelegate) override;
 
-  void clear() noexcept override;
-
  private:
   std::priority_queue<
       std::shared_ptr<Task>,

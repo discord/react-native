@@ -133,8 +133,4 @@ void RuntimeScheduler::setIntersectionObserverDelegate(
       intersectionObserverDelegate);
 }
 
-void RuntimeScheduler::clear() noexcept {
-  return runtimeSchedulerImpl_->clear();
-}
-
 } // namespace facebook::react
