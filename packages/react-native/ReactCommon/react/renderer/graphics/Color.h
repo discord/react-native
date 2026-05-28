@@ -9,9 +9,11 @@
 
 #include <functional>
 #include <limits>
+#include <vector>
 
 #include <react/renderer/graphics/ColorComponents.h>
 #include <react/renderer/graphics/HostPlatformColor.h>
+#include <react/utils/hash_combine.h>
 
 #ifdef RN_SERIALIZABLE_STATE
 #include <folly/dynamic.h>
@@ -83,5 +85,18 @@ template <>
 struct std::hash<facebook::react::SharedColor> {
   size_t operator()(const facebook::react::SharedColor& color) const {
     return std::hash<facebook::react::Color>{}(*color);
+  }
+};
+
+// This is only used in Discord specific code, in Text gradient feature
+template <>
+struct std::hash<std::vector<facebook::react::SharedColor>> {
+  size_t operator()(
+      const std::vector<facebook::react::SharedColor>& colors) const {
+    size_t seed = 0;
+    for (const auto& color : colors) {
+      facebook::react::hash_combine(seed, color);
+    }
+    return seed;
   }
 };

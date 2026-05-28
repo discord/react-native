@@ -11,7 +11,7 @@ import type * as React from 'react';
 import {Constructor} from '../../types/private/Utilities';
 import {AccessibilityProps} from '../Components/View/ViewAccessibility';
 import {NativeMethods} from '../../types/public/ReactNativeTypes';
-import {ColorValue, StyleProp} from '../StyleSheet/StyleSheet';
+import {ColorValue, OpaqueColorValue, StyleProp} from '../StyleSheet/StyleSheet';
 import {TextStyle, ViewStyle} from '../StyleSheet/StyleSheetTypes';
 import {
   GestureResponderEvent,
@@ -222,7 +222,7 @@ export interface TextProps
   /**
    * Adds a horizontal gradient using the int based color values.
    */
-  gradientColors?: number[] | undefined;
+  gradientColors?: Array<number | OpaqueColorValue> | undefined;
 
   /**
    * Gradient angle in degrees. Default is 0 (horizontal).

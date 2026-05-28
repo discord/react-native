@@ -144,6 +144,7 @@ struct hash<facebook::react::TextAttributes> {
         textAttributes.textShadowColor,
         textAttributes.textStrokeWidth,
         textAttributes.textStrokeColor,
+        textAttributes.gradientColors,
         textAttributes.gradientAngle,
         textAttributes.gradientWidth,
         textAttributes.gradientMode,
