@@ -399,6 +399,7 @@ Class<RCTComponentViewProtocol> RCTParagraphCls(void)
   [nativeTextLayoutManager drawAttributedString:stateData.attributedString
                             paragraphAttributes:_paragraphAttributes
                                           frame:frame
+                                     viewBounds:self.bounds
                               drawHighlightPath:^(UIBezierPath *highlightPath) {
                                 if (highlightPath) {
                                   if (!self->_highlightLayer) {

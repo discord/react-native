@@ -8,6 +8,7 @@
 #import "RCTTextLayoutManager.h"
 
 #import "RCTAttributedTextUtils.h"
+#import <CoreText/CoreText.h>
 
 #import <React/NSTextStorage+FontScaling.h>
 #import <React/RCTUtils.h>
@@ -33,6 +34,26 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
     case EllipsizeMode::Middle:
       return NSLineBreakByTruncatingMiddle;
   }
+}
+
+static CGFloat getStrokeWidth(NSAttributedString *attributedString)
+{
+  if (attributedString.length == 0) {
+    return 0;
+  }
+  __block CGFloat strokeWidth = 0;
+  [attributedString enumerateAttribute:@"RCTTextStrokeWidth"
+                               inRange:NSMakeRange(0, attributedString.length)
+                               options:0
+                            usingBlock:^(id value, NSRange range, BOOL *stop) {
+                              if (value && [value isKindOfClass:[NSNumber class]]) {
+                                CGFloat width = [value floatValue];
+                                if (width > strokeWidth) {
+                                  strokeWidth = width;
+                                }
+                              }
+                            }];
+  return strokeWidth;
 }
 
 - (TextMeasurement)measureNSAttributedString:(NSAttributedString *)attributedString
@@ -69,6 +90,7 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
 - (void)drawAttributedString:(AttributedString)attributedString
          paragraphAttributes:(ParagraphAttributes)paragraphAttributes
                        frame:(CGRect)frame
+                  viewBounds:(CGRect)viewBounds
            drawHighlightPath:(void (^_Nullable)(UIBezierPath *highlightPath))block
 {
   NSTextStorage *textStorage = [self
@@ -79,9 +101,9 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
   NSTextContainer *textContainer = layoutManager.textContainers.firstObject;
 
 #if TARGET_OS_MACCATALYST
-  CGContextRef context = UIGraphicsGetCurrentContext();
-  CGContextSaveGState(context);
-  CGContextSetShouldSmoothFonts(context, NO);
+  CGContextRef macCatalystContext = UIGraphicsGetCurrentContext();
+  CGContextSaveGState(macCatalystContext);
+  CGContextSetShouldSmoothFonts(macCatalystContext, NO);
 #endif
 
   NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
@@ -89,16 +111,86 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
   [self processTruncatedAttributedText:textStorage textContainer:textContainer layoutManager:layoutManager];
 
   [layoutManager drawBackgroundForGlyphRange:glyphRange atPoint:frame.origin];
-  [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:frame.origin];
+  NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
 
+  CGFloat strokeWidth = getStrokeWidth(textStorage);
+  __block UIColor *strokeColor = nil;
+  if (strokeWidth > 0) {
+    [textStorage enumerateAttribute:@"RCTTextStrokeColor"
+                            inRange:characterRange
+                            options:0
+                         usingBlock:^(id value, NSRange range, BOOL *stop) {
+                           if ([value isKindOfClass:[UIColor class]]) {
+                             strokeColor = value;
+                             *stop = YES;
+                           }
+                         }];
+  }
+  if (strokeWidth > 0 && strokeColor) {
+    CGContextRef context = UIGraphicsGetCurrentContext();
+    CGContextSetLineWidth(context, strokeWidth);
+    CGContextSetLineJoin(context, kCGLineJoinRound);
+    CGContextSetLineCap(context, kCGLineCapRound);
+
+    // Shift glyphs by strokeWidth/2 when there's room so the outward stroke fits; otherwise
+    // center whatever slack is left. `_measureTextStorage:` grew the returned size by
+    // strokeWidth, so `frame.size` is already inflated - `frame.size - strokeWidth` recovers
+    // the natural text size and `viewBounds - frame + strokeWidth` is the slack around it.
+    CGFloat slackX = viewBounds.size.width - frame.size.width + strokeWidth;
+    CGFloat slackY = viewBounds.size.height - frame.size.height + strokeWidth;
+    CGFloat strokeShiftX =
+        (slackX <= 0) ? 0 : (slackX >= strokeWidth ? strokeWidth / 2.0 : slackX / 2.0);
+    CGFloat strokeShiftY =
+        (slackY <= 0) ? 0 : (slackY >= strokeWidth ? strokeWidth / 2.0 : slackY / 2.0);
+
+    // PASS 1: Draw stroke outline
+    CGContextSaveGState(context);
+    CGContextSetTextDrawingMode(context, kCGTextStroke);
+
+    NSMutableAttributedString *strokeText = [textStorage mutableCopy];
+    [strokeText addAttribute:NSForegroundColorAttributeName value:strokeColor range:characterRange];
+
+    CGContextSetTextMatrix(context, CGAffineTransformIdentity);
+    CGContextTranslateCTM(
+        context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
+    CGContextScaleCTM(context, 1.0, -1.0);
+
+    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)strokeText);
+    CGMutablePathRef path = CGPathCreateMutable();
+    CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
+    CTFrameRef ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+    CTFrameDraw(ctFrame, context);
+    CFRelease(ctFrame);
+    CFRelease(path);
+    CFRelease(framesetter);
+    CGContextRestoreGState(context);
+
+    // PASS 2: Draw fill on top
+    CGContextSaveGState(context);
+    CGContextSetTextDrawingMode(context, kCGTextFill);
+
+    CGContextSetTextMatrix(context, CGAffineTransformIdentity);
+    CGContextTranslateCTM(
+        context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
+    CGContextScaleCTM(context, 1.0, -1.0);
+
+    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)textStorage);
+    path = CGPathCreateMutable();
+    CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
+    ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+    CTFrameDraw(ctFrame, context);
+    CFRelease(ctFrame);
+    CFRelease(path);
+    CFRelease(framesetter);
+    CGContextRestoreGState(context);
+  } else {
+    [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:frame.origin];
+  }
 #if TARGET_OS_MACCATALYST
-  CGContextRestoreGState(context);
+  CGContextRestoreGState(macCatalystContext);
 #endif
-
   if (block != nil) {
     __block UIBezierPath *highlightPath = nil;
-    NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
-
     [textStorage
         enumerateAttribute:RCTAttributedStringIsHighlightedAttributeName
                    inRange:characterRange
@@ -384,6 +476,13 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
       enumeratedLinesHeight += layoutManager.extraLineFragmentUsedRect.size.height;
     }
     size.height = enumeratedLinesHeight;
+  }
+
+  // Reserve space for the outward stroke on both axes so it isn't clipped
+  CGFloat strokeWidth = getStrokeWidth(textStorage);
+  if (strokeWidth > 0) {
+    size.width += strokeWidth;
+    size.height += strokeWidth;
   }
 
   size = (CGSize){
