@@ -31,6 +31,9 @@ RCT_EXTERN void RCTSetCustomSRWebSocketProvider(SRWebSocketProvider provider);
 
 - (void)sendData:(NSData *)data forSocketID:(nonnull NSNumber *)socketID;
 
+// Blocking call that waits until there are no more remaining actions on the queue
+- (void)flush;
+
 @end
 
 @interface RCTBridge (RCTWebSocketModule)
