@@ -363,8 +363,23 @@ UIFont *RCTFontWithFontProperties(RCTFontProperties fontProperties)
         fontNames = [UIFont fontNamesForFamilyName:font.familyName];
         fontWeight = (fontWeight != 0.0) ?: RCTGetFontWeight(font);
       } else {
-        // Failback to system font.
-        font = RCTDefaultFontWithFontProperties(fontProperties);
+        // Check if font string is a list of fonts comma separated
+        NSArray *rawFontFamilies = [fontProperties.family componentsSeparatedByString:@","];
+        if (rawFontFamilies.count >= 1) {
+          NSArray *updatedFontNames = fontNames;
+
+          for (NSString *name in rawFontFamilies) {
+            UIFont *commaFont = [UIFont fontWithName:name size:effectiveFontSize];
+            if (commaFont != nullptr) {
+              updatedFontNames = [updatedFontNames arrayByAddingObject:commaFont.fontName];
+            }
+          }
+
+          fontNames = updatedFontNames;
+        } else {
+          // Failback to system font.
+          font = RCTDefaultFontWithFontProperties(fontProperties);
+        }
       }
     }
 
