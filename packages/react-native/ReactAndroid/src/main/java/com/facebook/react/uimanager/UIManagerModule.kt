@@ -601,12 +601,32 @@ public open class UIManagerModule : ReactContextBaseJavaModule, LifecycleEventLi
           .arg("Lazy", false)
           .flush()
       try {
+        // If the background load is still happening, this will wait. If it completed, returns
+        // immediately.
+        val cached = UIManagerConstantsCache.getInstance().getCachedConstants()
+        val cachedCustomBubblingEvents =
+            UIManagerConstantsCache.getInstance().getCachedBubblingEventsTypes()
+        if (cached != null) {
+          if (cachedCustomBubblingEvents != null) {
+            (customBubblingEvents as? MutableMap<String, Any>)?.putAll(cachedCustomBubblingEvents)
+          }
+
+          return cached
+        }
+
+        // Otherwise, build fresh on this thread…
         @Suppress("UNCHECKED_CAST")
-        return UIManagerModuleConstantsHelper.createConstants(
-            viewManagers as List<ViewManager<in Nothing, in Nothing>>,
-            customBubblingEvents as? MutableMap<String, Any>,
-            customDirectEvents as? MutableMap<String, Any>,
-        )
+        val fresh =
+            UIManagerModuleConstantsHelper.createConstants(
+                viewManagers as List<ViewManager<in Nothing, in Nothing>>,
+                customBubblingEvents as? MutableMap<String, Any>,
+                customDirectEvents as? MutableMap<String, Any>,
+            )
+
+        // …and save to MMKV in the background for next time:
+        UIManagerConstantsCache.getInstance()
+            .saveConstantsAndBubblingEventsTypes(fresh, customBubblingEvents)
+        return fresh
       } finally {
         Systrace.endSection(Systrace.TRACE_TAG_REACT)
         ReactMarker.logMarker(CREATE_UI_MANAGER_MODULE_CONSTANTS_END)
