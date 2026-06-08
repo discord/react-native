@@ -12,6 +12,7 @@ import android.content.res.AssetManager
 import android.graphics.Typeface
 import android.os.Build
 import android.util.SparseArray
+import androidx.arch.core.util.Function
 import androidx.core.content.res.ResourcesCompat
 import com.facebook.react.common.ReactConstants
 
@@ -167,12 +168,18 @@ public class ReactFontManager {
 
     @JvmStatic public fun getInstance(): ReactFontManager = _instance
 
+    public var createAssetTypefaceOverride: Function<CreateTypefaceObject, Typeface>? = null
+
     private fun createAssetTypeface(
         fontFamilyName: String,
         style: Int,
         assetManager: AssetManager?,
     ): Typeface {
       if (assetManager != null) {
+        createAssetTypefaceOverride?.let { override ->
+          return override.apply(CreateTypefaceObject(fontFamilyName, style, assetManager))
+        }
+
         val extension = EXTENSIONS[style]
         for (fileExtension in FILE_EXTENSIONS) {
           val fileName = "$FONTS_ASSET_PATH$fontFamilyName$extension$fileExtension"
