@@ -9,6 +9,7 @@ package com.facebook.react.views.text.internal.span
 
 import android.graphics.Paint.FontMetricsInt
 import android.text.style.LineHeightSpan
+import com.facebook.react.bridge.Callback
 import kotlin.math.ceil
 import kotlin.math.floor
 
@@ -17,17 +18,17 @@ import kotlin.math.floor
  * LineHeightSpan.Standard which only effects space between the baselines of adjacent line boxes
  * (does not impact space before the first line or after the last).
  */
-internal class CustomLineHeightSpan(height: Float) : LineHeightSpan, ReactSpan {
-  val lineHeight: Int = ceil(height.toDouble()).toInt()
+public class CustomLineHeightSpan public constructor(height: Float) : LineHeightSpan, ReactSpan {
+  public val lineHeight: Int = ceil(height.toDouble()).toInt()
 
-  override fun chooseHeight(
+  public override fun chooseHeight(
       text: CharSequence,
       start: Int,
       end: Int,
       spanstartv: Int,
       v: Int,
       fm: FontMetricsInt,
-  ) {
+  ): Unit {
     // https://www.w3.org/TR/css-inline-3/#inline-height
     // When its computed line-height is not normal, its layout bounds are derived solely from
     // metrics of its first available font (ignoring glyphs from other fonts), and leading is used
@@ -37,6 +38,10 @@ internal class CustomLineHeightSpan(height: Float) : LineHeightSpan, ReactSpan {
     // ascent above the baseline of A′ = A + L/2, and an effective descent of D′ = D + L/2. However,
     // if line-fit-edge is not leading and this is not the root inline box, if the half-leading is
     // positive, treat it as zero. The layout bounds exactly encloses this effective A′ and D′.
+    chooseHeightOverride?.let {
+      it.invoke(fm, lineHeight)
+      return
+    }
 
     val leading = lineHeight - ((-fm.ascent) + fm.descent)
     fm.ascent -= ceil(leading / 2.0f).toInt()
@@ -52,5 +57,9 @@ internal class CustomLineHeightSpan(height: Float) : LineHeightSpan, ReactSpan {
     if (end == text.length) {
       fm.bottom = fm.descent
     }
+  }
+
+  public companion object {
+    public var chooseHeightOverride: Callback? = null
   }
 }
