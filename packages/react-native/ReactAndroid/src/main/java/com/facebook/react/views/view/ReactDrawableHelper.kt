@@ -14,6 +14,8 @@ import android.graphics.Color
 import android.graphics.drawable.ColorDrawable
 import android.graphics.drawable.Drawable
 import android.graphics.drawable.RippleDrawable
+import android.graphics.drawable.ShapeDrawable
+import android.graphics.drawable.shapes.RoundRectShape
 import android.util.TypedValue
 import com.facebook.common.logging.FLog
 import com.facebook.react.bridge.ColorPropConverter
@@ -150,6 +152,20 @@ public object ReactDrawableHelper {
       }
 
   private fun getMask(drawableDescriptionDict: ReadableMap): Drawable? {
+    if (drawableDescriptionDict.hasKey("borderless") && drawableDescriptionDict.getBoolean("borderless")) {
+      // Borderless ripples don't have masks.
+      return null
+    }
+
+    if (drawableDescriptionDict.hasKey("rippleCornerRadius")) {
+      val rippleRadius = PixelUtil.toPixelFromDIP(drawableDescriptionDict.getDouble("rippleCornerRadius"))
+      return ShapeDrawable(RoundRectShape(
+          FloatArray(8) { rippleRadius },
+          null,
+          null
+      ))
+    }
+
     if (
         !drawableDescriptionDict.hasKey("borderless") ||
             drawableDescriptionDict.isNull("borderless") ||
