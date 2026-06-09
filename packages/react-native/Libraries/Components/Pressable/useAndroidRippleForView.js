@@ -25,12 +25,14 @@ type NativeBackgroundProp = Readonly<{
   borderless: boolean,
   rippleRadius: ?number,
   alpha: ?number,
+  rippleCornerRadius: ?number,
 }>;
 
 export type PressableAndroidRippleConfig = {
   color?: ColorValue,
   borderless?: boolean,
   radius?: number,
+  cornerRadius?: number,
   foreground?: boolean,
   alpha?: number,
 };
@@ -50,7 +52,7 @@ export default function useAndroidRippleForView(
     | Readonly<{nativeBackgroundAndroid: NativeBackgroundProp}>
     | Readonly<{nativeForegroundAndroid: NativeBackgroundProp}>,
 }> {
-  const {color, borderless, radius, foreground, alpha} = rippleConfig ?? {};
+  const {color, borderless, radius, cornerRadius, foreground, alpha} = rippleConfig ?? {};
 
   return useMemo(() => {
     if (
@@ -64,6 +66,7 @@ export default function useAndroidRippleForView(
         color: processedColor,
         borderless: borderless === true,
         rippleRadius: radius,
+        rippleCornerRadius: cornerRadius,
         alpha: alpha ?? null,
       };
 
