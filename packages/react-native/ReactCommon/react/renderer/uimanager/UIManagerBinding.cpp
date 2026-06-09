@@ -16,6 +16,7 @@
 #include <react/renderer/dom/DOM.h>
 #include <react/renderer/runtimescheduler/RuntimeSchedulerBinding.h>
 #include <react/renderer/uimanager/primitives.h>
+#include <chrono>
 
 #include <utility>
 
@@ -460,6 +461,7 @@ jsi::Value UIManagerBinding::get(
   }
 
   if (methodName == "completeRoot") {
+    using clock = std::chrono::steady_clock;
     auto paramCount = 2;
     return jsi::Function::createFromHostFunction(
         runtime,
@@ -477,11 +479,15 @@ jsi::Value UIManagerBinding::get(
           auto surfaceId = surfaceIdFromValue(runtime, arguments[0]);
 
           auto shadowNodeList = shadowNodeListFromValue(runtime, arguments[1]);
+
+          static const clock::time_point t0 = clock::now();
+          const bool isWithinFirst5s = (clock::now() - t0) < std::chrono::seconds(5);
+
           uiManager->completeSurface(
               surfaceId,
               shadowNodeList,
               {.enableStateReconciliation = true,
-               .mountSynchronously = false,
+               .mountSynchronously = isWithinFirst5s, // make sure we push first render as soon as possible otherwise we observe 200ms delay
                .source = ShadowTree::CommitSource::React});
 
           return jsi::Value::undefined();
