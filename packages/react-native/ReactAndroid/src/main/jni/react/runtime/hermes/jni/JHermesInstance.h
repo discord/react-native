@@ -23,11 +23,11 @@ class JHermesInstance : public jni::HybridClass<JHermesInstance, JJSRuntimeFacto
  public:
   static constexpr auto kJavaDescriptor = "Lcom/facebook/react/runtime/hermes/HermesInstance;";
 
-  static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jclass> /* unused */, bool allocInOldGenBeforeTTI);
+  static jni::local_ref<jhybriddata> initHybrid(jni::alias_ref<jclass> /* unused */, bool allocInOldGenBeforeTTI, bool useOccupancyTargetExperiment);
 
   static void registerNatives();
 
-  JHermesInstance(bool allocInOldGenBeforeTTI) : allocInOldGenBeforeTTI_(allocInOldGenBeforeTTI) {};
+  JHermesInstance(bool allocInOldGenBeforeTTI, bool useOccupancyTargetExperiment) : allocInOldGenBeforeTTI_(allocInOldGenBeforeTTI), useOccupancyTargetExperiment_(useOccupancyTargetExperiment) {};
 
   std::unique_ptr<JSRuntime> createJSRuntime(std::shared_ptr<MessageQueueThread> msgQueueThread) noexcept;
 
@@ -37,6 +37,7 @@ class JHermesInstance : public jni::HybridClass<JHermesInstance, JJSRuntimeFacto
   friend HybridBase;
 
   bool allocInOldGenBeforeTTI_;
+  bool useOccupancyTargetExperiment_;
 };
 
 } // namespace facebook::react

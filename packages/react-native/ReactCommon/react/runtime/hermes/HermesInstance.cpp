@@ -116,7 +116,11 @@ class HermesJSRuntime : public JSRuntime {
   }
 
   void unstable_initializeOnJsThread() override {
+    // On new arch, we're seeing a crash in release optimized builds here. Adding this as a stopgap measure to prevent
+    // the crash to allow us to more thoroughly test new arch while this is investigated.
+#ifndef DISABLE_HERMES_PROFILING_WORKAROUND
     hermesRuntime_.registerForProfiling();
+#endif
   }
 
  private:
@@ -129,12 +133,15 @@ class HermesJSRuntime : public JSRuntime {
 std::unique_ptr<JSRuntime> HermesInstance::createJSRuntime(
     std::shared_ptr<::hermes::vm::CrashManager> crashManager,
     std::shared_ptr<MessageQueueThread> msgQueueThread,
-    bool allocInOldGenBeforeTTI) noexcept {
+    bool allocInOldGenBeforeTTI,
+    bool useOccupancyTargetExperiment) noexcept {
   assert(msgQueueThread != nullptr);
 
   auto gcConfig = ::hermes::vm::GCConfig::Builder()
                       // Default to 3GB
                       .withMaxHeapSize(3072 << 20)
+                      .withOccupancyTarget(
+                          useOccupancyTargetExperiment ? 0.75 : 0.5)
                       .withName("RNBridgeless");
 
   if (allocInOldGenBeforeTTI) {
