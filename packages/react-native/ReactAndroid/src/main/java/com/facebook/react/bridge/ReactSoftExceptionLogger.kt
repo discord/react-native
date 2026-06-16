@@ -19,7 +19,7 @@ import com.facebook.react.bridge.ReactSoftExceptionLogger.Categories.SURFACE_MOU
 import java.util.concurrent.CopyOnWriteArrayList
 
 @DoNotStrip
-internal object ReactSoftExceptionLogger {
+object ReactSoftExceptionLogger {
   @Retention(AnnotationRetention.SOURCE)
   @StringDef(
       RVG_ADD_CHILDREN_FOR_ACCESSIBILITY,
