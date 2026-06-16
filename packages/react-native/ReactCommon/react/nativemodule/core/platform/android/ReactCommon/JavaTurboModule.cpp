@@ -464,7 +464,9 @@ jsi::Value convertFromJMapToValue(JNIEnv* env, jsi::Runtime& rt, jobject arg) {
  */
 jsi::JSError convertThrowableToJSError(
     jsi::Runtime& runtime,
-    jni::alias_ref<jni::JThrowable> throwable) {
+    jni::alias_ref<jni::JThrowable> throwable,
+    const std::string& functionName = "",
+    const std::string& moduleName = "") {
   auto stackTrace = throwable->getStackTrace();
 
   jsi::Array stackElements(runtime, stackTrace->size());
@@ -487,8 +489,21 @@ jsi::JSError convertThrowableToJSError(
   cause.setProperty(runtime, "message", message);
   cause.setProperty(runtime, "stackElements", std::move(stackElements));
 
-  jsi::Value error =
-      createJSRuntimeError(runtime, "Exception in HostFunction: " + message);
+  std::string errorMessage = "Exception in HostFunction: " + message;
+  if (!functionName.empty() || !moduleName.empty()) {
+    errorMessage += " [";
+    if (!moduleName.empty()) {
+      errorMessage += "Module: " + moduleName;
+      if (!functionName.empty()) {
+        errorMessage += ", ";
+      }
+    }
+    if (!functionName.empty()) {
+      errorMessage += "Function: " + functionName;
+    }
+    errorMessage += "]";
+  }
+  jsi::Value error = createJSRuntimeError(runtime, errorMessage);
   error.asObject(runtime).setProperty(runtime, "cause", std::move(cause));
   return {runtime, std::move(error)};
 }
@@ -579,7 +594,7 @@ jsi::Value JavaTurboModule::invokeJavaMethod(
       }
       auto exception = std::current_exception();
       auto throwable = jni::getJavaExceptionForCppException(exception);
-      throw convertThrowableToJSError(runtime, throwable);
+      throw convertThrowableToJSError(runtime, throwable, methodNameStr, name_);
     }
   };
 
