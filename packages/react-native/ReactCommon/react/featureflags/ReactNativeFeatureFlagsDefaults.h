@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<3d1718afe5b2ed63a918ffe09a4a36b1>>
+ * @generated SignedSource<<10e582d7b5e8640c5e216fa8ce976f77>>
  */
 
 /**
@@ -52,7 +52,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool disableMountItemReorderingAndroid() override {
-    return false;
+    return true;
   }
 
   bool disableSubviewClippingAndroid() override {
@@ -72,7 +72,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableAccumulatedUpdatesInRawPropsAndroid() override {
-    return false;
+    return true;
   }
 
   bool enableAndroidTextMeasurementOptimizations() override {

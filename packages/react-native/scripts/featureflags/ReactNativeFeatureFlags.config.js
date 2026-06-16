@@ -115,7 +115,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     disableMountItemReorderingAndroid: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2024-10-26',
         description:
@@ -170,7 +170,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'experimental',
     },
     enableAccumulatedUpdatesInRawPropsAndroid: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2024-12-10',
         description:

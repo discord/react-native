@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9e5b3192d1bec953c116d959ad63283d>>
+ * @generated SignedSource<<19c006161a1def476ed59f9f1af70e0d>>
  */
 
 /**
@@ -35,7 +35,7 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun disableImageViewPreallocationAndroid(): Boolean = false
 
-  override fun disableMountItemReorderingAndroid(): Boolean = false
+  override fun disableMountItemReorderingAndroid(): Boolean = true
 
   override fun disableSubviewClippingAndroid(): Boolean = false
 
@@ -45,7 +45,7 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enableAccessibilityOrder(): Boolean = false
 
-  override fun enableAccumulatedUpdatesInRawPropsAndroid(): Boolean = false
+  override fun enableAccumulatedUpdatesInRawPropsAndroid(): Boolean = true
 
   override fun enableAndroidTextMeasurementOptimizations(): Boolean = false
 
