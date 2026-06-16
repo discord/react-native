@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<52d39a196023796eed43d419c5a0b855>>
+ * @generated SignedSource<<3e31386835070bba6e34bf81d380e9a7>>
  * @flow strict
  * @noformat
  */
@@ -239,7 +239,7 @@ export const disableImageViewPreallocationAndroid: Getter<boolean> = createNativ
 /**
  * Prevent FabricMountingManager from reordering mountItems, which may lead to invalid state on the UI thread
  */
-export const disableMountItemReorderingAndroid: Getter<boolean> = createNativeFlagGetter('disableMountItemReorderingAndroid', false);
+export const disableMountItemReorderingAndroid: Getter<boolean> = createNativeFlagGetter('disableMountItemReorderingAndroid', true);
 /**
  * Force disable subview clipping for ReactViewGroup on Android
  */
@@ -259,7 +259,7 @@ export const enableAccessibilityOrder: Getter<boolean> = createNativeFlagGetter(
 /**
  * When enabled, Android will accumulate updates in rawProps to reduce the number of mounting instructions for cascading re-renders.
  */
-export const enableAccumulatedUpdatesInRawPropsAndroid: Getter<boolean> = createNativeFlagGetter('enableAccumulatedUpdatesInRawPropsAndroid', false);
+export const enableAccumulatedUpdatesInRawPropsAndroid: Getter<boolean> = createNativeFlagGetter('enableAccumulatedUpdatesInRawPropsAndroid', true);
 /**
  * Enables various optimizations throughout the path of measuring text on Android.
  */
