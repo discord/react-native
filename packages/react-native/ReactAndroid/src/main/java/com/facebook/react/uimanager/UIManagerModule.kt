@@ -162,6 +162,10 @@ public open class UIManagerModule : ReactContextBaseJavaModule, LifecycleEventLi
     // Not implemented for Paper.
   }
 
+  override fun markViewAsInTransition(surfaceId: Int, reactTag: Int, isTransitioning: Boolean) {
+    // Not implemented for Paper.
+  }
+
   /**
    * This method is intended to reuse the [ViewManagerRegistry] with FabricUIManager. Do not use
    * this method as this will be removed in the near future.
