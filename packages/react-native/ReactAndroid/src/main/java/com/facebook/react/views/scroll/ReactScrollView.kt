@@ -536,6 +536,14 @@ constructor(context: Context, private val fpsListener: FpsListener? = null) :
   }
 
   override fun onScrollChanged(x: Int, y: Int, oldX: Int, oldY: Int) {
+    onScrollChanged(x, y, oldX, oldY, false)
+  }
+
+  /**
+   * Discord: [isDrawing] marks scroll events dispatched during an Android draw pass, so the app's
+   * ReactScrollViewOverride can avoid a Reanimated sync mount mid-traversal.
+   */
+  protected open fun onScrollChanged(x: Int, y: Int, oldX: Int, oldY: Int, isDrawing: Boolean) {
     Systrace.beginSection(Systrace.TRACE_TAG_REACT, "ReactScrollView.onScrollChanged")
     try {
       super.onScrollChanged(x, y, oldX, oldY)
@@ -548,6 +556,7 @@ constructor(context: Context, private val fpsListener: FpsListener? = null) :
             this,
             onScrollDispatchHelper.xFlingVelocity,
             onScrollDispatchHelper.yFlingVelocity,
+            isDrawing,
         )
         _virtualViewContainerState?.updateState()
       }
