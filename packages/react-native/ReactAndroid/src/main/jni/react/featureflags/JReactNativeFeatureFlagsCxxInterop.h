@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2877b4d6ae0fa9ecd62a40d4f5d739a0>>
+ * @generated SignedSource<<4b10c7dfeaaeeeb138a15ec4c1d80e44>>
  */
 
 /**
@@ -106,6 +106,9 @@ class JReactNativeFeatureFlagsCxxInterop
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableFontScaleChangesUpdatingLayout(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
+
+  static bool enableIOSExperimentalAutoFocusImplementation(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableIOSTextBaselineOffsetPerLine(

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<eb28728ca97cd3c577f5a5031565da5d>>
+ * @generated SignedSource<<06e23b001a519a0c6aaa5dc248ca34cf>>
  */
 
 /**
@@ -185,6 +185,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableFontScaleChangesUpdatingLayout(): Boolean = accessor.enableFontScaleChangesUpdatingLayout()
+
+  /**
+   * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
+   */
+  @JvmStatic
+  public fun enableIOSExperimentalAutoFocusImplementation(): Boolean = accessor.enableIOSExperimentalAutoFocusImplementation()
 
   /**
    * Applies base offset for each line of text separately on iOS.

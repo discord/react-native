@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2ad5091591c01862e39a0d4ff6e07fe2>>
+ * @generated SignedSource<<48470b00d1d9d7241fd20b5b58f6339d>>
  */
 
 /**
@@ -192,6 +192,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableFontScaleChangesUpdatingLayout() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableFontScaleChangesUpdatingLayout");
+    return method(javaProvider_);
+  }
+
+  bool enableIOSExperimentalAutoFocusImplementation() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSExperimentalAutoFocusImplementation");
     return method(javaProvider_);
   }
 
@@ -737,6 +743,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout(
   return ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableIOSTextBaselineOffsetPerLine(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableIOSTextBaselineOffsetPerLine();
@@ -1186,6 +1197,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableFontScaleChangesUpdatingLayout",
         JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout),
+      makeNativeMethod(
+        "enableIOSExperimentalAutoFocusImplementation",
+        JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation),
       makeNativeMethod(
         "enableIOSTextBaselineOffsetPerLine",
         JReactNativeFeatureFlagsCxxInterop::enableIOSTextBaselineOffsetPerLine),

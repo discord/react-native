@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<08edd9db3342b94c2aa656f1ece3a6bb>>
+ * @generated SignedSource<<b09672e978fa64fc772fc43bfd1cf0d9>>
  */
 
 /**
@@ -168,6 +168,11 @@ class ReactNativeFeatureFlags {
    * Enables font scale changes updating layout for measurable nodes.
    */
   RN_EXPORT static bool enableFontScaleChangesUpdatingLayout();
+
+  /**
+   * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
+   */
+  RN_EXPORT static bool enableIOSExperimentalAutoFocusImplementation();
 
   /**
    * Applies base offset for each line of text separately on iOS.

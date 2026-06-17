@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2c27d7999f2af39bc95a2087c2571c50>>
+ * @generated SignedSource<<1c8bce5cb2fbe6c8657dc123395ea3b3>>
  */
 
 /**
@@ -172,6 +172,11 @@ bool NativeReactNativeFeatureFlags::enableFabricRenderer(
 bool NativeReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout();
+}
+
+bool NativeReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
 }
 
 bool NativeReactNativeFeatureFlags::enableIOSTextBaselineOffsetPerLine(

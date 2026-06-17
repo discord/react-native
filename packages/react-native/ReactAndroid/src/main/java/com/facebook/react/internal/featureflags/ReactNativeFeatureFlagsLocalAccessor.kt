@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<b56fb2472248ada0e576e0bf4379c3fc>>
+ * @generated SignedSource<<8c871c1acb3365add8ab30d060015c9d>>
  */
 
 /**
@@ -50,6 +50,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var enableFabricLogsCache: Boolean? = null
   private var enableFabricRendererCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
+  private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
   private var enableIOSTextBaselineOffsetPerLineCache: Boolean? = null
   private var enableIOSViewClipToPaddingBoxCache: Boolean? = null
   private var enableImagePrefetchingAndroidCache: Boolean? = null
@@ -375,6 +376,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.enableFontScaleChangesUpdatingLayout()
       accessedFeatureFlags.add("enableFontScaleChangesUpdatingLayout")
       enableFontScaleChangesUpdatingLayoutCache = cached
+    }
+    return cached
+  }
+
+  override fun enableIOSExperimentalAutoFocusImplementation(): Boolean {
+    var cached = enableIOSExperimentalAutoFocusImplementationCache
+    if (cached == null) {
+      cached = currentProvider.enableIOSExperimentalAutoFocusImplementation()
+      accessedFeatureFlags.add("enableIOSExperimentalAutoFocusImplementation")
+      enableIOSExperimentalAutoFocusImplementationCache = cached
     }
     return cached
   }

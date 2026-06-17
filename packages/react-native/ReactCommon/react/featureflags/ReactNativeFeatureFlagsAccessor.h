@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<73f9ef58d17114b2d06bf13168d77100>>
+ * @generated SignedSource<<541d75873183aa1a4e9186db4f5ac403>>
  */
 
 /**
@@ -58,6 +58,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool enableFabricLogs();
   bool enableFabricRenderer();
   bool enableFontScaleChangesUpdatingLayout();
+  bool enableIOSExperimentalAutoFocusImplementation();
   bool enableIOSTextBaselineOffsetPerLine();
   bool enableIOSViewClipToPaddingBox();
   bool enableImagePrefetchingAndroid();
@@ -137,7 +138,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 94> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 95> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -165,6 +166,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> enableFabricLogs_;
   std::atomic<std::optional<bool>> enableFabricRenderer_;
   std::atomic<std::optional<bool>> enableFontScaleChangesUpdatingLayout_;
+  std::atomic<std::optional<bool>> enableIOSExperimentalAutoFocusImplementation_;
   std::atomic<std::optional<bool>> enableIOSTextBaselineOffsetPerLine_;
   std::atomic<std::optional<bool>> enableIOSViewClipToPaddingBox_;
   std::atomic<std::optional<bool>> enableImagePrefetchingAndroid_;

@@ -56,16 +56,32 @@ using namespace facebook::react;
   if (self = [super init]) {
     self.delegate = delegate;
     [self _setUpFeatureFlags:releaseLevel];
-
-    [RCTColorSpaceUtils applyDefaultColorSpace:[self defaultColorSpace]];
-    RCTEnableTurboModule(YES);
-
-    self.rootViewFactory = [self createRCTRootViewFactory];
-
-    [RCTComponentViewFactory currentComponentViewFactory].thirdPartyFabricComponentsProvider = self;
+    [self _setUpReactNativeFactory];
   }
 
   return self;
+}
+
+- (instancetype)initWithDelegate:(id<RCTReactNativeFactoryDelegate>)delegate
+            featureFlagsProvider:(std::unique_ptr<ReactNativeFeatureFlagsProvider>)featureFlagsProvider
+{
+  if (self = [super init]) {
+    self.delegate = delegate;
+    [self _setUpFeatureFlagsWithProvider:std::move(featureFlagsProvider)];
+    [self _setUpReactNativeFactory];
+  }
+
+  return self;
+}
+
+- (void)_setUpReactNativeFactory
+{
+  [RCTColorSpaceUtils applyDefaultColorSpace:[self defaultColorSpace]];
+  RCTEnableTurboModule(YES);
+
+  self.rootViewFactory = [self createRCTRootViewFactory];
+
+  [RCTComponentViewFactory currentComponentViewFactory].thirdPartyFabricComponentsProvider = self;
 }
 
 - (void)startReactNativeWithModuleName:(NSString *)moduleName inWindow:(UIWindow *_Nullable)window
@@ -372,6 +388,23 @@ using namespace facebook::react;
         ReactNativeFeatureFlags::override(std::make_unique<ReactNativeFeatureFlagsOverridesOSSStable>());
         break;
     }
+  });
+}
+
+- (void)_setUpFeatureFlagsWithProvider:(std::unique_ptr<ReactNativeFeatureFlagsProvider>)featureFlagsProvider
+{
+  if (featureFlagsProvider == nullptr) {
+    [NSException
+         raise:@"RCTReactNativeFactory::_setUpFeatureFlagsWithProvider called with a null provider"
+        format:@"A ReactNativeFeatureFlagsProvider must be provided"];
+    return;
+  }
+
+  __block auto featureFlagsProviderBlock = std::move(featureFlagsProvider);
+
+  static dispatch_once_t setupFeatureFlagsToken;
+  dispatch_once(&setupFeatureFlagsToken, ^{
+    ReactNativeFeatureFlags::override(std::move(featureFlagsProviderBlock));
   });
 }
 
