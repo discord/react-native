@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<a1c52a57a980eaab23d92416340a6734>>
+ * @generated SignedSource<<d792773c5fb6a7aef87c9e4712f0ddf6>>
  */
 
 /**
@@ -90,6 +90,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var redBoxV2AndroidCache: Boolean? = null
   private var redBoxV2IOSCache: Boolean? = null
   private var shouldPressibilityUseW3CPointerEventsForHoverCache: Boolean? = null
+  private var runtimeCrashUiThreadUtilsCache: Boolean? = null
   private var shouldTriggerResponderTransferOnScrollAndroidCache: Boolean? = null
   private var skipActivityIdentityAssertionOnHostPauseCache: Boolean? = null
   private var syncAndroidClipBoundsWithOverflowCache: Boolean? = null
@@ -102,6 +103,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var useNestedScrollViewAndroidCache: Boolean? = null
   private var useSharedAnimatedBackendCache: Boolean? = null
   private var useTraitHiddenOnAndroidCache: Boolean? = null
+  private var useTraitHiddenOnIOSCache: Boolean? = null
   private var useTurboModuleInteropCache: Boolean? = null
   private var viewCullingOutsetRatioCache: Double? = null
   private var viewTransitionEnabledCache: Boolean? = null
@@ -738,6 +740,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     return cached
   }
 
+  override fun runtimeCrashUiThreadUtils(): Boolean {
+    var cached = runtimeCrashUiThreadUtilsCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.runtimeCrashUiThreadUtils()
+      runtimeCrashUiThreadUtilsCache = cached
+    }
+    return cached
+  }
+
   override fun shouldTriggerResponderTransferOnScrollAndroid(): Boolean {
     var cached = shouldTriggerResponderTransferOnScrollAndroidCache
     if (cached == null) {
@@ -842,6 +853,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.useTraitHiddenOnAndroid()
       useTraitHiddenOnAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun useTraitHiddenOnIOS(): Boolean {
+    var cached = useTraitHiddenOnIOSCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.useTraitHiddenOnIOS()
+      useTraitHiddenOnIOSCache = cached
     }
     return cached
   }

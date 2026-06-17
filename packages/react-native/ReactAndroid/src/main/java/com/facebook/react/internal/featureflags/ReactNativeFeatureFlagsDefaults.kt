@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<dfb471a76c773cd0e796113cc6b684d7>>
+ * @generated SignedSource<<9391b5ba7d1734de5a48f0d9a2ff3430>>
  */
 
 /**
@@ -163,6 +163,8 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun shouldPressibilityUseW3CPointerEventsForHover(): Boolean = false
 
+  override fun runtimeCrashUiThreadUtils(): Boolean = false
+
   override fun shouldTriggerResponderTransferOnScrollAndroid(): Boolean = false
 
   override fun skipActivityIdentityAssertionOnHostPause(): Boolean = false
@@ -186,6 +188,8 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
   override fun useSharedAnimatedBackend(): Boolean = false
 
   override fun useTraitHiddenOnAndroid(): Boolean = false
+
+  override fun useTraitHiddenOnIOS(): Boolean = true
 
   override fun useTurboModuleInterop(): Boolean = false
 
