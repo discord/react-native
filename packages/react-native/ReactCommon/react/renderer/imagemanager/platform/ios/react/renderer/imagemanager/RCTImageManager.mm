@@ -105,11 +105,6 @@ using namespace facebook::react;
                                       completionBlock:completionBlock];
 
       RCTImageLoaderCancellationBlock cancelationBlock = loaderRequest.cancellationBlock;
-      // Hardening: `loaderRequest.cancellationBlock` can be nil (e.g. a loader that
-      // returns no cancellation block, or a request that has already completed). Invoking
-      // a nil block dereferences `block->invoke` at offset 0x10 → EXC_BAD_ACCESS /
-      // KERN_INVALID_ADDRESS at 0x10. Guard against it so a cancel triggered during view
-      // recycling (RCTImageComponentView::prepareForRecycle → removeObserver) is a no-op.
       sharedCancelationFunction.assign([cancelationBlock]() {
         if (cancelationBlock) {
           cancelationBlock();
