@@ -114,6 +114,10 @@ internal constructor(
   @ThreadConfined(ThreadConfined.UI)
   private val erroneouslyReaddedReactTags: MutableSet<Int> = HashSet()
 
+  // Coordinates view operations that must wait for an Android view transition to finish.
+  @ThreadConfined(ThreadConfined.UI)
+  private val viewTransitionCoordinator = ViewTransitionCoordinator()
+
   // This set is used to keep track of views that are currently being interacted with (i.e.
   // views that saw a ACTION_DOWN but not a ACTION_UP event yet). This is used to prevent
   // views from being removed while they are being interacted with as their event emitter will
@@ -250,6 +254,8 @@ internal constructor(
     // causes further operations to noop.
     isStopped = true
 
+    viewTransitionCoordinator.clearAllPending()
+
     // Reset all StateWrapper objects
     // Since this can happen on any thread, is it possible to race between StateWrapper destruction
     // and some accesses from View classes in the UI thread?
@@ -308,6 +314,20 @@ internal constructor(
     }
   }
 
+  /**
+   * Mark a view as entering/exiting an Android view transition. ViewManagers call this when they
+   * use ViewGroup.startViewTransition/endViewTransition so the mounting layer can queue operations
+   * that would otherwise fail while the view is temporarily mid-transition.
+   */
+  @UiThread
+  public fun markViewInTransition(tag: Int, isTransitioning: Boolean): Unit {
+    UiThreadUtil.assertOnUiThread()
+    val viewState = getNullableViewState(tag) ?: return
+    viewTransitionCoordinator.markViewInTransition(tag, isTransitioning, viewState.view) {
+      viewTransitionCoordinator.drainOperationsForChild(tag, this@SurfaceMountingManager)
+    }
+  }
+
   @UiThread
   public fun addViewAt(parentTag: Int, tag: Int, index: Int): Unit {
     UiThreadUtil.assertOnUiThread()
@@ -341,53 +361,79 @@ internal constructor(
     val view = viewState.view
     checkNotNull(view) { "Unable to find view for viewState $viewState and tag $tag" }
 
-    // Display children before inserting
-    if (SHOW_CHANGED_VIEW_HIERARCHIES) {
-      FLog.e(TAG, "addViewAt: [$tag] -> [$parentTag] idx: $index BEFORE")
-      logViewHierarchy(parentView, false)
+    val viewParent = view.parent
+    val shouldEnqueueOperation = viewTransitionCoordinator.shouldEnqueueOperation(tag, parentTag)
+
+    // Fast path: nothing queued and no existing parent — add immediately.
+    if (!shouldEnqueueOperation && viewParent == null) {
+      addViewAtInternal(parentView, view, index)
+      return
     }
 
-    val viewParent = view.parent
-    if (viewParent != null) {
-      val actualParentId = if (viewParent is ViewGroup) viewParent.id else View.NO_ID
+    if (!shouldEnqueueOperation) {
+      // Not explicitly queued, but the view already has a parent, which we treat as a signal that
+      // it is mid-transition: mark it and enqueue so the add runs once the transition completes.
+      viewTransitionCoordinator.markViewInTransition(tag, true, view) {
+        viewTransitionCoordinator.drainOperationsForChild(tag, this@SurfaceMountingManager)
+      }
+      FLog.w(
+          TAG,
+          "addViewAt: View with tag [$tag] already has a parent [${(viewParent as? ViewGroup)?.id}], enqueuing add operation into ViewTransitionCoordinator",
+      )
+    }
+
+    viewTransitionCoordinator.enqueueOperation(
+        AddViewOperation(tag, parentTag, index, parentView, view)
+    )
+  }
+
+  /**
+   * Adds a view to its parent. Called directly from [addViewAt] for immediate execution, or from
+   * the [ViewTransitionCoordinator] once a transition completes.
+   */
+  @UiThread
+  private fun addViewAtInternal(parentView: ViewGroup, child: View, atIndex: Int): Unit {
+    UiThreadUtil.assertOnUiThread()
+    if (isStopped) {
+      return
+    }
+
+    val childParent = child.parent
+    if (childParent != null) {
+      val actualParentId = if (childParent is ViewGroup) childParent.id else View.NO_ID
       ReactSoftExceptionLogger.logSoftException(
           TAG,
           IllegalStateException(
-              "addViewAt: cannot insert view [$tag] into parent [$parentTag]: View already has a parent: [$actualParentId]  Parent: ${viewParent.javaClass.simpleName} View: ${view.javaClass.simpleName}"
+              "addViewAtInternal: cannot insert view [${child.id}] into parent [${parentView.id}]: View already has a parent: [$actualParentId]  Parent: ${childParent.javaClass.simpleName} View: ${child.javaClass.simpleName}"
           ),
       )
 
-      // We've hit an error case, and `addView` will crash below
-      // if we don't take evasive action (it is an error to add a View
-      // to the hierarchy if it already has a parent).
-      // We don't know /why/ this happens yet, but it does happen
-      // very infrequently in production.
-      // Thus, we do three things here:
-      // (1) We logged a SoftException above, so if there's a crash later
-      // on, we might have some hints about what caused it.
-      // (2) We remove the View from its parent.
-      // (3) In case the View was removed from the hierarchy with the
-      // RemoveDeleteTree instruction, and is now being readded - which
-      // should be impossible - we mark this as a "readded" View and
-      // thus prevent the RemoveDeleteTree worker from deleting this
-      // View in the future.
-      if (viewParent is ViewGroup) {
-        viewParent.removeView(view)
+      // Evasive action for a known differ-ordering re-add bug: remove the view from the erroneous
+      // parent and mark it re-added so the RemoveDeleteTree worker won't later delete it.
+      if (childParent is ViewGroup) {
+        childParent.removeView(child)
       }
-      erroneouslyReaddedReactTags.add(tag)
+      erroneouslyReaddedReactTags.add(child.id)
     }
 
+    // Display children before inserting
+    if (SHOW_CHANGED_VIEW_HIERARCHIES) {
+      FLog.e(TAG, "addViewAt: [${child.id}] -> [${parentView.id}] idx: $atIndex BEFORE")
+      logViewHierarchy(parentView, false)
+    }
+
+    val parentViewState = getViewState(parentView.id)
     try {
-      getViewGroupManager(parentViewState).addView(parentView, view, index)
+      getViewGroupManager(parentViewState).addView(parentView, child, atIndex)
     } catch (e: IllegalStateException) {
       // Wrap error with more context for debugging
       throw IllegalStateException(
-          ("addViewAt: failed to insert view [$tag] into parent [$parentTag] at index $index"),
+          ("addViewAt: failed to insert view [${child.id}] into parent [${parentView.id}] at index $atIndex"),
           e,
       )
     } catch (e: IndexOutOfBoundsException) {
       throw IllegalStateException(
-          ("addViewAt: failed to insert view [$tag] into parent [$parentTag] at index $index"),
+          ("addViewAt: failed to insert view [${child.id}] into parent [${parentView.id}] at index $atIndex"),
           e,
       )
     }
@@ -401,10 +447,15 @@ internal constructor(
       // tldr is that `parent.children == []; parent.addView(x); parent.children == []`
       // and you need to wait a tick for `parent.children == [x]`.
       UiThreadUtil.runOnUiThread {
-        FLog.e(TAG, "addViewAt: [$tag] -> [$parentTag] idx: $index AFTER")
+        FLog.e(TAG, "addViewAt: [${child.id}] -> [${parentView.id}] idx: $atIndex AFTER")
         logViewHierarchy(parentView, false)
       }
     }
+  }
+
+  /** Executes an [AddViewOperation] queued by the [ViewTransitionCoordinator]. */
+  public fun executeAddViewOperation(operation: AddViewOperation): Unit {
+    addViewAtInternal(operation.parent, operation.child, operation.index)
   }
 
   @UiThread
@@ -444,12 +495,40 @@ internal constructor(
       throw IllegalStateException(message)
     }
 
+    if (
+        viewTransitionCoordinator.shouldEnqueueOperation(
+            tag, parentTag, /* checkTransitionStatus = */ false)
+    ) {
+      // checkTransitionStatus = false: don't gate on in-transition status here. When a view is in
+      // transition we still call removeViewAt immediately so it is marked for removal and the
+      // onDetach listener eventually fires. Only queue when a queue already exists for this view.
+      viewTransitionCoordinator.enqueueOperation(
+          RemoveViewOperation(tag, parentTag, index, parentView)
+      )
+      return
+    }
+
+    removeViewAtInternal(parentTag, parentView, tag, index)
+  }
+
+  /**
+   * Removes a view from its parent. Called directly from [removeViewAt] for immediate execution, or
+   * from the [ViewTransitionCoordinator] once a transition completes.
+   */
+  @UiThread
+  private fun removeViewAtInternal(
+      parentTag: Int,
+      parentView: ViewGroup,
+      tag: Int,
+      index: Int,
+  ): Unit {
     if (SHOW_CHANGED_VIEW_HIERARCHIES) {
       // Display children before deleting any
       FLog.e(TAG, "removeViewAt: [$tag] -> [$parentTag] idx: $index BEFORE")
       logViewHierarchy(parentView, false)
     }
 
+    val parentViewState = getViewState(parentTag)
     val viewGroupManager = getViewGroupManager(parentViewState)
 
     // Verify that the view we're about to remove has the same tag we expect
@@ -537,6 +616,12 @@ internal constructor(
     }
   }
 
+  /** Executes a [RemoveViewOperation] queued by the [ViewTransitionCoordinator]. */
+  public fun executeRemoveViewOperation(operation: RemoveViewOperation): Unit {
+    removeViewAtInternal(
+        operation.parentTag, operation.parentView, operation.childTag, operation.index)
+  }
+
   @UiThread
   internal fun createView(
       componentName: String,
@@ -549,6 +634,8 @@ internal constructor(
     if (isStopped) {
       return
     }
+    // If a view is (re)created while a delete for the same tag is queued, drop the delete.
+    viewTransitionCoordinator.notifyViewCreated(reactTag)
     // We treat this as a perf problem and not a logical error. View Preallocation or unexpected
     // changes to Differ or C++ Binding could cause some redundant Create instructions.
     // There are cases where preallocation happens and a node is recreated: if a node is
@@ -1048,6 +1135,20 @@ internal constructor(
       return
     }
 
+    if (viewTransitionCoordinator.shouldEnqueueOperation(reactTag, DELETE_VIEW_PARENT_TAG)) {
+      viewTransitionCoordinator.enqueueOperation(DeleteViewOperation(reactTag))
+      return
+    }
+
+    deleteViewInternal(reactTag)
+  }
+
+  /**
+   * Deletes a view. Called directly from [deleteView] for immediate execution, or from the
+   * [ViewTransitionCoordinator] once a transition completes.
+   */
+  @UiThread
+  private fun deleteViewInternal(reactTag: Int): Unit {
     if (
         ReactNativeFeatureFlags.overrideBySynchronousMountPropsAtMountingAndroid() &&
             tagToSynchronousMountProps.containsKey(reactTag)
@@ -1080,6 +1181,11 @@ internal constructor(
 
       onViewStateDeleted(viewState)
     }
+  }
+
+  /** Executes a [DeleteViewOperation] queued by the [ViewTransitionCoordinator]. */
+  public fun executeDeleteViewOperation(operation: DeleteViewOperation): Unit {
+    deleteViewInternal(operation.childTag)
   }
 
   @UiThread
