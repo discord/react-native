@@ -66,9 +66,13 @@ public object ReactScrollViewHelper {
 
   /** Shared by [ReactScrollView] and [ReactHorizontalScrollView]. */
   @JvmStatic
-  public fun <T> emitScrollEvent(scrollView: T, xVelocity: Float, yVelocity: Float)
-      where T : HasScrollEventThrottle?, T : ViewGroup {
-    emitScrollEvent(scrollView, ScrollEventType.SCROLL, xVelocity, yVelocity, false)
+  public fun <T> emitScrollEvent(
+      scrollView: T,
+      xVelocity: Float,
+      yVelocity: Float,
+      isDrawing: Boolean = false,
+  ) where T : HasScrollEventThrottle?, T : ViewGroup {
+    emitScrollEvent(scrollView, ScrollEventType.SCROLL, xVelocity, yVelocity, false, isDrawing)
   }
 
   /**
@@ -121,6 +125,7 @@ public object ReactScrollViewHelper {
       xVelocity: Float,
       yVelocity: Float,
       skipThrottle: Boolean = false,
+      isDrawing: Boolean = false,
   ) where T : HasScrollEventThrottle?, T : ViewGroup {
     val now = System.currentTimeMillis()
     // Throttle the scroll event if scrollEventThrottle is set to be equal or more than 17 ms.
@@ -160,7 +165,8 @@ public object ReactScrollViewHelper {
               contentView.height,
               scrollView.width,
               scrollView.height,
-          ),
+          )
+          .also { it.isDrawing = isDrawing },
       )
       if (scrollEventType == ScrollEventType.SCROLL) {
         scrollView.lastScrollDispatchTime = now
@@ -445,19 +451,23 @@ public object ReactScrollViewHelper {
   }
 
   @JvmStatic
-  public fun <T> updateStateOnScrollChanged(scrollView: T, xVelocity: Float, yVelocity: Float)
-      where
-          T : HasFlingAnimator?,
-          T : HasScrollEventThrottle?,
-          T : HasScrollState?,
-          T : HasStateWrapper?,
-          T : ViewGroup {
+  public fun <T> updateStateOnScrollChanged(
+      scrollView: T,
+      xVelocity: Float,
+      yVelocity: Float,
+      isDrawing: Boolean = false,
+  ) where
+      T : HasFlingAnimator?,
+      T : HasScrollEventThrottle?,
+      T : HasScrollState?,
+      T : HasStateWrapper?,
+      T : ViewGroup {
     // Race an UpdateState with every onScroll. This makes it more likely that, in Fabric,
     // when JS processes the scroll event, the C++ ShadowNode representation will have a
     // "more correct" scroll position. It will frequently be /incorrect/ but this decreases
     // the error as much as possible.
     updateFabricScrollState(scrollView, scrollView.scrollX, scrollView.scrollY)
-    emitScrollEvent(scrollView, xVelocity, yVelocity)
+    emitScrollEvent(scrollView, xVelocity, yVelocity, isDrawing)
   }
 
   public fun <T> registerFlingAnimator(scrollView: T)
