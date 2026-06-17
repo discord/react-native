@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<d9ed25122f1ff64122bfc83f8e5e9545>>
+ * @generated SignedSource<<2ad5091591c01862e39a0d4ff6e07fe2>>
  */
 
 /**
@@ -471,6 +471,12 @@ class ReactNativeFeatureFlagsJavaProvider
     return method(javaProvider_);
   }
 
+  bool runtimeCrashUiThreadUtils() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("runtimeCrashUiThreadUtils");
+    return method(javaProvider_);
+  }
+
   bool shouldTriggerResponderTransferOnScrollAndroid() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("shouldTriggerResponderTransferOnScrollAndroid");
@@ -552,6 +558,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool useTraitHiddenOnAndroid() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useTraitHiddenOnAndroid");
+    return method(javaProvider_);
+  }
+
+  bool useTraitHiddenOnIOS() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useTraitHiddenOnIOS");
     return method(javaProvider_);
   }
 
@@ -955,6 +967,11 @@ bool JReactNativeFeatureFlagsCxxInterop::shouldPressibilityUseW3CPointerEventsFo
   return ReactNativeFeatureFlags::shouldPressibilityUseW3CPointerEventsForHover();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::runtimeCrashUiThreadUtils(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::runtimeCrashUiThreadUtils();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::shouldTriggerResponderTransferOnScrollAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::shouldTriggerResponderTransferOnScrollAndroid();
@@ -1023,6 +1040,11 @@ bool JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend(
 bool JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::useTraitHiddenOnAndroid();
+}
+
+bool JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnIOS(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::useTraitHiddenOnIOS();
 }
 
 bool JReactNativeFeatureFlagsCxxInterop::useTurboModuleInterop(
@@ -1303,6 +1325,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
         "shouldPressibilityUseW3CPointerEventsForHover",
         JReactNativeFeatureFlagsCxxInterop::shouldPressibilityUseW3CPointerEventsForHover),
       makeNativeMethod(
+        "runtimeCrashUiThreadUtils",
+        JReactNativeFeatureFlagsCxxInterop::runtimeCrashUiThreadUtils),
+      makeNativeMethod(
         "shouldTriggerResponderTransferOnScrollAndroid",
         JReactNativeFeatureFlagsCxxInterop::shouldTriggerResponderTransferOnScrollAndroid),
       makeNativeMethod(
@@ -1344,6 +1369,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "useTraitHiddenOnAndroid",
         JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnAndroid),
+      makeNativeMethod(
+        "useTraitHiddenOnIOS",
+        JReactNativeFeatureFlagsCxxInterop::useTraitHiddenOnIOS),
       makeNativeMethod(
         "useTurboModuleInterop",
         JReactNativeFeatureFlagsCxxInterop::useTurboModuleInterop),

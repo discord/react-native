@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fe3b6746883be22fd72788a9388408fe>>
+ * @generated SignedSource<<1f141d362b0411217f8a2d308ae993d2>>
  * @flow strict
  * @noformat
  */
@@ -119,6 +119,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   redBoxV2Android: Getter<boolean>,
   redBoxV2IOS: Getter<boolean>,
   shouldPressibilityUseW3CPointerEventsForHover: Getter<boolean>,
+  runtimeCrashUiThreadUtils: Getter<boolean>,
   shouldTriggerResponderTransferOnScrollAndroid: Getter<boolean>,
   skipActivityIdentityAssertionOnHostPause: Getter<boolean>,
   syncAndroidClipBoundsWithOverflow: Getter<boolean>,
@@ -133,6 +134,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   useOptimizedViewRegistryOnAndroid: Getter<boolean>,
   useSharedAnimatedBackend: Getter<boolean>,
   useTraitHiddenOnAndroid: Getter<boolean>,
+  useTraitHiddenOnIOS: Getter<boolean>,
   useTurboModuleInterop: Getter<boolean>,
   useTurboModules: Getter<boolean>,
   useUnorderedMapInDifferentiator: Getter<boolean>,
@@ -494,6 +496,10 @@ export const redBoxV2IOS: Getter<boolean> = createNativeFlagGetter('redBoxV2IOS'
  */
 export const shouldPressibilityUseW3CPointerEventsForHover: Getter<boolean> = createNativeFlagGetter('shouldPressibilityUseW3CPointerEventsForHover', false);
 /**
+ * Instead of logging a soft exception crash the app in UiThreadUtils.
+ */
+export const runtimeCrashUiThreadUtils: Getter<boolean> = createNativeFlagGetter('runtimeCrashUiThreadUtils', false);
+/**
  * Do not emit touchcancel from Android ScrollView, instead native topScroll event will trigger responder transfer and terminate in RN renderer.
  */
 export const shouldTriggerResponderTransferOnScrollAndroid: Getter<boolean> = createNativeFlagGetter('shouldTriggerResponderTransferOnScrollAndroid', false);
@@ -549,6 +555,10 @@ export const useSharedAnimatedBackend: Getter<boolean> = createNativeFlagGetter(
  * Use Trait::hidden on Android
  */
 export const useTraitHiddenOnAndroid: Getter<boolean> = createNativeFlagGetter('useTraitHiddenOnAndroid', false);
+/**
+ * iOS only. When true (default), shadow nodes carrying ShadowNodeTraits::Trait::Hidden are filtered out of the mounting slice. When false, those nodes stay in the slice and are hidden via UIView.hidden = YES in updateLayoutMetrics:.
+ */
+export const useTraitHiddenOnIOS: Getter<boolean> = createNativeFlagGetter('useTraitHiddenOnIOS', true);
 /**
  * In Bridgeless mode, should legacy NativeModules use the TurboModule system?
  */

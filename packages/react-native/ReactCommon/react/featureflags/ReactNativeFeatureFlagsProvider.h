@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<87316e34516ebbbb34ae384e5a61376b>>
+ * @generated SignedSource<<55ba4d9fa4be4802144875f058ee6bf7>>
  */
 
 /**
@@ -97,6 +97,7 @@ class ReactNativeFeatureFlagsProvider {
   virtual bool redBoxV2Android() = 0;
   virtual bool redBoxV2IOS() = 0;
   virtual bool shouldPressibilityUseW3CPointerEventsForHover() = 0;
+  virtual bool runtimeCrashUiThreadUtils() = 0;
   virtual bool shouldTriggerResponderTransferOnScrollAndroid() = 0;
   virtual bool skipActivityIdentityAssertionOnHostPause() = 0;
   virtual bool syncAndroidClipBoundsWithOverflow() = 0;
@@ -111,6 +112,7 @@ class ReactNativeFeatureFlagsProvider {
   virtual bool useOptimizedViewRegistryOnAndroid() = 0;
   virtual bool useSharedAnimatedBackend() = 0;
   virtual bool useTraitHiddenOnAndroid() = 0;
+  virtual bool useTraitHiddenOnIOS() = 0;
   virtual bool useTurboModuleInterop() = 0;
   virtual bool useTurboModules() = 0;
   virtual bool useUnorderedMapInDifferentiator() = 0;

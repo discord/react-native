@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<1eca66b21554b00725f2a9be894a0db9>>
+ * @generated SignedSource<<eb28728ca97cd3c577f5a5031565da5d>>
  */
 
 /**
@@ -463,6 +463,12 @@ public object ReactNativeFeatureFlags {
   public fun shouldPressibilityUseW3CPointerEventsForHover(): Boolean = accessor.shouldPressibilityUseW3CPointerEventsForHover()
 
   /**
+   * Instead of logging a soft exception crash the app in UiThreadUtils.
+   */
+  @JvmStatic
+  public fun runtimeCrashUiThreadUtils(): Boolean = accessor.runtimeCrashUiThreadUtils()
+
+  /**
    * Do not emit touchcancel from Android ScrollView, instead native topScroll event will trigger responder transfer and terminate in RN renderer.
    */
   @JvmStatic
@@ -545,6 +551,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun useTraitHiddenOnAndroid(): Boolean = accessor.useTraitHiddenOnAndroid()
+
+  /**
+   * iOS only. When true (default), shadow nodes carrying ShadowNodeTraits::Trait::Hidden are filtered out of the mounting slice. When false, those nodes stay in the slice and are hidden via UIView.hidden = YES in updateLayoutMetrics:.
+   */
+  @JvmStatic
+  public fun useTraitHiddenOnIOS(): Boolean = accessor.useTraitHiddenOnIOS()
 
   /**
    * In Bridgeless mode, should legacy NativeModules use the TurboModule system?

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<17621e5f711352812633c125b7858537>>
+ * @generated SignedSource<<73f9ef58d17114b2d06bf13168d77100>>
  */
 
 /**
@@ -104,6 +104,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool redBoxV2Android();
   bool redBoxV2IOS();
   bool shouldPressibilityUseW3CPointerEventsForHover();
+  bool runtimeCrashUiThreadUtils();
   bool shouldTriggerResponderTransferOnScrollAndroid();
   bool skipActivityIdentityAssertionOnHostPause();
   bool syncAndroidClipBoundsWithOverflow();
@@ -118,6 +119,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool useOptimizedViewRegistryOnAndroid();
   bool useSharedAnimatedBackend();
   bool useTraitHiddenOnAndroid();
+  bool useTraitHiddenOnIOS();
   bool useTurboModuleInterop();
   bool useTurboModules();
   bool useUnorderedMapInDifferentiator();
@@ -135,7 +137,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 92> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 94> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -209,6 +211,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> redBoxV2Android_;
   std::atomic<std::optional<bool>> redBoxV2IOS_;
   std::atomic<std::optional<bool>> shouldPressibilityUseW3CPointerEventsForHover_;
+  std::atomic<std::optional<bool>> runtimeCrashUiThreadUtils_;
   std::atomic<std::optional<bool>> shouldTriggerResponderTransferOnScrollAndroid_;
   std::atomic<std::optional<bool>> skipActivityIdentityAssertionOnHostPause_;
   std::atomic<std::optional<bool>> syncAndroidClipBoundsWithOverflow_;
@@ -223,6 +226,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> useOptimizedViewRegistryOnAndroid_;
   std::atomic<std::optional<bool>> useSharedAnimatedBackend_;
   std::atomic<std::optional<bool>> useTraitHiddenOnAndroid_;
+  std::atomic<std::optional<bool>> useTraitHiddenOnIOS_;
   std::atomic<std::optional<bool>> useTurboModuleInterop_;
   std::atomic<std::optional<bool>> useTurboModules_;
   std::atomic<std::optional<bool>> useUnorderedMapInDifferentiator_;

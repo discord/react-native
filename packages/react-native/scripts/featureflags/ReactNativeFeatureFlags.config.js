@@ -817,6 +817,16 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    runtimeCrashUiThreadUtils: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2025-12-11',
+        description: 'Instead of logging a soft exception crash the app in UiThreadUtils.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     shouldTriggerResponderTransferOnScrollAndroid: {
       defaultValue: false,
       metadata: {
@@ -961,6 +971,17 @@ const definitions: FeatureFlagDefinitions = {
         dateAdded: '2025-10-9',
         description: 'Use Trait::hidden on Android',
         expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
+    useTraitHiddenOnIOS: {
+      defaultValue: true,
+      metadata: {
+        dateAdded: '2026-04-29',
+        description:
+          'iOS only. When true (default), shadow nodes carrying ShadowNodeTraits::Trait::Hidden are filtered out of the mounting slice. When false, those nodes stay in the slice and are hidden via UIView.hidden = YES in updateLayoutMetrics:.',
+        expectedReleaseValue: false,
         purpose: 'experimentation',
       },
       ossReleaseStage: 'none',

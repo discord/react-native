@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<378d6a8de497d26ebbbf55885be27a21>>
+ * @generated SignedSource<<b56fb2472248ada0e576e0bf4379c3fc>>
  */
 
 /**
@@ -96,6 +96,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var redBoxV2AndroidCache: Boolean? = null
   private var redBoxV2IOSCache: Boolean? = null
   private var shouldPressibilityUseW3CPointerEventsForHoverCache: Boolean? = null
+  private var runtimeCrashUiThreadUtilsCache: Boolean? = null
   private var shouldTriggerResponderTransferOnScrollAndroidCache: Boolean? = null
   private var skipActivityIdentityAssertionOnHostPauseCache: Boolean? = null
   private var syncAndroidClipBoundsWithOverflowCache: Boolean? = null
@@ -110,6 +111,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var useOptimizedViewRegistryOnAndroidCache: Boolean? = null
   private var useSharedAnimatedBackendCache: Boolean? = null
   private var useTraitHiddenOnAndroidCache: Boolean? = null
+  private var useTraitHiddenOnIOSCache: Boolean? = null
   private var useTurboModuleInteropCache: Boolean? = null
   private var useTurboModulesCache: Boolean? = null
   private var useUnorderedMapInDifferentiatorCache: Boolean? = null
@@ -837,6 +839,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
     return cached
   }
 
+  override fun runtimeCrashUiThreadUtils(): Boolean {
+    var cached = runtimeCrashUiThreadUtilsCache
+    if (cached == null) {
+      cached = currentProvider.runtimeCrashUiThreadUtils()
+      accessedFeatureFlags.add("runtimeCrashUiThreadUtils")
+      runtimeCrashUiThreadUtilsCache = cached
+    }
+    return cached
+  }
+
   override fun shouldTriggerResponderTransferOnScrollAndroid(): Boolean {
     var cached = shouldTriggerResponderTransferOnScrollAndroidCache
     if (cached == null) {
@@ -973,6 +985,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.useTraitHiddenOnAndroid()
       accessedFeatureFlags.add("useTraitHiddenOnAndroid")
       useTraitHiddenOnAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun useTraitHiddenOnIOS(): Boolean {
+    var cached = useTraitHiddenOnIOSCache
+    if (cached == null) {
+      cached = currentProvider.useTraitHiddenOnIOS()
+      accessedFeatureFlags.add("useTraitHiddenOnIOS")
+      useTraitHiddenOnIOSCache = cached
     }
     return cached
   }

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<a737810bf0211590401c2afb464aaf37>>
+ * @generated SignedSource<<af73a5cca552df44496f21d3df10bd46>>
  */
 
 /**
@@ -172,6 +172,8 @@ public object ReactNativeFeatureFlagsCxxInterop {
 
   @DoNotStrip @JvmStatic public external fun shouldPressibilityUseW3CPointerEventsForHover(): Boolean
 
+  @DoNotStrip @JvmStatic public external fun runtimeCrashUiThreadUtils(): Boolean
+
   @DoNotStrip @JvmStatic public external fun shouldTriggerResponderTransferOnScrollAndroid(): Boolean
 
   @DoNotStrip @JvmStatic public external fun skipActivityIdentityAssertionOnHostPause(): Boolean
@@ -199,6 +201,8 @@ public object ReactNativeFeatureFlagsCxxInterop {
   @DoNotStrip @JvmStatic public external fun useSharedAnimatedBackend(): Boolean
 
   @DoNotStrip @JvmStatic public external fun useTraitHiddenOnAndroid(): Boolean
+
+  @DoNotStrip @JvmStatic public external fun useTraitHiddenOnIOS(): Boolean
 
   @DoNotStrip @JvmStatic public external fun useTurboModuleInterop(): Boolean
 

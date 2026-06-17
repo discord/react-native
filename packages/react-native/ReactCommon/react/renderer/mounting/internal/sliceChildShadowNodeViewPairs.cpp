@@ -58,9 +58,13 @@ static void sliceChildShadowNodeViewPairsRecursively(
     auto& childShadowNode = *sharedChildShadowNode;
     // T153547836: Disabled on Android because the mounting infrastructure
     // is not fully ready yet.
+    // On iOS, gated by useTraitHiddenOnIOS. When false, the view stays in the slice and is hidden
+    // via UIView.hidden = YES in updateLayoutMetrics: instead of being removed.
     if (
 #ifdef ANDROID
         ReactNativeFeatureFlags::useTraitHiddenOnAndroid() &&
+#else
+        ReactNativeFeatureFlags::useTraitHiddenOnIOS() &&
 #endif
         childShadowNode.getTraits().check(ShadowNodeTraits::Trait::Hidden)) {
       continue;
