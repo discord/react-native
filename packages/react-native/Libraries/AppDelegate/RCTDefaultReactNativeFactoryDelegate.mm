@@ -7,6 +7,7 @@
 
 #import "RCTDefaultReactNativeFactoryDelegate.h"
 #import <ReactCommon/RCTHost.h>
+#import <React/RCTViewController.h>
 #import "RCTAppSetupUtils.h"
 #import "RCTDependencyProvider.h"
 #if USE_THIRD_PARTY_JSC != 1
@@ -18,7 +19,8 @@
 #import <react/featureflags/ReactNativeFeatureFlags.h>
 #import <react/nativemodule/defaults/DefaultTurboModules.h>
 
-@interface RCTRootViewController : UIViewController
+// Subclasses RCTViewController so the autoFocus rework still gets viewDidAppear.
+@interface RCTRootViewController : RCTViewController
 @end
 
 @implementation RCTRootViewController

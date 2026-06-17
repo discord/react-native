@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<434bf512fbb309eebde07a108fe474bb>>
+ * @generated SignedSource<<0e7fd60442c1311a4bc0072eace88b71>>
  */
 
 /**
@@ -89,6 +89,8 @@ class NativeReactNativeFeatureFlags
   bool enableFontScaleChangesUpdatingLayout(jsi::Runtime& runtime);
 
   bool enableIOSCompressedTextFrameAdjustment(jsi::Runtime& runtime);
+
+  bool enableIOSExperimentalAutoFocusImplementation(jsi::Runtime& runtime);
 
   bool enableIOSTextBaselineOffsetPerLine(jsi::Runtime& runtime);
 
