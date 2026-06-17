@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<968b02a2de4d8e1fe86b7d0faab8d730>>
+ * @generated SignedSource<<9e4ced13a36c5a6c491eb7d9fe2ba699>>
  */
 
 /**
@@ -185,6 +185,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableIOSCompressedTextFrameAdjustment(): Boolean = accessor.enableIOSCompressedTextFrameAdjustment()
+
+  /**
+   * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
+   */
+  @JvmStatic
+  public fun enableIOSExperimentalAutoFocusImplementation(): Boolean = accessor.enableIOSExperimentalAutoFocusImplementation()
 
   /**
    * Applies base offset for each line of text separately on iOS.

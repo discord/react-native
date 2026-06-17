@@ -7,6 +7,7 @@
 
 #import "RCTDefaultReactNativeFactoryDelegate.h"
 #import <ReactCommon/RCTHost.h>
+#import <React/RCTViewController.h>
 #import "RCTAppSetupUtils.h"
 #import "RCTDependencyProvider.h"
 #if USE_THIRD_PARTY_JSC != 1
@@ -35,7 +36,7 @@
 
 - (UIViewController *)createRootViewController
 {
-  return [UIViewController new];
+  return [RCTViewController new];
 }
 
 - (void)setRootView:(UIView *)rootView toRootViewController:(UIViewController *)rootViewController

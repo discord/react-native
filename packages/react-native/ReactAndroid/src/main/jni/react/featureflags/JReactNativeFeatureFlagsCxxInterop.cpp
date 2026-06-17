@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<76f2707aea17c23615890a8e5b0a4ef2>>
+ * @generated SignedSource<<77872c88b7cc777fafca359bc49d4fb7>>
  */
 
 /**
@@ -192,6 +192,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableIOSCompressedTextFrameAdjustment() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSCompressedTextFrameAdjustment");
+    return method(javaProvider_);
+  }
+
+  bool enableIOSExperimentalAutoFocusImplementation() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSExperimentalAutoFocusImplementation");
     return method(javaProvider_);
   }
 
@@ -707,6 +713,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableIOSCompressedTextFrameAdjustment(
   return ReactNativeFeatureFlags::enableIOSCompressedTextFrameAdjustment();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableIOSTextBaselineOffsetPerLine(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableIOSTextBaselineOffsetPerLine();
@@ -1131,6 +1142,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableIOSCompressedTextFrameAdjustment",
         JReactNativeFeatureFlagsCxxInterop::enableIOSCompressedTextFrameAdjustment),
+      makeNativeMethod(
+        "enableIOSExperimentalAutoFocusImplementation",
+        JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation),
       makeNativeMethod(
         "enableIOSTextBaselineOffsetPerLine",
         JReactNativeFeatureFlagsCxxInterop::enableIOSTextBaselineOffsetPerLine),

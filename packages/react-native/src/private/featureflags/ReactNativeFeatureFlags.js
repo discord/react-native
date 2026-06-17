@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<73352804c84f16e38ab87d78ff616ac0>>
+ * @generated SignedSource<<13ade5a05e955da8b848b77007f2c0a1>>
  * @flow strict
  * @noformat
  */
@@ -75,6 +75,7 @@ export type ReactNativeFeatureFlags = Readonly<{
   enableFlexboxAutoMinSizeInStrictMode: Getter<boolean>,
   enableFontScaleChangesUpdatingLayout: Getter<boolean>,
   enableIOSCompressedTextFrameAdjustment: Getter<boolean>,
+  enableIOSExperimentalAutoFocusImplementation: Getter<boolean>,
   enableIOSTextBaselineOffsetPerLine: Getter<boolean>,
   enableIOSViewClipToPaddingBox: Getter<boolean>,
   enableImagePrefetchingAndroid: Getter<boolean>,
@@ -318,6 +319,10 @@ export const enableFontScaleChangesUpdatingLayout: Getter<boolean> = createNativ
  * Adjusts iOS Text drawing frames for compressed explicit line heights.
  */
 export const enableIOSCompressedTextFrameAdjustment: Getter<boolean> = createNativeFlagGetter('enableIOSCompressedTextFrameAdjustment', false);
+/**
+ * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
+ */
+export const enableIOSExperimentalAutoFocusImplementation: Getter<boolean> = createNativeFlagGetter('enableIOSExperimentalAutoFocusImplementation', false);
 /**
  * Applies base offset for each line of text separately on iOS.
  */

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bad3dbaf92a0a869dfb91523ef4904f9>>
+ * @generated SignedSource<<4865af8a23bc168cc1eab8b5fd91eb70>>
  */
 
 /**
@@ -24,6 +24,8 @@ public open class ReactNativeFeatureFlagsOverrides_RNOSS_Experimental_Android : 
   // but that is more expensive than just duplicating the defaults here.
 
   override fun enableFlexboxAutoMinSizeInStrictMode(): Boolean = true
+
+  override fun enableIOSExperimentalAutoFocusImplementation(): Boolean = true
 
   override fun preventShadowTreeCommitExhaustion(): Boolean = true
 

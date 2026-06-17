@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5c7271fe5fcdd90f61a5a07772b820e5>>
+ * @generated SignedSource<<054fb11ca30880cd09049a766b252e39>>
  */
 
 /**
@@ -30,6 +30,10 @@ class ReactNativeFeatureFlagsOverridesOSSExperimental : public ReactNativeFeatur
     ReactNativeFeatureFlagsOverridesOSSExperimental() = default;
 
   bool enableFlexboxAutoMinSizeInStrictMode() override {
+    return true;
+  }
+
+  bool enableIOSExperimentalAutoFocusImplementation() override {
     return true;
   }
 

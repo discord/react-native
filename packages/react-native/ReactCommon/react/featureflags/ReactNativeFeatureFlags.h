@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c67df070bea1aa15e88db3baff7e6e3f>>
+ * @generated SignedSource<<6f626e55c9f36d3d13ecc61547a10b2e>>
  */
 
 /**
@@ -170,6 +170,11 @@ class ReactNativeFeatureFlags {
    * Adjusts iOS Text drawing frames for compressed explicit line heights.
    */
   RN_EXPORT static bool enableIOSCompressedTextFrameAdjustment();
+
+  /**
+   * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
+   */
+  RN_EXPORT static bool enableIOSExperimentalAutoFocusImplementation();
 
   /**
    * Applies base offset for each line of text separately on iOS.

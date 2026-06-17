@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<df4d4333f4b2587aab9dda5e3e3693ac>>
+ * @generated SignedSource<<aadee7a57848b357019985e95490cdda>>
  */
 
 /**
@@ -106,6 +106,9 @@ class JReactNativeFeatureFlagsCxxInterop
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableIOSCompressedTextFrameAdjustment(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
+
+  static bool enableIOSExperimentalAutoFocusImplementation(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableIOSTextBaselineOffsetPerLine(
