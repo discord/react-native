@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9ba96307800856ef9043d64b4c078e60>>
+ * @generated SignedSource<<0fdebd5a0b1231b206cdbeac0c9298e0>>
  */
 
 /**
@@ -309,6 +309,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
     return false;
   }
 
+  bool runtimeCrashUiThreadUtils() override {
+    return false;
+  }
+
   bool shouldTriggerResponderTransferOnScrollAndroid() override {
     return false;
   }
@@ -355,6 +359,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
 
   bool useTraitHiddenOnAndroid() override {
     return false;
+  }
+
+  bool useTraitHiddenOnIOS() override {
+    return true;
   }
 
   bool useTurboModuleInterop() override {

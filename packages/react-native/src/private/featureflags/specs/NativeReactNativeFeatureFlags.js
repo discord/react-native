@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<d6c54d6154c0f0771c211424e608f182>>
+ * @generated SignedSource<<2e0fab0796fd1ce74a370094b28b7b53>>
  * @flow strict
  * @noformat
  */
@@ -95,6 +95,7 @@ export interface Spec extends TurboModule {
   readonly redBoxV2Android?: () => boolean;
   readonly redBoxV2IOS?: () => boolean;
   readonly shouldPressibilityUseW3CPointerEventsForHover?: () => boolean;
+  readonly runtimeCrashUiThreadUtils?: () => boolean;
   readonly shouldTriggerResponderTransferOnScrollAndroid?: () => boolean;
   readonly skipActivityIdentityAssertionOnHostPause?: () => boolean;
   readonly syncAndroidClipBoundsWithOverflow?: () => boolean;
@@ -107,6 +108,7 @@ export interface Spec extends TurboModule {
   readonly useNestedScrollViewAndroid?: () => boolean;
   readonly useSharedAnimatedBackend?: () => boolean;
   readonly useTraitHiddenOnAndroid?: () => boolean;
+  readonly useTraitHiddenOnIOS?: () => boolean;
   readonly useTurboModuleInterop?: () => boolean;
   readonly viewCullingOutsetRatio?: () => number;
   readonly viewTransitionEnabled?: () => boolean;

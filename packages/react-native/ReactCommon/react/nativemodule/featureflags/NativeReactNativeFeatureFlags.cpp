@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<909f4afa6f96b4e77577432e4d98ba76>>
+ * @generated SignedSource<<170020de3e20b7ca0a6694eed3410bc2>>
  */
 
 /**
@@ -394,6 +394,11 @@ bool NativeReactNativeFeatureFlags::shouldPressibilityUseW3CPointerEventsForHove
   return ReactNativeFeatureFlags::shouldPressibilityUseW3CPointerEventsForHover();
 }
 
+bool NativeReactNativeFeatureFlags::runtimeCrashUiThreadUtils(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::runtimeCrashUiThreadUtils();
+}
+
 bool NativeReactNativeFeatureFlags::shouldTriggerResponderTransferOnScrollAndroid(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::shouldTriggerResponderTransferOnScrollAndroid();
@@ -452,6 +457,11 @@ bool NativeReactNativeFeatureFlags::useSharedAnimatedBackend(
 bool NativeReactNativeFeatureFlags::useTraitHiddenOnAndroid(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::useTraitHiddenOnAndroid();
+}
+
+bool NativeReactNativeFeatureFlags::useTraitHiddenOnIOS(
+    jsi::Runtime& /*runtime*/) {
+  return ReactNativeFeatureFlags::useTraitHiddenOnIOS();
 }
 
 bool NativeReactNativeFeatureFlags::useTurboModuleInterop(
