@@ -53,8 +53,6 @@ import com.facebook.react.views.progressbar.ReactProgressBarViewManager
 import com.facebook.react.views.safeareaview.ReactSafeAreaViewManager
 import com.facebook.react.views.scroll.ReactHorizontalScrollContainerViewManager
 import com.facebook.react.views.scroll.ReactHorizontalScrollViewManager
-import com.facebook.react.views.scroll.ReactNestedScrollViewManager
-import com.facebook.react.views.scroll.ReactScrollViewManager
 import com.facebook.react.views.swiperefresh.SwipeRefreshLayoutManager
 import com.facebook.react.views.switchview.ReactSwitchManager
 import com.facebook.react.views.text.PreparedLayoutTextViewManager
@@ -143,8 +141,10 @@ constructor(private val config: MainPackageConfig? = null) :
           ReactHorizontalScrollViewManager(),
           ReactHorizontalScrollContainerViewManager(),
           ReactProgressBarViewManager(),
-          if (ReactNativeFeatureFlags.useNestedScrollViewAndroid()) ReactNestedScrollViewManager()
-          else ReactScrollViewManager(),
+// Discord: ReactScrollViewManager deactivated — overridden by the app's
+// ReactScrollViewManagerOverride (canOverrideExistingModule). See PR #120.
+//          if (ReactNativeFeatureFlags.useNestedScrollViewAndroid()) ReactNestedScrollViewManager()
+//          else ReactScrollViewManager(),
           ReactSwitchManager(),
           ReactSafeAreaViewManager(),
           SwipeRefreshLayoutManager(),
@@ -178,12 +178,14 @@ constructor(private val config: MainPackageConfig? = null) :
               ModuleSpec.viewManagerSpec { ReactProgressBarViewManager() },
           ReactSafeAreaViewManager.REACT_CLASS to
               ModuleSpec.viewManagerSpec { ReactSafeAreaViewManager() },
-          ReactScrollViewManager.REACT_CLASS to
-              ModuleSpec.viewManagerSpec {
-                if (ReactNativeFeatureFlags.useNestedScrollViewAndroid())
-                    ReactNestedScrollViewManager()
-                else ReactScrollViewManager()
-              },
+// Discord: ReactScrollViewManager deactivated — overridden by the app's
+// ReactScrollViewManagerOverride (canOverrideExistingModule). See PR #120.
+//          ReactScrollViewManager.REACT_CLASS to
+//              ModuleSpec.viewManagerSpec {
+//                if (ReactNativeFeatureFlags.useNestedScrollViewAndroid())
+//                    ReactNestedScrollViewManager()
+//                else ReactScrollViewManager()
+//              },
           ReactSwitchManager.REACT_CLASS to ModuleSpec.viewManagerSpec { ReactSwitchManager() },
           SwipeRefreshLayoutManager.REACT_CLASS to
               ModuleSpec.viewManagerSpec { SwipeRefreshLayoutManager() },

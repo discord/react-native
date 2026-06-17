@@ -649,7 +649,8 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
         ReactScrollViewHelper.updateStateOnScrollChanged(
             this,
             mOnScrollDispatchHelper.getXFlingVelocity(),
-            mOnScrollDispatchHelper.getYFlingVelocity());
+            mOnScrollDispatchHelper.getYFlingVelocity(),
+            false);
         if (mVirtualViewContainerState != null) {
           mVirtualViewContainerState.updateState();
         }
