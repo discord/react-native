@@ -20,11 +20,11 @@ ImageResponseObserverCoordinator::ImageResponseObserverCoordinator(
       cancelRequest_(std::move(cancelationFunction)) {}
 
 void ImageResponseObserverCoordinator::addObserver(
-    const ImageResponseObserver& observer) const {
+    std::shared_ptr<const ImageResponseObserver> observer) const {
   mutex_.lock();
   switch (status_) {
     case ImageResponse::Status::Loading: {
-      observers_.push_back(&observer);
+      observers_.push_back(observer);
       mutex_.unlock();
       break;
     }
@@ -32,17 +32,17 @@ void ImageResponseObserverCoordinator::addObserver(
       auto imageData = imageData_;
       auto imageMetadata = imageMetadata_;
       mutex_.unlock();
-      observer.didReceiveImage(ImageResponse{imageData, imageMetadata});
+      observer->didReceiveImage(ImageResponse{imageData, imageMetadata});
       break;
     }
     case ImageResponse::Status::Failed: {
       auto imageErrorData = imageErrorData_;
       mutex_.unlock();
-      observer.didReceiveFailure(ImageLoadError{imageErrorData});
+      observer->didReceiveFailure(ImageLoadError{imageErrorData});
       break;
     }
     case ImageResponse::Status::Cancelled: {
-      observers_.push_back(&observer);
+      observers_.push_back(observer);
       status_ = ImageResponse::Status::Loading;
       mutex_.unlock();
       resumeRequest_();
@@ -52,13 +52,13 @@ void ImageResponseObserverCoordinator::addObserver(
 }
 
 void ImageResponseObserverCoordinator::removeObserver(
-    const ImageResponseObserver& observer) const {
+    const std::shared_ptr<const ImageResponseObserver>& observer) const {
   std::scoped_lock lock(mutex_);
 
   // We remove only one element to maintain a balance between add/remove calls.
-  auto position = std::find(observers_.begin(), observers_.end(), &observer);
+  auto position = std::find(observers_.begin(), observers_.end(), observer);
   if (position != observers_.end()) {
-    observers_.erase(position, observers_.end());
+    observers_.erase(position);
 
     if (observers_.empty() && status_ == ImageResponse::Status::Loading) {
       status_ = ImageResponse::Status::Cancelled;
@@ -78,7 +78,7 @@ void ImageResponseObserverCoordinator::nativeImageResponseProgress(
       status_ == ImageResponse::Status::Cancelled);
   mutex_.unlock();
 
-  for (auto observer : observers) {
+  for (const auto& observer : observers) {
     observer->didReceiveProgress(progress, loaded, total);
   }
 }
@@ -95,7 +95,7 @@ void ImageResponseObserverCoordinator::nativeImageResponseComplete(
   auto observers = observers_;
   mutex_.unlock();
 
-  for (auto observer : observers) {
+  for (const auto& observer : observers) {
     observer->didReceiveImage(imageResponse);
   }
 }
@@ -111,7 +111,7 @@ void ImageResponseObserverCoordinator::nativeImageResponseFailed(
   auto observers = observers_;
   mutex_.unlock();
 
-  for (auto observer : observers) {
+  for (const auto& observer : observers) {
     observer->didReceiveFailure(loadError);
   }
 }
