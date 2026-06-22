@@ -380,6 +380,20 @@ public class TextAttributeProps private constructor() {
       }
     }
 
+  public var textStrokeWidth: Float = Float.NaN
+    private set
+
+  public var isTextStrokeColorSet: Boolean = false
+    private set
+
+  public var textStrokeColor: Int = 0
+    private set(value) {
+      if (value != field) {
+        field = value
+        isTextStrokeColorSet = true
+      }
+    }
+
   private fun setTextTransform(textTransform: String?) {
     this.textTransform =
         when (textTransform) {
@@ -449,6 +463,8 @@ public class TextAttributeProps private constructor() {
 
     // Discord text attributes (100+ range, mirrors conversions.h)
     public const val TA_KEY_GRADIENT_COLORS: Int = 100
+    public const val TA_KEY_TEXT_STROKE_WIDTH: Int = 101
+    public const val TA_KEY_TEXT_STROKE_COLOR: Int = 102
     public const val TA_KEY_GRADIENT_ANGLE: Int = 103
     public const val TA_KEY_GRADIENT_WIDTH: Int = 104
     public const val TA_KEY_GRADIENT_MODE: Int = 105
@@ -502,6 +518,8 @@ public class TextAttributeProps private constructor() {
           TA_KEY_TEXT_SHADOW_COLOR -> result.textShadowColor = entry.intValue
           TA_KEY_TEXT_SHADOW_OFFSET_DX -> result.textShadowOffsetDx = entry.doubleValue.toFloat()
           TA_KEY_TEXT_SHADOW_OFFSET_DY -> result.textShadowOffsetDy = entry.doubleValue.toFloat()
+          TA_KEY_TEXT_STROKE_WIDTH -> result.textStrokeWidth = entry.doubleValue.toFloat()
+          TA_KEY_TEXT_STROKE_COLOR -> result.textStrokeColor = entry.intValue
           TA_KEY_IS_HIGHLIGHTED -> {}
           TA_KEY_LAYOUT_DIRECTION -> result.setLayoutDirection(entry.stringValue)
           TA_KEY_ACCESSIBILITY_ROLE -> result.setAccessibilityRole(entry.stringValue)
@@ -581,6 +599,10 @@ public class TextAttributeProps private constructor() {
       result.gradientAngle = getFloatProp(props, "gradientAngle", Float.NaN)
       result.gradientWidth = getFloatProp(props, "gradientWidth", Float.NaN)
       result.gradientMode = getStringProp(props, "gradientMode")
+      result.textStrokeWidth = getFloatProp(props, "textStrokeWidth", Float.NaN)
+      if (props.hasKey("textStrokeColor")) {
+        result.textStrokeColor = props.getInt("textStrokeColor", 0)
+      }
       return result
     }
 

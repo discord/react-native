@@ -1151,6 +1151,8 @@ constexpr static MapBuffer::Key TE_KEY_PROPS = 1;
 // Discord text attributes. Kept in their own range (100+) so upstream key
 // additions cannot collide with them.
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_COLORS = 100;
+constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_WIDTH = 101;
+constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_COLOR = 102;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_ANGLE = 103;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_WIDTH = 104;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_MODE = 105;
@@ -1364,6 +1366,13 @@ inline MapBuffer toMapBuffer(const TextAttributes &textAttributes)
   if (textAttributes.textShadowOffset) {
     builder.putDouble(TA_KEY_TEXT_SHADOW_OFFSET_DX, textAttributes.textShadowOffset->width);
     builder.putDouble(TA_KEY_TEXT_SHADOW_OFFSET_DY, textAttributes.textShadowOffset->height);
+  }
+  // Stroke
+  if (!std::isnan(textAttributes.textStrokeWidth)) {
+    builder.putDouble(TA_KEY_TEXT_STROKE_WIDTH, textAttributes.textStrokeWidth);
+  }
+  if (textAttributes.textStrokeColor) {
+    builder.putInt(TA_KEY_TEXT_STROKE_COLOR, toAndroidRepr(textAttributes.textStrokeColor));
   }
   // Special
   if (textAttributes.isHighlighted.has_value()) {
