@@ -152,6 +152,11 @@ public constructor(
     view.setDefaultSource(source)
   }
 
+  /** Discord: full source-map overload, used by the app's FastImageViewManager placeholder. */
+  public fun setDefaultSource(view: ReactImageView, source: ReadableMap?) {
+    view.setDefaultSource(source?.getString("uri"))
+  }
+
   // In JS this is Image.props.loadingIndicatorSource.uri
   @ReactProp(name = "loadingIndicatorSrc")
   public fun setLoadingIndicatorSource(view: ReactImageView, source: Dynamic) {
