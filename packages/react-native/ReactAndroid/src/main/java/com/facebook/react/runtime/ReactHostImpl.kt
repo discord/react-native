@@ -72,6 +72,7 @@ import com.facebook.react.uimanager.events.BlackHoleEventDispatcher
 import com.facebook.react.uimanager.events.EventDispatcher
 import com.facebook.react.views.imagehelper.ResourceDrawableIdHelper
 import java.lang.ref.WeakReference
+import java.util.WeakHashMap
 import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.Executor
 import java.util.concurrent.Executors
@@ -146,6 +147,9 @@ public class ReactHostImpl(
   private val reactLifecycleStateManager = ReactLifecycleStateManager(stateTracker)
   private var memoryPressureListener: MemoryPressureListener? = null
   private var defaultHardwareBackBtnHandler: DefaultHardwareBackBtnHandler? = null
+
+  // Discord added fix for https://app.asana.com/1/236888843494340/project/1199705967702853/task/1211580756398579?focus=true
+  private val activeActivities: MutableMap<Activity, Boolean> = WeakHashMap()
 
   private val reactInstanceEventListeners: MutableList<ReactInstanceEventListener> =
       CopyOnWriteArrayList()
@@ -251,6 +255,11 @@ public class ReactHostImpl(
   override fun onHostResume(activity: Activity?) {
     stateTracker.enterState("onHostResume(activity)")
 
+    if (activity != null) {
+      // It's possible that multiple activities are active at the same time
+      activeActivities[activity] = true
+    }
+
     currentActivity = activity
     frameTimingsObserver?.setCurrentWindow(activity?.window)
 
@@ -270,25 +279,18 @@ public class ReactHostImpl(
     val method = "onHostPause(activity)"
     stateTracker.enterState(method)
 
-    val currentActivity = this.currentActivity
-    if (currentActivity != null) {
-      val isSameActivity = activity === currentActivity
-      if (!isSameActivity) {
-        val currentActivityClass = currentActivity.javaClass.simpleName
-        val activityClass = if (activity == null) "null" else activity.javaClass.simpleName
-        val isNotSameActivityMessage =
-            "Pausing an activity that is not the current activity, this is incorrect! Current activity: $currentActivityClass Paused activity: $activityClass"
-        if (ReactNativeFeatureFlags.skipActivityIdentityAssertionOnHostPause()) {
-          FLog.w(TAG, method, isNotSameActivityMessage)
-        } else {
-          Assertions.assertCondition(isSameActivity, isNotSameActivityMessage)
-        }
+    if (activity != null) {
+      activeActivities.remove(activity)
+      if (activeActivities.size > 0) {
+        // Another activity is still active, so we don't want to pause RN yet.
+        return
       }
     }
 
+    // Identity assertion intentionally omitted — activeActivities (above) gates multi-activity pausing (#80).
     maybeEnableDevSupport(false)
     defaultHardwareBackBtnHandler = null
-    reactLifecycleStateManager.moveToOnHostPause(currentReactContext, currentActivity)
+    reactLifecycleStateManager.moveToOnHostPause(currentReactContext, activity)
   }
 
   /** To be called when the host activity is paused. */
@@ -313,6 +315,15 @@ public class ReactHostImpl(
   @ThreadConfined(ThreadConfined.UI)
   override fun onHostDestroy(activity: Activity?) {
     stateTracker.enterState("onHostDestroy(activity)")
+
+    // Mirror the multi-activity awareness from onHostPause: don't destroy the shared
+    // ReactContext while other activities are still active.
+    if (activity != null) {
+      activeActivities.remove(activity)
+      if (activeActivities.size > 0) {
+        return
+      }
+    }
 
     val currentActivity = this.currentActivity
 
@@ -342,7 +353,7 @@ public class ReactHostImpl(
       initialProps: Bundle?,
   ): ReactSurface {
     val surface = ReactSurfaceImpl(context, moduleName, initialProps)
-    val surfaceView = ReactSurfaceView(context, surface)
+    val surfaceView = reactHostDelegate.createReactSurfaceView(context, surface);
     surfaceView.setShouldLogContentAppeared(true)
     surface.attachView(surfaceView)
     surface.attach(this)

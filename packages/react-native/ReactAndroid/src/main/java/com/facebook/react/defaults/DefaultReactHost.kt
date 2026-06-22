@@ -21,6 +21,8 @@ import com.facebook.react.fabric.ComponentFactory
 import com.facebook.react.runtime.BindingsInstaller
 import com.facebook.react.runtime.JSRuntimeFactory
 import com.facebook.react.runtime.ReactHostImpl
+import com.facebook.react.runtime.ReactSurfaceImpl
+import com.facebook.react.runtime.ReactSurfaceView
 import com.facebook.react.runtime.cxxreactpackage.CxxReactPackage
 import com.facebook.react.runtime.hermes.HermesInstance
 import java.lang.Exception
@@ -62,6 +64,7 @@ public object DefaultReactHost {
   public fun getDefaultReactHost(
       context: Context,
       packageList: List<ReactPackage>,
+      createReactSurfaceView: (Context, ReactSurfaceImpl) -> ReactSurfaceView,
       jsMainModulePath: String = "index",
       jsBundleAssetPath: String = "index.android.bundle",
       jsBundleFilePath: String? = null,
@@ -96,6 +99,7 @@ public object DefaultReactHost {
             bindingsInstaller = bindingsInstaller,
             turboModuleManagerDelegateBuilder = defaultTmmDelegateBuilder,
             exceptionHandler = exceptionHandler,
+            createReactSurfaceViewCallback = createReactSurfaceView,
         )
     val componentFactory = ComponentFactory()
     DefaultComponentsRegistry.register(componentFactory)
