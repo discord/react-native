@@ -70,6 +70,13 @@ abstract class PreparePrefabHeadersTask : DefaultTask() {
           copySpec.include("boost/cstdint.hpp")
           copySpec.include("boost/utility.hpp")
           copySpec.include("boost/version.hpp")
+          // Extra files for kv-storage
+          copySpec.include("boost/*.hpp")
+          copySpec.include("boost/align/**/*.hpp")
+          copySpec.include("boost/container/**/*.hpp")
+          copySpec.include("boost/lockfree/**/*.hpp")
+          copySpec.include("boost/parameter/**/*.hpp")
+          copySpec.include("boost/predef/**/*.hpp")
           copySpec.into(File(outputFolder.asFile, headerPrefix))
         }
       }
