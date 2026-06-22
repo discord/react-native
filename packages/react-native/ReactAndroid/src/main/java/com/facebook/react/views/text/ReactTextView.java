@@ -9,6 +9,7 @@ package com.facebook.react.views.text;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Paint;
 import android.graphics.Rect;
 import android.os.Build;
 import android.text.Layout;
@@ -49,6 +50,7 @@ import com.facebook.react.uimanager.style.Overflow;
 import com.facebook.react.views.text.internal.span.CanvasEffectSpan;
 import com.facebook.react.views.text.internal.span.ReactFragmentIndexSpan;
 import com.facebook.react.views.text.internal.span.ReactTagSpan;
+import com.facebook.react.views.text.internal.span.StrokeStyleSpan;
 import com.facebook.yoga.YogaMeasureMode;
 
 @Nullsafe(Nullsafe.Mode.LOCAL)
@@ -210,6 +212,7 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
       }
 
       if (mOverflow != Overflow.VISIBLE) {
+        canvas.save();
         BackgroundStyleApplicator.clipToPaddingBox(this, canvas);
       }
 
@@ -223,19 +226,37 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
           } else {
             if (drawSpans.length > 0) {
               drawTextEffects(canvas, spanned, layout, drawSpans, true, false);
-              super.onDraw(canvas);
+              drawTextWithStroke(canvas);
               drawTextEffects(canvas, spanned, layout, drawSpans, false, false);
             } else {
-              super.onDraw(canvas);
+              drawTextWithStroke(canvas);
             }
           }
         } else {
-          super.onDraw(canvas);
+          drawTextWithStroke(canvas);
         }
       } else {
-        super.onDraw(canvas);
+        drawTextWithStroke(canvas);
+      }
+
+      if (mOverflow != Overflow.VISIBLE) {
+        canvas.restore();
       }
     }
+  }
+
+  /** Discord: two-pass (stroke, then fill) draw when the text carries a StrokeStyleSpan. */
+  private void drawWithStroke(Paint paint, Runnable draw) {
+    CharSequence text = getText();
+    StrokeStyleSpan strokeSpan =
+        text instanceof Spanned ? StrokeStyleSpan.getStrokeSpan((Spanned) text) : null;
+    if (strokeSpan == null || !strokeSpan.draw(paint, draw)) {
+      draw.run();
+    }
+  }
+
+  private void drawTextWithStroke(Canvas canvas) {
+    drawWithStroke(getPaint(), () -> super.onDraw(canvas));
   }
 
   private boolean shouldDrawLayoutWithoutTextViewClip() {
@@ -252,7 +273,7 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
     canvas.save();
     canvas.translate(
         getCompoundPaddingLeft(), getExtendedPaddingTop() + getVerticalGravityOffset(layout));
-    layout.draw(canvas);
+    drawWithStroke(layout.getPaint(), () -> layout.draw(canvas));
     canvas.restore();
 
     drawTextEffects(canvas, spanned, layout, drawSpans, false, true);
