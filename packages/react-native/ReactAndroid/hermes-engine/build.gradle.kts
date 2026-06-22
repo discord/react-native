@@ -12,8 +12,8 @@ import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
   id("signing")
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.download)
+  id(libs.plugins.android.library.get().pluginId)
+  id(libs.plugins.download.get().pluginId)
 }
 
 group = "com.facebook.react"
@@ -164,6 +164,7 @@ fun configureBuildForHermesCommandLineArgs(
           "-B",
           hermesBuildDir.toString(),
           "-DJSI_DIR=" + jsiDir.absolutePath,
+          "-DICU_FOUND=1",
           "-DCMAKE_BUILD_TYPE=Release",
       )
   if (enableDebugger) {

@@ -11,10 +11,10 @@ import com.facebook.soloader.SoLoader
 import com.facebook.soloader.annotation.SoLoaderLibrary
 
 @SoLoaderLibrary("react_newarchdefaults")
-internal object DefaultSoLoader {
+public object DefaultSoLoader {
   @Synchronized
   @JvmStatic
-  fun maybeLoadSoLibrary() {
+  public fun maybeLoadSoLibrary() {
     SoLoader.loadLibrary("react_newarchdefaults")
     try {
       SoLoader.loadLibrary("appmodules")

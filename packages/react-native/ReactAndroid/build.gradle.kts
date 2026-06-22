@@ -16,9 +16,9 @@ import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 plugins {
   id("maven-publish")
   id("com.facebook.react")
-  alias(libs.plugins.android.library)
-  alias(libs.plugins.download)
-  alias(libs.plugins.kotlin.android)
+  id(libs.plugins.android.library.get().pluginId)
+  id(libs.plugins.download.get().pluginId)
+  id(libs.plugins.kotlin.android.get().pluginId)
   alias(libs.plugins.ktfmt)
 }
 
@@ -104,6 +104,8 @@ val preparePrefab by
                       Pair("src/main/jni/react/uimanager", "react/uimanager/"),
                       // glog
                       Pair(File(buildDir, "third-party-ndk/glog/exported/").absolutePath, ""),
+                      // fbgloginit (exports fb/glog_init.h)
+                      Pair("src/main/jni/first-party/fbgloginit", ""),
                       // jsiinpsector
                       Pair("../ReactCommon/jsinspector-modern/", "jsinspector-modern/"),
                       // jsitooling
@@ -515,6 +517,65 @@ fun enableWarningsAsErrors(): Boolean {
   return value?.toString()?.toBoolean() ?: false
 }
 
+val packageReactNdkLibsForBuck by
+    tasks.registering(Copy::class) {
+      dependsOn("mergeDebugNativeLibs")
+      // Shared libraries (.so) are copied from the merged_native_libs folder instead
+      from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+      exclude("**/libjsc.so")
+      exclude("**/libhermes.so")
+      into("src/main/jni/prebuilt/lib")
+    }
+
+// Derivative of the packageReactNdkDebugLibsForBuck task, appends "debug" to the "into" dir
+val packageReactNdkDebugLibsForDiscord by
+    tasks.registering(Copy::class) {
+      dependsOn("mergeDebugNativeLibs")
+      // Shared libraries (.so) are copied from the merged_native_libs folder instead
+      from("$buildDir/intermediates/merged_native_libs/debug/out/lib/")
+      exclude("**/libjsc.so")
+      exclude("**/libhermes.so")
+      into("src/main/jni/prebuilt/lib/debug")
+    }
+
+// Derivative of the packageReactNdkReleaseLibsForBuck task, appends "release" to the "into" dir
+val packageReactNdkReleaseLibsForDiscord by
+    tasks.registering(Copy::class) {
+        dependsOn("mergeReleaseNativeLibs")
+        // Shared libraries (.so) are copied from the merged_native_libs folder instead
+        from("$buildDir/intermediates/merged_native_libs/release/out/lib/")
+        exclude("**/libjsc.so")
+        exclude("**/libhermes.so")
+        into("src/main/jni/prebuilt/lib/release")
+    }
+
+val createReactNdkLibraryZipArchiveForDiscord by
+    tasks.registering(Zip::class) {
+        // This dependsOn tasks gets all our *.so files into the src/main/jni/prebuilt/lib directory
+        dependsOn("packageReactNdkDebugLibsForDiscord")
+        dependsOn("packageReactNdkReleaseLibsForDiscord")
+
+        // A searchable self-documenting name for the build process, but its final packaged name will end up being react-native-{version}.zip
+        archiveFileName.set("ReactNativeLibrariesForDiscord.zip")
+        from(layout.projectDirectory.dir("src/main/jni/prebuilt")) {
+            // Get all *.so files in the prebuilt directory
+            include("**/*.so")
+            val fileCopyAction = object: Action<FileCopyDetails> {
+                override fun execute(fcd: FileCopyDetails) {
+                    // Trim down each file's directory to just include the "lib/{debug/release}/{architecture}" part
+                    val relativeFileName = RelativePath(true, *fcd.relativePath.segments.takeLast(4).toTypedArray())
+                    fcd.relativePath = relativeFileName
+                }
+            }
+            eachFile(fileCopyAction)
+            // Removes empty dirs resulting from the eachFile directory remapping above
+            includeEmptyDirs = false
+        }
+
+        // Place this .zip right into our ReactAndroid directory
+        destinationDirectory.set(layout.projectDirectory)
+    }
+
 repositories {
   // Normally RNGP will set repositories for all modules,
   // but when consumed from source, we need to re-declare
@@ -694,7 +755,7 @@ tasks.withType<KotlinCompile>().configureEach {
 }
 
 dependencies {
-  implementation("com.tencent:mmkv-static:1.2.14")
+  implementation("com.tencent:mmkv-static:1.3.14")
   api(libs.androidx.appcompat)
   api(libs.androidx.appcompat.resources)
   api(libs.androidx.autofill)
@@ -768,5 +829,15 @@ apply(from = "./publish.gradle")
 // Please note that the original coordinates, `react-native`, have been voided
 // as they caused https://github.com/facebook/react-native/issues/35210
 publishing {
-  publications { getByName("release", MavenPublication::class) { artifactId = "react-android" } }
+  publications {
+    getByName("release", MavenPublication::class) {
+      artifactId = "react-android"
+    }
+    create<MavenPublication>("libZip") {
+      groupId = "com.facebook.react"
+      version = "test"
+      artifactId = "discord-rn-libs"
+      artifact(tasks.named("createReactNdkLibraryZipArchiveForDiscord").get())
+    }
+  }
 }
