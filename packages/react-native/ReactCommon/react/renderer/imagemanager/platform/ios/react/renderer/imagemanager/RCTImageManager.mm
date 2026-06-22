@@ -105,7 +105,11 @@ using namespace facebook::react;
                                       completionBlock:completionBlock];
 
       RCTImageLoaderCancellationBlock cancelationBlock = loaderRequest.cancellationBlock;
-      sharedCancelationFunction.assign([cancelationBlock]() { cancelationBlock(); });
+      sharedCancelationFunction.assign([cancelationBlock]() {
+        if (cancelationBlock) {
+          cancelationBlock();
+        }
+      });
     };
 
     startRequest();
