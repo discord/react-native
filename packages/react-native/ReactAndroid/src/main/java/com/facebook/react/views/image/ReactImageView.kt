@@ -288,46 +288,12 @@ public class ReactImageView(
     } else if (sources.size() == 1) {
       // Optimize for the case where we have just one uri, case in which we don't need the sizes
       val source = checkNotNull(sources.getMap(0))
-      val cacheControl = computeCacheControl(source.getString("cache"))
-      var imageSource = ImageSource(context, source.getString("uri"), cacheControl = cacheControl)
-      if (Uri.EMPTY == imageSource.uri) {
-        warnImageSource(source.getString("uri"))
-        imageSource = getTransparentBitmapImageSource(context)
-      }
+      val imageSource = readableMapToImageSource(source, includeSize = false)
       tmpSources.add(imageSource)
     } else {
       for (idx in 0 until sources.size()) {
         val source = sources.getMap(idx) ?: continue
-        val cacheControl = computeCacheControl(source.getString("cache"))
-        val uri = source.getString("uri")
-        val isForceCached = if (source.hasKey("isForceCached")) {
-          source.getBoolean("isForceCached")
-        } else {
-          false
-        }
-        val width = if (source.hasKey("width")) {
-          source.getDouble("width")
-        } else {
-          0.0
-        }
-        val height = if (source.hasKey("height")) {
-          source.getDouble("height")
-        } else {
-          0.0
-        }
-        var imageSource =
-            ImageSource(
-                context,
-                uri,
-                width,
-                height,
-                cacheControl,
-                isForceCached,
-            )
-        if (Uri.EMPTY == imageSource.uri) {
-          warnImageSource(uri)
-          imageSource = getTransparentBitmapImageSource(context)
-        }
+        val imageSource = readableMapToImageSource(source, includeSize = true)
         tmpSources.add(imageSource)
       }
     }
@@ -595,6 +561,26 @@ public class ReactImageView(
 
   private val isTiled: Boolean
     get() = tileMode != TileMode.CLAMP
+
+  private fun readableMapToImageSource(source: ReadableMap, includeSize: Boolean = false): ImageSource {
+    val cacheControl = computeCacheControl(source.getString("cache"))
+    val uri = source.getString("uri")
+    var imageSource = if (includeSize) {
+      val width = if (source.hasKey("width")) source.getDouble("width") else 0.0
+      val height = if (source.hasKey("height")) source.getDouble("height") else 0.0
+      val isForceCached = if (source.hasKey("isForceCached")) source.getBoolean("isForceCached") else false
+      ImageSource(context, uri, width, height, cacheControl, isForceCached)
+    } else {
+      ImageSource(context, uri, cacheControl = cacheControl)
+    }
+
+    if (Uri.EMPTY == imageSource.uri) {
+      warnImageSource(uri)
+      imageSource = getTransparentBitmapImageSource(context)
+    }
+
+    return imageSource
+  }
 
   private fun setSourceImage() {
     imageSource = null

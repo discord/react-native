@@ -60,6 +60,12 @@ HostPlatformViewProps::HostPlatformViewProps(
           "needsOffscreenAlphaCompositing",
           sourceProps.needsOffscreenAlphaCompositing,
           {})),
+      preventClipping(convertRawProp(
+          context,
+          rawProps,
+          "preventClipping",
+          sourceProps.preventClipping,
+          {})),
       renderToHardwareTextureAndroid(convertRawProp(
           context,
           rawProps,
@@ -122,6 +128,7 @@ void HostPlatformViewProps::setProp(
     RAW_SET_PROP_SWITCH_CASE_BASIC(focusable);
     RAW_SET_PROP_SWITCH_CASE_BASIC(hasTVPreferredFocus);
     RAW_SET_PROP_SWITCH_CASE_BASIC(needsOffscreenAlphaCompositing);
+    RAW_SET_PROP_SWITCH_CASE_BASIC(preventClipping);
     RAW_SET_PROP_SWITCH_CASE_BASIC(renderToHardwareTextureAndroid);
     RAW_SET_PROP_SWITCH_CASE_BASIC(screenReaderFocusable);
     RAW_SET_PROP_SWITCH_CASE_BASIC(nextFocusDown);
@@ -482,6 +489,10 @@ folly::dynamic HostPlatformViewProps::getDiffProps(
   if (needsOffscreenAlphaCompositing !=
       oldProps->needsOffscreenAlphaCompositing) {
     result["needsOffscreenAlphaCompositing"] = needsOffscreenAlphaCompositing;
+  }
+
+  if (preventClipping != oldProps->preventClipping) {
+    result["preventClipping"] = preventClipping;
   }
 
   if (renderToHardwareTextureAndroid !=

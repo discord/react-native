@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bc0cc2607ac99531a8f24f87401cade4>>
+ * @generated SignedSource<<a2d25e3b6b042bf60151ef5a6d7af669>>
  * @flow strict
  * @noformat
  */
@@ -340,7 +340,7 @@ export const enableImagePrefetchingAndroid: Getter<boolean> = createNativeFlagGe
 /**
  * When enabled, Image `tintColor` is handled as a true optional: any defined color is applied as a tint — including `transparent` (alpha 0), which renders the image invisible — and an unset value clears a previously applied tint. When disabled, the prior behavior is preserved, where a transparent `tintColor` is treated as unassigned and the image renders untinted.
  */
-export const enableImageTransparentTintColor: Getter<boolean> = createNativeFlagGetter('enableImageTransparentTintColor', false);
+export const enableImageTransparentTintColor: Getter<boolean> = createNativeFlagGetter('enableImageTransparentTintColor', true);
 /**
  * Dispatches state updates for content offset changes synchronously on the main thread.
  */

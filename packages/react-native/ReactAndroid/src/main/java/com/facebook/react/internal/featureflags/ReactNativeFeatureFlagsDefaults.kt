@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c7125c5a1a15c6306fc714c35c42ded3>>
+ * @generated SignedSource<<6e52458685a4028607b6c6112a309a0f>>
  */
 
 /**
@@ -83,7 +83,7 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
 
   override fun enableImagePrefetchingAndroid(): Boolean = false
 
-  override fun enableImageTransparentTintColor(): Boolean = false
+  override fun enableImageTransparentTintColor(): Boolean = true
 
   override fun enableImmediateUpdateModeForContentOffsetChanges(): Boolean = false
 
