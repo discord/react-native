@@ -39,6 +39,8 @@ class ComponentDescriptorRegistry {
       const ComponentDescriptorProviderRegistry &providerRegistry,
       std::shared_ptr<const ContextContainer> contextContainer);
 
+  void addMultipleAsync(std::vector<ComponentDescriptorProvider> providers) const;
+
   /*
    * This is broken. Please do not use.
    * If you requesting a ComponentDescriptor and unsure that it's there, you are
