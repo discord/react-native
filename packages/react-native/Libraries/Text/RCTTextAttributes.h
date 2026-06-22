@@ -61,6 +61,9 @@ __attribute__((deprecated("This API will be removed along with the legacy archit
 @property (nonatomic, assign) CGSize textShadowOffset;
 @property (nonatomic, assign) CGFloat textShadowRadius;
 @property (nonatomic, strong, nullable) UIColor *textShadowColor;
+// Stroke
+@property (nonatomic, assign) CGFloat textStrokeWidth;
+@property (nonatomic, strong, nullable) UIColor *textStrokeColor;
 // Special
 @property (nonatomic, assign) BOOL isHighlighted;
 @property (nonatomic, strong, nullable) NSNumber *tag;

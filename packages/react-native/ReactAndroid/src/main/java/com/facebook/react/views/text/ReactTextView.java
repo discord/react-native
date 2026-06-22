@@ -48,6 +48,7 @@ import com.facebook.react.uimanager.style.LogicalEdge;
 import com.facebook.react.uimanager.style.Overflow;
 import com.facebook.react.views.text.internal.span.ReactFragmentIndexSpan;
 import com.facebook.react.views.text.internal.span.ReactTagSpan;
+import com.facebook.react.views.text.internal.span.StrokeStyleSpan;
 import com.facebook.yoga.YogaMeasureMode;
 
 @Nullsafe(Nullsafe.Mode.LOCAL)
@@ -209,10 +210,20 @@ public class ReactTextView extends AppCompatTextView implements ReactCompoundVie
       }
 
       if (mOverflow != Overflow.VISIBLE) {
+        canvas.save();
         BackgroundStyleApplicator.clipToPaddingBox(this, canvas);
       }
 
-      super.onDraw(canvas);
+      CharSequence text = getText();
+      StrokeStyleSpan strokeSpan =
+          text instanceof Spanned ? StrokeStyleSpan.getStrokeSpan((Spanned) text) : null;
+      if (strokeSpan == null || !strokeSpan.draw(getPaint(), () -> super.onDraw(canvas))) {
+        super.onDraw(canvas);
+      }
+
+      if (mOverflow != Overflow.VISIBLE) {
+        canvas.restore();
+      }
     }
   }
 

@@ -195,6 +195,20 @@ static TextAttributes convertRawProp(
       sourceTextAttributes.textShadowColor,
       defaultTextAttributes.textShadowColor);
 
+  // Stroke
+  textAttributes.textStrokeWidth = convertRawProp(
+      context,
+      rawProps,
+      "textStrokeWidth",
+      sourceTextAttributes.textStrokeWidth,
+      defaultTextAttributes.textStrokeWidth);
+  textAttributes.textStrokeColor = convertRawProp(
+      context,
+      rawProps,
+      "textStrokeColor",
+      sourceTextAttributes.textStrokeColor,
+      defaultTextAttributes.textStrokeColor);
+
   // Special
   textAttributes.isHighlighted = convertRawProp(
       context,
@@ -351,6 +365,10 @@ void BaseTextProps::setProp(
         defaults, value, textAttributes, textShadowRadius, "textShadowRadius");
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, textShadowColor, "textShadowColor");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, textStrokeWidth, "textStrokeWidth");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, textStrokeColor, "textStrokeColor");
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, isHighlighted, "isHighlighted");
     REBUILD_FIELD_SWITCH_CASE(

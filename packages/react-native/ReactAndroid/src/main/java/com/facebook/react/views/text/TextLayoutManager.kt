@@ -21,6 +21,7 @@ import android.text.StaticLayout
 import android.text.TextDirectionHeuristics
 import android.text.TextPaint
 import android.text.TextUtils
+import android.text.style.LeadingMarginSpan
 import android.util.LayoutDirection
 import android.view.Gravity
 import android.view.View
@@ -53,6 +54,7 @@ import com.facebook.react.views.text.internal.span.ReactTextPaintHolderSpan
 import com.facebook.react.views.text.internal.span.ReactUnderlineSpan
 import com.facebook.react.views.text.internal.span.SetSpanOperation
 import com.facebook.react.views.text.internal.span.ShadowStyleSpan
+import com.facebook.react.views.text.internal.span.StrokeStyleSpan
 import com.facebook.react.views.text.internal.span.TextInlineViewPlaceholderSpan
 import com.facebook.yoga.YogaMeasureMode
 import com.facebook.yoga.YogaMeasureOutput
@@ -361,6 +363,22 @@ internal object TextLayoutManager {
               )
           )
         }
+        if (
+            !textAttributes.textStrokeWidth.isNaN() &&
+                textAttributes.textStrokeWidth > 0 &&
+                textAttributes.isTextStrokeColorSet
+        ) {
+          ops.add(
+              SetSpanOperation(
+                  start,
+                  end,
+                  StrokeStyleSpan(
+                      textAttributes.textStrokeWidth,
+                      textAttributes.textStrokeColor,
+                  ),
+              )
+          )
+        }
         if (!textAttributes.lineHeight.isNaN()) {
           ops.add(SetSpanOperation(start, end, CustomLineHeightSpan(textAttributes.lineHeight)))
         }
@@ -563,6 +581,22 @@ internal object TextLayoutManager {
           )
         }
 
+        if (
+            !fragment.props.textStrokeWidth.isNaN() &&
+                fragment.props.textStrokeWidth > 0 &&
+                fragment.props.isTextStrokeColorSet
+        ) {
+          spannable.setSpan(
+              StrokeStyleSpan(
+                  fragment.props.textStrokeWidth,
+                  fragment.props.textStrokeColor,
+              ),
+              start,
+              end,
+              spanFlags,
+          )
+        }
+
         if (!fragment.props.lineHeight.isNaN()) {
           spannable.setSpan(CustomLineHeightSpan(fragment.props.lineHeight), start, end, spanFlags)
         }
@@ -580,7 +614,24 @@ internal object TextLayoutManager {
       start = end
     }
 
+    addLeadingMarginForTextEffects(spannable)
     return spannable
+  }
+
+  private fun addLeadingMarginForTextEffects(spannable: Spannable) {
+    val strokeSpan = StrokeStyleSpan.getStrokeSpan(spannable)
+    val shadowSpan = ShadowStyleSpan.getShadowSpan(spannable)
+    val strokeOffset = strokeSpan?.getLeftOffset() ?: 0f
+    val shadowOffset = shadowSpan?.getLeftOffset() ?: 0f
+    val leadingMargin = max(strokeOffset, shadowOffset).toInt()
+    if (leadingMargin > 0) {
+      spannable.setSpan(
+          LeadingMarginSpan.Standard(leadingMargin),
+          0,
+          spannable.length,
+          Spanned.SPAN_INCLUSIVE_INCLUSIVE,
+      )
+    }
   }
 
   fun getOrCreateSpannableForText(
@@ -636,6 +687,7 @@ internal object TextLayoutManager {
         op.execute(sb, priorityIndex)
       }
 
+      addLeadingMarginForTextEffects(sb)
       reactTextViewManagerCallback?.onPostProcessSpannable(sb)
       return sb
     }

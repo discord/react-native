@@ -240,6 +240,16 @@ export interface TextProps
    * When using "clamp", set gradientWidth to match your text width.
    */
   gradientMode?: 'mirror' | 'clamp' | undefined;
+
+  /**
+   * Width of the text stroke (outline). Creates an outer stroke effect.
+   */
+  textStrokeWidth?: number | undefined;
+
+  /**
+   * Color of the text stroke (outline).
+   */
+  textStrokeColor?: ColorValue | undefined;
 }
 
 /**

@@ -443,6 +443,26 @@ static YGSize RCTTextShadowViewMeasure(
     size.width -= letterSpacing;
   }
 
+  // Account for text stroke width (similar to Android implementation)
+  // Check if text has custom stroke attribute and add extra space
+  __block CGFloat strokeWidth = 0;
+  [textStorage enumerateAttribute:@"RCTTextStrokeWidth"
+                          inRange:NSMakeRange(0, textStorage.length)
+                          options:0
+                       usingBlock:^(id value, NSRange range, BOOL *stop) {
+    if (value && [value isKindOfClass:[NSNumber class]]) {
+      CGFloat width = [value floatValue];
+      if (width > 0) {
+        strokeWidth = MAX(strokeWidth, width);
+        *stop = YES;
+      }
+    }
+  }];
+
+  if (strokeWidth > 0) {
+    size.width += strokeWidth;
+  }
+
   size = (CGSize){MIN(RCTCeilPixelValue(size.width), maximumSize.width),
                   MIN(RCTCeilPixelValue(size.height), maximumSize.height)};
 

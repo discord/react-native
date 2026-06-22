@@ -30,6 +30,7 @@ import com.facebook.react.uimanager.style.Overflow
 import com.facebook.react.views.text.internal.span.DrawCommandSpan
 import com.facebook.react.views.text.internal.span.ReactFragmentIndexSpan
 import com.facebook.react.views.text.internal.span.ReactLinkSpan
+import com.facebook.react.views.text.internal.span.StrokeStyleSpan
 import kotlin.collections.ArrayList
 import kotlin.math.roundToInt
 
@@ -130,10 +131,17 @@ internal class PreparedLayoutTextView(context: Context) : ViewGroup(context), Re
         }
       }
 
-      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
-        Api34Utils.draw(layout, canvas, selection?.path, selectionPaint)
-      } else {
-        layout.draw(canvas, selection?.path, selectionPaint, 0)
+      val drawLayout = Runnable {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+          Api34Utils.draw(layout, canvas, selection?.path, selectionPaint)
+        } else {
+          layout.draw(canvas, selection?.path, selectionPaint, 0)
+        }
+      }
+
+      val strokeSpan = StrokeStyleSpan.getStrokeSpan(layout.text as? Spanned)
+      if (strokeSpan == null || !strokeSpan.draw(layout.paint, drawLayout)) {
+        drawLayout.run()
       }
 
       if (spanned != null) {

@@ -59,6 +59,9 @@ RCT_REMAP_SHADOW_PROPERTY(textDecorationLine, textAttributes.textDecorationLine,
 RCT_REMAP_SHADOW_PROPERTY(textShadowOffset, textAttributes.textShadowOffset, CGSize)
 RCT_REMAP_SHADOW_PROPERTY(textShadowRadius, textAttributes.textShadowRadius, CGFloat)
 RCT_REMAP_SHADOW_PROPERTY(textShadowColor, textAttributes.textShadowColor, UIColor)
+// Stroke
+RCT_REMAP_SHADOW_PROPERTY(textStrokeWidth, textAttributes.textStrokeWidth, CGFloat)
+RCT_REMAP_SHADOW_PROPERTY(textStrokeColor, textAttributes.textStrokeColor, UIColor)
 // Special
 RCT_REMAP_SHADOW_PROPERTY(isHighlighted, textAttributes.isHighlighted, BOOL)
 RCT_REMAP_SHADOW_PROPERTY(textTransform, textAttributes.textTransform, RCTTextTransform)

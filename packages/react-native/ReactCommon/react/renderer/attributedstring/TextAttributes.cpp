@@ -109,6 +109,14 @@ void TextAttributes::apply(TextAttributes textAttributes) {
       ? textAttributes.textShadowColor
       : textShadowColor;
 
+  // Stroke
+  textStrokeWidth = !std::isnan(textAttributes.textStrokeWidth)
+      ? textAttributes.textStrokeWidth
+      : textStrokeWidth;
+  textStrokeColor = textAttributes.textStrokeColor
+      ? textAttributes.textStrokeColor
+      : textStrokeColor;
+
   // Special
   isHighlighted = textAttributes.isHighlighted.has_value()
       ? textAttributes.isHighlighted
@@ -148,6 +156,7 @@ bool TextAttributes::operator==(const TextAttributes& rhs) const {
              textDecorationStyle,
              textShadowOffset,
              textShadowColor,
+             textStrokeColor,
              isHighlighted,
              isPressable,
              layoutDirection,
@@ -171,6 +180,7 @@ bool TextAttributes::operator==(const TextAttributes& rhs) const {
              rhs.textDecorationStyle,
              rhs.textShadowOffset,
              rhs.textShadowColor,
+             rhs.textStrokeColor,
              rhs.isHighlighted,
              rhs.isPressable,
              rhs.layoutDirection,
@@ -184,6 +194,7 @@ bool TextAttributes::operator==(const TextAttributes& rhs) const {
       floatEquality(letterSpacing, rhs.letterSpacing) &&
       floatEquality(lineHeight, rhs.lineHeight) &&
       floatEquality(textShadowRadius, rhs.textShadowRadius) &&
+      floatEquality(textStrokeWidth, rhs.textStrokeWidth) &&
       floatEquality(gradientAngle, rhs.gradientAngle) &&
       floatEquality(gradientWidth, rhs.gradientWidth) &&
       gradientColors == rhs.gradientColors &&

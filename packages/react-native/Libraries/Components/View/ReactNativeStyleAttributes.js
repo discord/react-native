@@ -269,6 +269,8 @@ const ReactNativeStyleAttributes: {[string]: AnyAttributeType, ...} = {
   textShadowColor: colorAttribute,
   textShadowOffset: true,
   textShadowRadius: true,
+  textStrokeColor: colorAttribute,
+  textStrokeWidth: true,
   textTransform: true,
   userSelect: true,
   verticalAlign: true,

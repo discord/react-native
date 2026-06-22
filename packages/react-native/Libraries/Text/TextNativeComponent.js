@@ -52,6 +52,8 @@ const textViewConfig = {
     gradientAngle: true,
     gradientWidth: true,
     gradientMode: true,
+    textStrokeWidth: true,
+    textStrokeColor: true,
   },
   directEventTypes: {
     topTextLayout: {
@@ -70,6 +72,8 @@ const virtualTextViewConfig = {
     gradientAngle: true,
     gradientWidth: true,
     gradientMode: true,
+    textStrokeWidth: true,
+    textStrokeColor: true,
   },
   uiViewClassName: 'RCTVirtualText',
 } as const;

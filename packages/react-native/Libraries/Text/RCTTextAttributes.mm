@@ -36,6 +36,7 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
     _textShadowRadius = NAN;
     _opacity = NAN;
     _textTransform = RCTTextTransformUndefined;
+    _textStrokeWidth = NAN;
     _gradientAngle = NAN;
   }
 
@@ -97,6 +98,10 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
       : _textShadowOffset; // *
   _textShadowRadius = !isnan(textAttributes->_textShadowRadius) ? textAttributes->_textShadowRadius : _textShadowRadius;
   _textShadowColor = textAttributes->_textShadowColor ?: _textShadowColor;
+
+  // Stroke
+  _textStrokeWidth = !isnan(textAttributes->_textStrokeWidth) ? textAttributes->_textStrokeWidth : _textStrokeWidth;
+  _textStrokeColor = textAttributes->_textStrokeColor ?: _textStrokeColor;
 
   // Special
   _isHighlighted = textAttributes->_isHighlighted || _isHighlighted; // *
@@ -216,6 +221,14 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
     shadow.shadowBlurRadius = _textShadowRadius;
     shadow.shadowColor = _textShadowColor;
     attributes[NSShadowAttributeName] = shadow;
+  }
+
+  // We don't use NSStrokeWidthAttributeName because it centers the stroke on the text path
+  // Instead, we do custom two-pass rendering to get true outer stroke
+  if (!isnan(_textStrokeWidth) && _textStrokeWidth > 0) {
+    UIColor *strokeColorToUse = _textStrokeColor ?: effectiveForegroundColor;
+    attributes[@"RCTTextStrokeWidth"] = @(_textStrokeWidth);
+    attributes[@"RCTTextStrokeColor"] = strokeColorToUse;
   }
 
   // Special
@@ -438,6 +451,8 @@ static NSString *capitalizeText(NSString *text)
       // Shadow
       RCTTextAttributesCompareSize(_textShadowOffset) && RCTTextAttributesCompareFloats(_textShadowRadius) &&
       RCTTextAttributesCompareObjects(_textShadowColor) &&
+      // Stroke
+      RCTTextAttributesCompareFloats(_textStrokeWidth) && RCTTextAttributesCompareObjects(_textStrokeColor) &&
       // Special
       RCTTextAttributesCompareOthers(_isHighlighted) && RCTTextAttributesCompareObjects(_tag) &&
       RCTTextAttributesCompareOthers(_layoutDirection) && RCTTextAttributesCompareOthers(_textTransform);

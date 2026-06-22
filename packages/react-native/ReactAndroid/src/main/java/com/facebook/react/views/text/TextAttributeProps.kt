@@ -355,6 +355,20 @@ public class TextAttributeProps private constructor() {
       }
     }
 
+  public var textStrokeWidth: Float = Float.NaN
+    private set
+
+  public var isTextStrokeColorSet: Boolean = false
+    private set
+
+  public var textStrokeColor: Int = 0
+    private set(value) {
+      if (value != field) {
+        field = value
+        isTextStrokeColorSet = true
+      }
+    }
+
   private fun setTextTransform(textTransform: String?) {
     this.textTransform =
         when (textTransform) {
@@ -418,6 +432,8 @@ public class TextAttributeProps private constructor() {
     public const val TA_KEY_TEXT_TRANSFORM: Int = 27
     public const val TA_KEY_MAX_FONT_SIZE_MULTIPLIER: Int = 29
     public const val TA_KEY_GRADIENT_COLORS: Int = 30
+    public const val TA_KEY_TEXT_STROKE_WIDTH: Int = 31
+    public const val TA_KEY_TEXT_STROKE_COLOR: Int = 32
     public const val TA_KEY_GRADIENT_ANGLE: Int = 33
     public const val TA_KEY_GRADIENT_WIDTH: Int = 34
     public const val TA_KEY_GRADIENT_MODE: Int = 35
@@ -468,6 +484,8 @@ public class TextAttributeProps private constructor() {
           TA_KEY_TEXT_SHADOW_COLOR -> result.textShadowColor = entry.intValue
           TA_KEY_TEXT_SHADOW_OFFSET_DX -> result.textShadowOffsetDx = entry.doubleValue.toFloat()
           TA_KEY_TEXT_SHADOW_OFFSET_DY -> result.textShadowOffsetDy = entry.doubleValue.toFloat()
+          TA_KEY_TEXT_STROKE_WIDTH -> result.textStrokeWidth = entry.doubleValue.toFloat()
+          TA_KEY_TEXT_STROKE_COLOR -> result.textStrokeColor = entry.intValue
           TA_KEY_IS_HIGHLIGHTED -> {}
           TA_KEY_LAYOUT_DIRECTION -> result.setLayoutDirection(entry.stringValue)
           TA_KEY_ACCESSIBILITY_ROLE -> result.setAccessibilityRole(entry.stringValue)
@@ -525,6 +543,10 @@ public class TextAttributeProps private constructor() {
       result.gradientAngle = getFloatProp(props, "gradientAngle", Float.NaN)
       result.gradientWidth = getFloatProp(props, "gradientWidth", Float.NaN)
       result.gradientMode = getStringProp(props, "gradientMode")
+      result.textStrokeWidth = getFloatProp(props, "textStrokeWidth", Float.NaN)
+      if (props.hasKey("textStrokeColor")) {
+        result.textStrokeColor = props.getInt("textStrokeColor", 0)
+      }
       return result
     }
 
