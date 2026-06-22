@@ -22,6 +22,7 @@
 #include <react/renderer/mounting/ShadowViewMutation.h>
 
 #include <fbjni/fbjni.h>
+#include <fbjni/NativeRunnable.h>
 #include <glog/logging.h>
 
 #include <algorithm>
@@ -1015,6 +1016,27 @@ void FabricMountingManager::executeMount(
       telemetry.getAffectedLayoutNodesCount());
 
   env->DeleteLocalRef(buffer.ints);
+}
+
+// For pull rendering model
+void FabricMountingManager::scheduleMountRunnable(std::function<void()>&& f) {
+  static auto scheduleOnMainThread =
+      JFabricUIManager::javaClassStatic()
+          ->getMethod<void(jni::JRunnable::javaobject)>("scheduleMountRunnable");
+  auto runnable = jni::JNativeRunnable::newObjectCxxArgs(std::move(f));
+  scheduleOnMainThread(javaUIManager_, runnable.get());
+}
+
+// For pull rendering model
+void FabricMountingManager::scheduleMount(
+    const std::shared_ptr<const MountingCoordinator>& mountingCoordinator) {
+  scheduleMountRunnable([this, mountingCoordinator] {
+    auto transaction = mountingCoordinator->pullTransaction();
+    if (!transaction.has_value()) {
+      return;
+    }
+    executeMount(*transaction);
+  });
 }
 
 void FabricMountingManager::drainPreallocateViewsQueue() {

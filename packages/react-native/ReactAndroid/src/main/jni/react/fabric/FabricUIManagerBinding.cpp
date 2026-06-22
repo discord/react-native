@@ -621,7 +621,8 @@ FabricUIManagerBinding::getMountingManager(const char* locationHint) {
 
 void FabricUIManagerBinding::schedulerDidFinishTransaction(
     const std::shared_ptr<const MountingCoordinator>& mountingCoordinator) {
-  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
+  if (ReactNativeFeatureFlags::usePullModelOnAndroid() ||
+      ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
     // We don't do anything here. We will pull the transaction in
     // `schedulerShouldRenderTransactions`.
   } else {
@@ -671,7 +672,9 @@ void FabricUIManagerBinding::schedulerShouldRenderTransactions(
     }
   }
 
-  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
+  if (ReactNativeFeatureFlags::usePullModelOnAndroid()) {
+    mountingManager->scheduleMount(mountingCoordinator);
+  } else if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
     auto mountingTransaction = mountingCoordinator->pullTransaction(
         /* willPerformAsynchronously = */ true);
     if (mountingTransaction.has_value()) {
