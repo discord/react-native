@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<26f39511a91c5fae20d3a0c41d6c6a85>>
+ * @generated SignedSource<<da6107ec1897530c001faec97cd0263a>>
  * @flow strict
  * @noformat
  */
@@ -133,6 +133,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   useNativeViewConfigsInBridgelessMode: Getter<boolean>,
   useNestedScrollViewAndroid: Getter<boolean>,
   useOptimizedViewRegistryOnAndroid: Getter<boolean>,
+  usePullModelOnAndroid: Getter<boolean>,
   useSharedAnimatedBackend: Getter<boolean>,
   useSilenceErrorSMMViewNotFound: Getter<boolean>,
   useTraitHiddenOnAndroid: Getter<boolean>,
@@ -553,6 +554,10 @@ export const useNestedScrollViewAndroid: Getter<boolean> = createNativeFlagGette
  * Use MutableIntObjectMap with ReadWriteLock instead of ConcurrentHashMap for the view registry in SurfaceMountingManager to reduce memory overhead and GC pressure.
  */
 export const useOptimizedViewRegistryOnAndroid: Getter<boolean> = createNativeFlagGetter('useOptimizedViewRegistryOnAndroid', false);
+/**
+ * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+ */
+export const usePullModelOnAndroid: Getter<boolean> = createNativeFlagGetter('usePullModelOnAndroid', true);
 /**
  * Use shared animation backend in C++ Animated
  */

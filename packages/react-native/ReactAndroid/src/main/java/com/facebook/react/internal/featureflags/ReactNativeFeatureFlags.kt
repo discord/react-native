@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<d83cdfc5c2e6996f23977c605265f047>>
+ * @generated SignedSource<<146ced7dc6e6e9bdd6dcf1920fbf5b87>>
  */
 
 /**
@@ -545,6 +545,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun useOptimizedViewRegistryOnAndroid(): Boolean = accessor.useOptimizedViewRegistryOnAndroid()
+
+  /**
+   * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+   */
+  @JvmStatic
+  public fun usePullModelOnAndroid(): Boolean = accessor.usePullModelOnAndroid()
 
   /**
    * Use shared animation backend in C++ Animated

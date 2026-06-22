@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9c06d05540e8da1a58facfdef29a2180>>
+ * @generated SignedSource<<06187aa8942a61d4281ecac8317a3031>>
  */
 
 /**
@@ -817,6 +817,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::useOptimizedViewRegistryOnAndroid();
+  }
+
+  bool usePullModelOnAndroid() override {
+    auto value = values_["usePullModelOnAndroid"];
+    if (!value.isNull()) {
+      return value.getBool();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::usePullModelOnAndroid();
   }
 
   bool useSharedAnimatedBackend() override {

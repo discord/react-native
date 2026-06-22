@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<636e5ad2dca08c7bbe80fe7b03e5ca74>>
+ * @generated SignedSource<<57b0f9161543a2e915f34ea1e3da4e7b>>
  */
 
 /**
@@ -555,6 +555,12 @@ class ReactNativeFeatureFlagsJavaProvider
     return method(javaProvider_);
   }
 
+  bool usePullModelOnAndroid() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("usePullModelOnAndroid");
+    return method(javaProvider_);
+  }
+
   bool useSharedAnimatedBackend() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useSharedAnimatedBackend");
@@ -1049,6 +1055,11 @@ bool JReactNativeFeatureFlagsCxxInterop::useOptimizedViewRegistryOnAndroid(
   return ReactNativeFeatureFlags::useOptimizedViewRegistryOnAndroid();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::usePullModelOnAndroid();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::useSharedAnimatedBackend();
@@ -1388,6 +1399,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "useOptimizedViewRegistryOnAndroid",
         JReactNativeFeatureFlagsCxxInterop::useOptimizedViewRegistryOnAndroid),
+      makeNativeMethod(
+        "usePullModelOnAndroid",
+        JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid),
       makeNativeMethod(
         "useSharedAnimatedBackend",
         JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend),

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fe2ae2baff3ad1fad312c13d7fd947e9>>
+ * @generated SignedSource<<6221ca210e6b109ef663ac9bffdbeacb>>
  */
 
 /**
@@ -110,6 +110,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var useNativeViewConfigsInBridgelessModeCache: Boolean? = null
   private var useNestedScrollViewAndroidCache: Boolean? = null
   private var useOptimizedViewRegistryOnAndroidCache: Boolean? = null
+  private var usePullModelOnAndroidCache: Boolean? = null
   private var useSharedAnimatedBackendCache: Boolean? = null
   private var useSilenceErrorSMMViewNotFoundCache: Boolean? = null
   private var useTraitHiddenOnAndroidCache: Boolean? = null
@@ -977,6 +978,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.useOptimizedViewRegistryOnAndroid()
       accessedFeatureFlags.add("useOptimizedViewRegistryOnAndroid")
       useOptimizedViewRegistryOnAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun usePullModelOnAndroid(): Boolean {
+    var cached = usePullModelOnAndroidCache
+    if (cached == null) {
+      cached = currentProvider.usePullModelOnAndroid()
+      accessedFeatureFlags.add("usePullModelOnAndroid")
+      usePullModelOnAndroidCache = cached
     }
     return cached
   }

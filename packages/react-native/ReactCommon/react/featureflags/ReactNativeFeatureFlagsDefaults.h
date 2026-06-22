@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8a69005b5bf83bf1165750bca6961d82>>
+ * @generated SignedSource<<cb5cfe5e8612965ed94ba8470b39b01a>>
  */
 
 /**
@@ -369,6 +369,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
 
   bool useOptimizedViewRegistryOnAndroid() override {
     return false;
+  }
+
+  bool usePullModelOnAndroid() override {
+    return true;
   }
 
   bool useSharedAnimatedBackend() override {

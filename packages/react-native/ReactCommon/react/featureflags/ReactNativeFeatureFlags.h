@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2068323b50282feb4d2b1a21336109e2>>
+ * @generated SignedSource<<116e488f7517008bd9e879d957ecc41e>>
  */
 
 /**
@@ -468,6 +468,11 @@ class ReactNativeFeatureFlags {
    * Use MutableIntObjectMap with ReadWriteLock instead of ConcurrentHashMap for the view registry in SurfaceMountingManager to reduce memory overhead and GC pressure.
    */
   RN_EXPORT static bool useOptimizedViewRegistryOnAndroid();
+
+  /**
+   * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+   */
+  RN_EXPORT static bool usePullModelOnAndroid();
 
   /**
    * Use shared animation backend in C++ Animated

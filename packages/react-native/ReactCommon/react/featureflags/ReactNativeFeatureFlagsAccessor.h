@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<b0ace8cfc8454c57e9a63d9d675f235e>>
+ * @generated SignedSource<<fea875a7c52892712f77d2d387f89136>>
  */
 
 /**
@@ -118,6 +118,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool useNativeViewConfigsInBridgelessMode();
   bool useNestedScrollViewAndroid();
   bool useOptimizedViewRegistryOnAndroid();
+  bool usePullModelOnAndroid();
   bool useSharedAnimatedBackend();
   bool useSilenceErrorSMMViewNotFound();
   bool useTraitHiddenOnAndroid();
@@ -139,7 +140,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 96> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 97> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -227,6 +228,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> useNativeViewConfigsInBridgelessMode_;
   std::atomic<std::optional<bool>> useNestedScrollViewAndroid_;
   std::atomic<std::optional<bool>> useOptimizedViewRegistryOnAndroid_;
+  std::atomic<std::optional<bool>> usePullModelOnAndroid_;
   std::atomic<std::optional<bool>> useSharedAnimatedBackend_;
   std::atomic<std::optional<bool>> useSilenceErrorSMMViewNotFound_;
   std::atomic<std::optional<bool>> useTraitHiddenOnAndroid_;
