@@ -90,7 +90,9 @@ constructor(context: Context, private val fpsListener: FpsListener? = null) :
     VirtualViewContainer,
     HasChildPressedStateDelay {
 
-  private companion object {
+  internal companion object {
+    internal var MAX_FLING_VELOCITY: Int? = null
+
     private var scrollerField: java.lang.reflect.Field? = null
     private var triedToGetScrollerField = false
 
@@ -694,7 +696,16 @@ constructor(context: Context, private val fpsListener: FpsListener? = null) :
   }
 
   override fun fling(velocityY: Int) {
-    val correctedVelocityY = correctFlingVelocityY(velocityY)
+    val maxFlingVelocity = MAX_FLING_VELOCITY
+    val correctedVelocityY =
+        if (maxFlingVelocity != null) {
+          val velocityYBeforeMaxFling = correctFlingVelocityY(velocityY)
+          (min(abs(velocityYBeforeMaxFling), maxFlingVelocity) *
+                  velocityYBeforeMaxFling.toFloat().sign)
+              .toInt()
+        } else {
+          correctFlingVelocityY(velocityY)
+        }
 
     if (pagingEnabled) {
       flingAndSnap(correctedVelocityY)
