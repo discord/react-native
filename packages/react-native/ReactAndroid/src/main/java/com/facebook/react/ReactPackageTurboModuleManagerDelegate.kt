@@ -15,6 +15,7 @@ import com.facebook.react.internal.turbomodule.core.TurboModuleManagerDelegate
 import com.facebook.react.module.annotations.ReactModule
 import com.facebook.react.module.model.ReactModuleInfo
 import com.facebook.react.turbomodule.core.interfaces.TurboModule
+import java.util.concurrent.CountDownLatch
 
 public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManagerDelegate {
   internal fun interface ModuleProvider {
@@ -26,6 +27,7 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   private val shouldEnableLegacyModuleInterop =
       ReactNativeNewArchitectureFeatureFlags.enableBridgelessArchitecture() &&
           ReactNativeNewArchitectureFeatureFlags.useTurboModuleInterop()
+  private val initTasksLeft = CountDownLatch(1)
 
   protected constructor(
       reactApplicationContext: ReactApplicationContext,
@@ -45,6 +47,23 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   private fun initialize(
       reactApplicationContext: ReactApplicationContext,
       packages: List<ReactPackage>,
+  ) {
+    if (!reactApplicationContext.isBridgeless) {
+      initializeModules(reactApplicationContext, packages)
+      initTasksLeft.countDown()
+      return
+    }
+
+    val worker = Thread {
+      initializeModules(reactApplicationContext, packages)
+      initTasksLeft.countDown()
+    }
+    worker.start()
+  }
+
+  private fun initializeModules(
+      reactApplicationContext: ReactApplicationContext,
+      packages: List<ReactPackage>
   ) {
     val applicationContext: ReactApplicationContext = reactApplicationContext
     for (reactPackage in packages) {
@@ -106,6 +125,11 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   }
 
   override fun getModule(moduleName: String): TurboModule? {
+    try {
+      initTasksLeft.await()
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
+    }
     var resolvedModule: NativeModule? = null
 
     for (moduleProvider in moduleProviders) {
@@ -131,6 +155,11 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   }
 
   override fun unstable_isModuleRegistered(moduleName: String): Boolean {
+    try {
+      initTasksLeft.await()
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
+    }
     for (moduleProvider in moduleProviders) {
       val moduleInfo: ReactModuleInfo? = packageModuleInfos[moduleProvider]?.get(moduleName)
       if (moduleInfo?.isTurboModule == true) {
@@ -141,6 +170,11 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   }
 
   override fun unstable_isLegacyModuleRegistered(moduleName: String): Boolean {
+    try {
+      initTasksLeft.await()
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
+    }
     for (moduleProvider in moduleProviders) {
       val moduleInfo: ReactModuleInfo? = packageModuleInfos[moduleProvider]?.get(moduleName)
       if (moduleInfo?.isTurboModule == false) {
@@ -151,6 +185,11 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
   }
 
   override fun getLegacyModule(moduleName: String): NativeModule? {
+    try {
+      initTasksLeft.await()
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
+    }
     if (!shouldEnableLegacyModuleInterop) {
       return null
     }
@@ -179,11 +218,18 @@ public abstract class ReactPackageTurboModuleManagerDelegate : TurboModuleManage
     return resolvedModule
   }
 
-  override fun getEagerInitModuleNames(): List<String> = buildList {
-    for (moduleProvider in moduleProviders) {
-      for (moduleInfo in packageModuleInfos[moduleProvider]?.values ?: emptyList()) {
-        if (moduleInfo.isTurboModule && moduleInfo.needsEagerInit) {
-          add(moduleInfo.name)
+  override fun getEagerInitModuleNames(): List<String> {
+    try {
+      initTasksLeft.await()
+    } catch (e: InterruptedException) {
+      Thread.currentThread().interrupt()
+    }
+    return buildList {
+      for (moduleProvider in moduleProviders) {
+        for (moduleInfo in packageModuleInfos[moduleProvider]?.values ?: emptyList()) {
+          if (moduleInfo.isTurboModule && moduleInfo.needsEagerInit) {
+            add(moduleInfo.name)
+          }
         }
       }
     }
