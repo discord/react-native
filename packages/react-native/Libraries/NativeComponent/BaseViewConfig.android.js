@@ -444,6 +444,9 @@ const validAttributesForEventProps = {
   onGotPointerCaptureCapture: true,
   onLostPointerCapture: true,
   onLostPointerCaptureCapture: true,
+
+    // Custom discord props:
+  preventClipping: true,
 } as const;
 
 /**
