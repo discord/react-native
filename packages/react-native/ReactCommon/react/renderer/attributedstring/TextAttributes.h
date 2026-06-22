@@ -10,6 +10,8 @@
 #include <functional>
 #include <limits>
 #include <optional>
+#include <string>
+#include <vector>
 
 #include <react/renderer/attributedstring/primitives.h>
 #include <react/renderer/components/view/AccessibilityPrimitives.h>
@@ -42,6 +44,10 @@ class TextAttributes : public DebugStringConvertible {
   SharedColor foregroundColor{};
   SharedColor backgroundColor{};
   Float opacity{std::numeric_limits<Float>::quiet_NaN()};
+  std::optional<std::vector<SharedColor>> gradientColors{};
+  Float gradientAngle{std::numeric_limits<Float>::quiet_NaN()};
+  Float gradientWidth{std::numeric_limits<Float>::quiet_NaN()};
+  std::optional<std::string> gradientMode{}; // "mirror" or "clamp"
 
   // Font
   std::string fontFamily{""};
@@ -134,6 +140,9 @@ struct hash<facebook::react::TextAttributes> {
         textAttributes.textShadowOffset,
         textAttributes.textShadowRadius,
         textAttributes.textShadowColor,
+        textAttributes.gradientAngle,
+        textAttributes.gradientWidth,
+        textAttributes.gradientMode,
         textAttributes.isHighlighted,
         textAttributes.isPressable,
         textAttributes.layoutDirection,

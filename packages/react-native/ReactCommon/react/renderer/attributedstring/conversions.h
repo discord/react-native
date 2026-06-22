@@ -1128,6 +1128,10 @@ constexpr static MapBuffer::Key TA_KEY_ROLE = 26;
 constexpr static MapBuffer::Key TA_KEY_TEXT_TRANSFORM = 27;
 constexpr static MapBuffer::Key TA_KEY_ALIGNMENT_VERTICAL = 28;
 constexpr static MapBuffer::Key TA_KEY_MAX_FONT_SIZE_MULTIPLIER = 29;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_COLORS = 30;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_ANGLE = 33;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_WIDTH = 34;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_MODE = 35;
 
 // constants for ParagraphAttributes serialization
 constexpr static MapBuffer::Key PA_KEY_MAX_NUMBER_OF_LINES = 0;
@@ -1249,6 +1253,23 @@ inline MapBuffer toMapBuffer(const TextAttributes &textAttributes)
   }
   if (textAttributes.backgroundColor) {
     builder.putInt(TA_KEY_BACKGROUND_COLOR, toAndroidRepr(textAttributes.backgroundColor));
+  }
+  if (textAttributes.gradientColors.has_value()) {
+    auto gradientColorsBuilder = MapBufferBuilder();
+    for (size_t i = 0; i < textAttributes.gradientColors->size(); ++i) {
+      gradientColorsBuilder.putInt(
+          static_cast<MapBuffer::Key>(i), toAndroidRepr((*textAttributes.gradientColors)[i]));
+    }
+    builder.putMapBuffer(TA_KEY_GRADIENT_COLORS, gradientColorsBuilder.build());
+  }
+  if (!std::isnan(textAttributes.gradientAngle)) {
+    builder.putDouble(TA_KEY_GRADIENT_ANGLE, textAttributes.gradientAngle);
+  }
+  if (!std::isnan(textAttributes.gradientWidth)) {
+    builder.putDouble(TA_KEY_GRADIENT_WIDTH, textAttributes.gradientWidth);
+  }
+  if (textAttributes.gradientMode.has_value()) {
+    builder.putString(TA_KEY_GRADIENT_MODE, *textAttributes.gradientMode);
   }
   if (!std::isnan(textAttributes.opacity)) {
     builder.putDouble(TA_KEY_OPACITY, textAttributes.opacity);

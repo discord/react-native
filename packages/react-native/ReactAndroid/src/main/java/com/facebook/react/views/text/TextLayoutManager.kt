@@ -39,6 +39,7 @@ import com.facebook.react.uimanager.ReactAccessibilityDelegate
 import com.facebook.react.views.text.internal.span.CustomLetterSpacingSpan
 import com.facebook.react.views.text.internal.span.CustomLineHeightSpan
 import com.facebook.react.views.text.internal.span.CustomStyleSpan
+import com.facebook.react.views.text.internal.span.LinearGradientSpan
 import com.facebook.react.views.text.internal.span.ReactAbsoluteSizeSpan
 import com.facebook.react.views.text.internal.span.ReactBackgroundColorSpan
 import com.facebook.react.views.text.internal.span.ReactClickableSpan
@@ -280,6 +281,27 @@ internal object TextLayoutManager {
               ?.let { SetSpanOperation(start, end, it) }
               ?.let { ops.add(it) }
         }
+        val gradientColors = textAttributes.gradientColors
+        if (gradientColors != null && gradientColors.size >= 2) {
+          val effectiveFontSize = textAttributes.fontSize
+          val gradientAngle =
+              if (textAttributes.gradientAngle.isNaN()) 0f else textAttributes.gradientAngle
+          val gradientWidth = textAttributes.gradientWidth
+          val gradientMode = textAttributes.gradientMode
+          ops.add(
+              SetSpanOperation(
+                  start,
+                  end,
+                  LinearGradientSpan(
+                      start * effectiveFontSize.toFloat(),
+                      gradientColors,
+                      gradientAngle,
+                      gradientWidth,
+                      gradientMode,
+                  ),
+              )
+          )
+        }
         if (textAttributes.isBackgroundColorSet) {
           textAttributes.backgroundColor
               ?.let { ReactBackgroundColorSpan(it) }
@@ -444,6 +466,27 @@ internal object TextLayoutManager {
         if (fragment.props.isColorSet) {
           spannable.setSpan(
               fragment.props.color?.let { ReactForegroundColorSpan(it) },
+              start,
+              end,
+              spanFlags,
+          )
+        }
+
+        val gradientColors = fragment.props.gradientColors
+        if (gradientColors != null && gradientColors.size >= 2) {
+          val effectiveFontSize = fragment.props.fontSize
+          val gradientAngle =
+              if (fragment.props.gradientAngle.isNaN()) 0f else fragment.props.gradientAngle
+          val gradientWidth = fragment.props.gradientWidth
+          val gradientMode = fragment.props.gradientMode
+          spannable.setSpan(
+              LinearGradientSpan(
+                  start * effectiveFontSize.toFloat(),
+                  gradientColors,
+                  gradientAngle,
+                  gradientWidth,
+                  gradientMode,
+              ),
               start,
               end,
               spanFlags,

@@ -218,6 +218,28 @@ export interface TextProps
   pressRetentionOffset?:
     | {top: number; left: number; bottom: number; right: number}
     | undefined;
+
+  /**
+   * Adds a horizontal gradient using the int based color values.
+   */
+  gradientColors?: number[] | undefined;
+
+  /**
+   * Gradient angle in degrees. Default is 0 (horizontal).
+   */
+  gradientAngle?: number | undefined;
+
+  /**
+   * Width of the gradient pattern in pixels. Default is 100.
+   */
+  gradientWidth?: number | undefined;
+
+  /**
+   * Gradient tiling mode. "mirror" (default) tiles the gradient back and forth.
+   * "clamp" renders the gradient once from the start to the end of the text.
+   * When using "clamp", set gradientWidth to match your text width.
+   */
+  gradientMode?: 'mirror' | 'clamp' | undefined;
 }
 
 /**

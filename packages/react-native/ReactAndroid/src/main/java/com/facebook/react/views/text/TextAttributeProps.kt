@@ -15,6 +15,7 @@ import android.view.Gravity
 import com.facebook.common.logging.FLog
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.bridge.ReadableMap
+import com.facebook.react.bridge.ReadableType
 import com.facebook.react.common.ReactConstants
 import com.facebook.react.common.mapbuffer.MapBuffer
 import com.facebook.react.uimanager.PixelUtil.toPixelFromDIP
@@ -190,6 +191,47 @@ public class TextAttributeProps private constructor() {
       }
       // }
     }
+
+  public var gradientColors: IntArray? = null
+    private set
+
+  public var gradientAngle: Float = Float.NaN
+    private set
+
+  public var gradientWidth: Float = Float.NaN
+    private set
+
+  public var gradientMode: String? = null
+    private set
+
+  private fun setGradientColors(gradientColors: ReadableArray?) {
+    if (gradientColors == null) return
+
+    val colors = ArrayList<Int>()
+    for (i in 0 until gradientColors.size()) {
+      if (!gradientColors.isNull(i) && gradientColors.getType(i) == ReadableType.Number) {
+        colors.add(gradientColors.getInt(i))
+      }
+    }
+    setGradientColorsFromList(colors)
+  }
+
+  private fun setGradientColors(gradientColors: MapBuffer?) {
+    if (gradientColors == null) return
+
+    val colors = ArrayList<Int>()
+    val iterator = gradientColors.iterator()
+    while (iterator.hasNext()) {
+      colors.add(iterator.next().intValue)
+    }
+    setGradientColorsFromList(colors)
+  }
+
+  private fun setGradientColorsFromList(colors: ArrayList<Int>) {
+    if (colors.size >= 2) {
+      gradientColors = colors.toIntArray()
+    }
+  }
 
   private fun setFontVariant(fontVariant: ReadableArray?) {
     fontFeatureSettings = parseFontVariant(fontVariant)
@@ -375,6 +417,10 @@ public class TextAttributeProps private constructor() {
     public const val TA_KEY_ROLE: Int = 26
     public const val TA_KEY_TEXT_TRANSFORM: Int = 27
     public const val TA_KEY_MAX_FONT_SIZE_MULTIPLIER: Int = 29
+    public const val TA_KEY_GRADIENT_COLORS: Int = 30
+    public const val TA_KEY_GRADIENT_ANGLE: Int = 33
+    public const val TA_KEY_GRADIENT_WIDTH: Int = 34
+    public const val TA_KEY_GRADIENT_MODE: Int = 35
 
     public const val UNSET: Int = -1
 
@@ -429,6 +475,10 @@ public class TextAttributeProps private constructor() {
           TA_KEY_TEXT_TRANSFORM -> result.setTextTransform(entry.stringValue)
           TA_KEY_MAX_FONT_SIZE_MULTIPLIER ->
               result.maxFontSizeMultiplier = entry.doubleValue.toFloat()
+          TA_KEY_GRADIENT_COLORS -> result.setGradientColors(entry.mapBufferValue)
+          TA_KEY_GRADIENT_ANGLE -> result.gradientAngle = entry.doubleValue.toFloat()
+          TA_KEY_GRADIENT_WIDTH -> result.gradientWidth = entry.doubleValue.toFloat()
+          TA_KEY_GRADIENT_MODE -> result.gradientMode = entry.stringValue
         }
       }
 
@@ -471,6 +521,10 @@ public class TextAttributeProps private constructor() {
       result.setLayoutDirection(getStringProp(props, ViewProps.LAYOUT_DIRECTION))
       result.setAccessibilityRole(getStringProp(props, ViewProps.ACCESSIBILITY_ROLE))
       result.setRole(getStringProp(props, ViewProps.ROLE))
+      result.setGradientColors(getArrayProp(props, "gradientColors"))
+      result.gradientAngle = getFloatProp(props, "gradientAngle", Float.NaN)
+      result.gradientWidth = getFloatProp(props, "gradientWidth", Float.NaN)
+      result.gradientMode = getStringProp(props, "gradientMode")
       return result
     }
 

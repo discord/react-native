@@ -30,6 +30,30 @@ static TextAttributes convertRawProp(
       "color",
       sourceTextAttributes.foregroundColor,
       defaultTextAttributes.foregroundColor);
+  textAttributes.gradientColors = convertRawProp(
+      context,
+      rawProps,
+      "gradientColors",
+      sourceTextAttributes.gradientColors,
+      defaultTextAttributes.gradientColors);
+  textAttributes.gradientAngle = convertRawProp(
+      context,
+      rawProps,
+      "gradientAngle",
+      sourceTextAttributes.gradientAngle,
+      defaultTextAttributes.gradientAngle);
+  textAttributes.gradientWidth = convertRawProp(
+      context,
+      rawProps,
+      "gradientWidth",
+      sourceTextAttributes.gradientWidth,
+      defaultTextAttributes.gradientWidth);
+  textAttributes.gradientMode = convertRawProp(
+      context,
+      rawProps,
+      "gradientMode",
+      sourceTextAttributes.gradientMode,
+      defaultTextAttributes.gradientMode);
 
   // Font
   textAttributes.fontFamily = convertRawProp(
@@ -249,6 +273,14 @@ void BaseTextProps::setProp(
   switch (hash) {
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, foregroundColor, "color");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, gradientColors, "gradientColors");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, gradientAngle, "gradientAngle");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, gradientWidth, "gradientWidth");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, gradientMode, "gradientMode");
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, fontFamily, "fontFamily");
     REBUILD_FIELD_SWITCH_CASE(

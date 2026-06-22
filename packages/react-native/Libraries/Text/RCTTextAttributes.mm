@@ -9,7 +9,9 @@
 
 #ifndef RCT_REMOVE_LEGACY_ARCH
 
+#import <QuartzCore/QuartzCore.h>
 #import <React/RCTAssert.h>
+#import <React/RCTConvert.h>
 #import <React/RCTFont.h>
 #import <React/RCTLog.h>
 
@@ -34,6 +36,7 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
     _textShadowRadius = NAN;
     _opacity = NAN;
     _textTransform = RCTTextTransformUndefined;
+    _gradientAngle = NAN;
   }
 
   return self;
@@ -48,6 +51,10 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
   // Color
   _foregroundColor = textAttributes->_foregroundColor ?: _foregroundColor;
   _backgroundColor = textAttributes->_backgroundColor ?: _backgroundColor;
+  _gradientColors = textAttributes->_gradientColors ?: _gradientColors;
+  _gradientAngle = !isnan(textAttributes->_gradientAngle) ? textAttributes->_gradientAngle : _gradientAngle;
+  _gradientWidth = !isnan(textAttributes->_gradientWidth) ? textAttributes->_gradientWidth : _gradientWidth;
+  _gradientMode = textAttributes->_gradientMode ?: _gradientMode;
   _opacity =
       !isnan(textAttributes->_opacity) ? (isnan(_opacity) ? 1.0 : _opacity) * textAttributes->_opacity : _opacity;
 
@@ -296,6 +303,49 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
 {
   UIColor *effectiveForegroundColor = _foregroundColor ?: [UIColor blackColor];
 
+  if (_gradientColors != nil) {
+    NSMutableArray *cgColors = [NSMutableArray array];
+    for (NSNumber *rawColor in _gradientColors) {
+      if (rawColor != nil) {
+        UIColor *color = [RCTConvert UIColor:@((0xFF << 24) | [rawColor integerValue])];
+        [cgColors addObject:(id)color.CGColor];
+      }
+    }
+
+    if ([cgColors count] > 0) {
+      BOOL isClampMode = [_gradientMode isEqualToString:@"clamp"];
+      if (!isClampMode) {
+        // Mirror mode (default) duplicates the first color at the end.
+        [cgColors addObject:cgColors[0]];
+      }
+
+      CAGradientLayer *gradient = [CAGradientLayer layer];
+      // Use gradientWidth if specified, otherwise default to 100
+      CGFloat patternWidth = (!isnan(_gradientWidth) && _gradientWidth > 0) ? _gradientWidth : 100;
+      CGFloat height = _lineHeight * self.effectiveFontSizeMultiplier;
+      gradient.frame = CGRectMake(0, 0, patternWidth, height);
+      gradient.colors = cgColors;
+
+      CGFloat angle = !isnan(_gradientAngle) ? _gradientAngle : 0.0;
+      CGFloat radians = angle * M_PI / 180.0;
+
+      CGFloat startX = 0.5 - 0.5 * cos(radians);
+      CGFloat startY = 0.5 - 0.5 * sin(radians);
+      CGFloat endX = 0.5 + 0.5 * cos(radians);
+      CGFloat endY = 0.5 + 0.5 * sin(radians);
+
+      gradient.startPoint = CGPointMake(startX, startY);
+      gradient.endPoint = CGPointMake(endX, endY);
+
+      UIGraphicsBeginImageContextWithOptions(gradient.frame.size, NO, 0.0);
+      [gradient renderInContext:UIGraphicsGetCurrentContext()];
+      UIImage *gradientImage = UIGraphicsGetImageFromCurrentImageContext();
+      UIGraphicsEndImageContext();
+
+      effectiveForegroundColor = [UIColor colorWithPatternImage:gradientImage];
+    }
+  }
+
   if (!isnan(_opacity)) {
     effectiveForegroundColor =
         [effectiveForegroundColor colorWithAlphaComponent:CGColorGetAlpha(effectiveForegroundColor.CGColor) * _opacity];
@@ -369,6 +419,8 @@ static NSString *capitalizeText(NSString *text)
 #define RCTTextAttributesCompareOthers(a) (a == textAttributes->a)
 
   return RCTTextAttributesCompareObjects(_foregroundColor) && RCTTextAttributesCompareObjects(_backgroundColor) &&
+      RCTTextAttributesCompareObjects(_gradientColors) && RCTTextAttributesCompareFloats(_gradientAngle) &&
+      RCTTextAttributesCompareFloats(_gradientWidth) && RCTTextAttributesCompareStrings(_gradientMode) &&
       RCTTextAttributesCompareFloats(_opacity) &&
       // Font
       RCTTextAttributesCompareObjects(_fontFamily) && RCTTextAttributesCompareFloats(_fontSize) &&
