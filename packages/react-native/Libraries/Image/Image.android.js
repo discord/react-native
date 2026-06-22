@@ -248,11 +248,11 @@ let BaseImage: AbstractImageAndroid = ({
   }
 
   if (defaultSource_ != null && defaultSource_.uri != null) {
-    nativeProps.defaultSource = defaultSource_.uri;
+    nativeProps.defaultSource = defaultSource_;
   }
 
   if (loadingIndicatorSource_ != null && loadingIndicatorSource_.uri != null) {
-    nativeProps.loadingIndicatorSrc = loadingIndicatorSource_.uri;
+    nativeProps.loadingIndicatorSrc = loadingIndicatorSource_;
   }
 
   if (ariaLabel != null) {

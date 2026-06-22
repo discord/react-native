@@ -102,6 +102,11 @@ inline void fromRawValue(const PropsParserContext & /* context */, const RawValu
       }
     }
 
+    if (items.find("isForceCached") != items.end() &&
+        items.at("isForceCached").hasType<bool>()) {
+      result.isForceCached = (bool)items.at("isForceCached");
+    }
+
     return;
   }
 
