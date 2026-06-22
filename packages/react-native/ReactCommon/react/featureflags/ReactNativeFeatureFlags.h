@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7c0d44ed2b82e02068f6be0d9ee84c7b>>
+ * @generated SignedSource<<9e69f751f6713e5cdb3ad14e55491d4e>>
  */
 
 /**
@@ -450,6 +450,11 @@ class ReactNativeFeatureFlags {
    * When enabled, ReactScrollView will extend NestedScrollView instead of ScrollView on Android for improved nested scrolling support.
    */
   RN_EXPORT static bool useNestedScrollViewAndroid();
+
+  /**
+   * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+   */
+  RN_EXPORT static bool usePullModelOnAndroid();
 
   /**
    * Use shared animation backend in C++ Animated
