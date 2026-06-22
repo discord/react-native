@@ -677,7 +677,8 @@ FabricUIManagerBinding::getMountingManager(const char* locationHint) {
 
 void FabricUIManagerBinding::schedulerDidFinishTransaction(
     const std::shared_ptr<const MountingCoordinator>& mountingCoordinator) {
-  if (ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
+  if (ReactNativeFeatureFlags::usePullModelOnAndroid() ||
+      ReactNativeFeatureFlags::enableAccumulatedUpdatesInRawPropsAndroid()) {
     // We don't do anything here. We will pull the transaction in
     // `schedulerShouldRenderTransactions`.
   } else {
@@ -727,7 +728,12 @@ void FabricUIManagerBinding::schedulerShouldRenderTransactions(
     }
   }
 
-  if (ReactNativeFeatureFlags::enableMountingCoordinatorPullModelAndroid()) {
+  if (ReactNativeFeatureFlags::usePullModelOnAndroid()) {
+    // Discord pull model: pull + execute the transaction on the UI thread at
+    // the next frame. Takes precedence over upstream's pull model below.
+    mountingManager->scheduleMount(mountingCoordinator);
+  } else if (
+      ReactNativeFeatureFlags::enableMountingCoordinatorPullModelAndroid()) {
     // Pull model: do NOT pull the transaction or build the batch here (on the
     // commit thread). Just notify Java that a transaction is available; the UI
     // thread will pull it via a PullTransactionMountItem and call back into
