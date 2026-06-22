@@ -11,6 +11,7 @@ import de.undercouch.gradle.tasks.download.Download
 import org.apache.tools.ant.taskdefs.condition.Os
 
 plugins {
+  id("maven-publish")
   id("signing")
   id(libs.plugins.android.library.get().pluginId)
   id(libs.plugins.download.get().pluginId)
@@ -438,6 +439,13 @@ android {
     jniLibs.excludes.add("**/libfbjni.so")
   }
 
+  publishing {
+    multipleVariants {
+      withSourcesJar()
+      allVariants()
+    }
+  }
+
   prefab { create("hermesvm") { headers = prefabHeadersDir.absolutePath } }
 }
 
@@ -457,4 +465,15 @@ afterEvaluate {
 tasks.withType<JavaCompile>().configureEach {
   options.compilerArgs.add("-Xlint:deprecation,unchecked")
   options.compilerArgs.add("-Werror")
+}
+
+/* Publishing Configuration */
+apply(from = "../publish.gradle")
+
+// We need to override the artifact ID as this project is called `hermes-engine` but
+// the maven coordinates are on `hermes-android`.
+// Please note that the original coordinates, `hermes-engine`, have been voided
+// as they caused https://github.com/facebook/react-native/issues/35210
+publishing {
+  publications { getByName("release", MavenPublication::class) { artifactId = "hermes-android" } }
 }
