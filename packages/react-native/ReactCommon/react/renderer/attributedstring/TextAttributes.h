@@ -10,6 +10,7 @@
 #include <functional>
 #include <limits>
 #include <optional>
+#include <string>
 #include <vector>
 
 #include <folly/dynamic.h>
@@ -50,6 +51,10 @@ class TextAttributes : public DebugStringConvertible {
   SharedColor foregroundColor{};
   SharedColor backgroundColor{};
   Float opacity{std::numeric_limits<Float>::quiet_NaN()};
+  std::optional<std::vector<SharedColor>> gradientColors{};
+  Float gradientAngle{std::numeric_limits<Float>::quiet_NaN()};
+  Float gradientWidth{std::numeric_limits<Float>::quiet_NaN()};
+  std::optional<std::string> gradientMode{}; // "mirror" or "clamp"
 
   // Font
   std::string fontFamily{""};
@@ -150,6 +155,8 @@ struct hash<facebook::react::TextAttributes> {
         textAttributes.textShadowRadius,
         textAttributes.textDecorationColor,
         textAttributes.textShadowColor,
+        textAttributes.gradientAngle,
+        textAttributes.gradientWidth,
         textEffectsHash);
     facebook::react::hash_combine_optionals(
         seed,
@@ -166,6 +173,7 @@ struct hash<facebook::react::TextAttributes> {
         textAttributes.textDecorationLineType,
         textAttributes.textDecorationStyle,
         textAttributes.textShadowOffset,
+        textAttributes.gradientMode,
         textAttributes.isHighlighted,
         textAttributes.isPressable,
         textAttributes.layoutDirection,
