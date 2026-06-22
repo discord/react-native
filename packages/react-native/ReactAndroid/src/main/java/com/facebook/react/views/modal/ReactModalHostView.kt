@@ -251,7 +251,7 @@ public class ReactModalHostView(context: ThemedReactContext) :
 
     // If the existing Dialog is currently up, we may need to redraw it or we may be able to update
     // the property without having to recreate the dialog
-    if (createNewDialog) {
+    if (createNewDialog || dialog == null) {
       dismiss()
     } else {
       // With Props 2.0 the view creation could include initial props. This means the dialog might
