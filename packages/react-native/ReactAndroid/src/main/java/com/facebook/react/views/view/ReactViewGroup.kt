@@ -159,6 +159,12 @@ public open class ReactViewGroup public constructor(context: Context?) :
   internal var nativeBackgroundMap: ReadableMap? = null
   internal var nativeForegroundMap: ReadableMap? = null
 
+  /**
+   * When set to true on a child [ReactViewGroup], that child will never be clipped by
+   * parent clipping logic (e.g., when `removeClippedSubviews` is enabled on the parent).
+   */
+  public var preventClipping: Boolean = false
+
   init {
     initView()
   }
@@ -188,6 +194,7 @@ public open class ReactViewGroup public constructor(context: Context?) :
     childrenRemovedWhileTransitioning = null
     nativeBackgroundMap = null
     nativeForegroundMap = null
+    preventClipping = false
   }
 
   internal open fun recycleView() {
@@ -508,6 +515,8 @@ public open class ReactViewGroup public constructor(context: Context?) :
     // it won't be size and located properly.
     val isAnimating = child.animation?.hasEnded() == false
 
+    val childPreventClipping = (child as? ReactViewGroup)?.preventClipping == true
+
     val shouldSkipView = excludedViewsSet?.contains(child.id) == true
     if (excludedViewsSet != null) {
       needUpdateClippingRecursive = true
@@ -518,21 +527,35 @@ public open class ReactViewGroup public constructor(context: Context?) :
             !isViewClipped(child, idx) &&
             !isAnimating &&
             child !== focusedChild &&
-            !shouldSkipView
+            !shouldSkipView &&
+            !childPreventClipping
     ) {
       setViewClipped(child, true)
+      if (!customDrawOrderDisabled()) {
+        drawingOrderHelper.handleRemoveView(child)
+        isChildrenDrawingOrderEnabled = drawingOrderHelper.shouldEnableCustomDrawingOrder()
+      } else {
+        isChildrenDrawingOrderEnabled = false
+      }
       // We can try saving on invalidate call here as the view that we remove is out of visible area
       // therefore invalidation is not necessary.
       removeViewInLayout(child)
       needUpdateClippingRecursive = true
-    } else if ((shouldSkipView || intersects) && isViewClipped(child, idx)) {
+    } else if ((((shouldSkipView || intersects) && isViewClipped(child, idx)) || childPreventClipping) &&
+        child.parent == null) {
       val adjustedIdx = idx - clippedSoFar
       check(adjustedIdx >= 0)
+      if (!customDrawOrderDisabled()) {
+        drawingOrderHelper.handleAddView(child)
+        isChildrenDrawingOrderEnabled = drawingOrderHelper.shouldEnableCustomDrawingOrder()
+      } else {
+        isChildrenDrawingOrderEnabled = false
+      }
       setViewClipped(child, false)
       addViewInLayout(child, adjustedIdx, defaultLayoutParam, true)
       invalidate()
       needUpdateClippingRecursive = true
-    } else if (intersects) {
+    } else if (intersects || childPreventClipping) {
       // If there is any intersection we need to inform the child to update its clipping rect
       needUpdateClippingRecursive = true
     }
