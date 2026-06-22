@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<0189996ac2b9d2a51d077370773478f8>>
+ * @generated SignedSource<<b2bfaa14047734480bdefbe07ddd80a0>>
  * @flow strict
  * @noformat
  */
@@ -107,6 +107,7 @@ export interface Spec extends TurboModule {
   readonly useFabricInterop?: () => boolean;
   readonly useNativeViewConfigsInBridgelessMode?: () => boolean;
   readonly useNestedScrollViewAndroid?: () => boolean;
+  readonly usePullModelOnAndroid?: () => boolean;
   readonly useSharedAnimatedBackend?: () => boolean;
   readonly useSilenceErrorSMMViewNotFound?: () => boolean;
   readonly useTraitHiddenOnAndroid?: () => boolean;

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<b739a3c66904d3f432b591049b5a72f5>>
+ * @generated SignedSource<<11b6009737d6b52cf89808bb073e08a1>>
  */
 
 /**
@@ -191,6 +191,8 @@ public object ReactNativeFeatureFlagsCxxInterop {
   @DoNotStrip @JvmStatic public external fun useNativeViewConfigsInBridgelessMode(): Boolean
 
   @DoNotStrip @JvmStatic public external fun useNestedScrollViewAndroid(): Boolean
+
+  @DoNotStrip @JvmStatic public external fun usePullModelOnAndroid(): Boolean
 
   @DoNotStrip @JvmStatic public external fun useSharedAnimatedBackend(): Boolean
 

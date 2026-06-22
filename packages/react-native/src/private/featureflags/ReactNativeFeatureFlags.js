@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5636ea473cb991b14d3c1a542c4af3d0>>
+ * @generated SignedSource<<bc0cc2607ac99531a8f24f87401cade4>>
  * @flow strict
  * @noformat
  */
@@ -131,6 +131,7 @@ export type ReactNativeFeatureFlags = Readonly<{
   useFabricInterop: Getter<boolean>,
   useNativeViewConfigsInBridgelessMode: Getter<boolean>,
   useNestedScrollViewAndroid: Getter<boolean>,
+  usePullModelOnAndroid: Getter<boolean>,
   useSharedAnimatedBackend: Getter<boolean>,
   useSilenceErrorSMMViewNotFound: Getter<boolean>,
   useTraitHiddenOnAndroid: Getter<boolean>,
@@ -544,6 +545,10 @@ export const useNativeViewConfigsInBridgelessMode: Getter<boolean> = createNativ
  * When enabled, ReactScrollView will extend NestedScrollView instead of ScrollView on Android for improved nested scrolling support.
  */
 export const useNestedScrollViewAndroid: Getter<boolean> = createNativeFlagGetter('useNestedScrollViewAndroid', false);
+/**
+ * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+ */
+export const usePullModelOnAndroid: Getter<boolean> = createNativeFlagGetter('usePullModelOnAndroid', true);
 /**
  * Use shared animation backend in C++ Animated
  */

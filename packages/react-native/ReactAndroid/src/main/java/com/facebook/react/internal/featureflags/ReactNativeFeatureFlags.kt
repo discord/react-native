@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<82d88c9c439b89de869039ebf597f3a2>>
+ * @generated SignedSource<<bbe56d31722c1e2fbb8cc6be6c830a62>>
  */
 
 /**
@@ -521,6 +521,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun useNestedScrollViewAndroid(): Boolean = accessor.useNestedScrollViewAndroid()
+
+  /**
+   * Use a pull model for mounting on Android. This is similar to what we do on iOS where the transaction is pulled on the main thread right before mounting.
+   */
+  @JvmStatic
+  public fun usePullModelOnAndroid(): Boolean = accessor.usePullModelOnAndroid()
 
   /**
    * Use shared animation backend in C++ Animated

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<84916daf5cd5efe24c380da750d392cc>>
+ * @generated SignedSource<<43da2c8476d0c7ce13b8a6c333c685e8>>
  */
 
 /**
@@ -531,6 +531,12 @@ class ReactNativeFeatureFlagsJavaProvider
     return method(javaProvider_);
   }
 
+  bool usePullModelOnAndroid() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("usePullModelOnAndroid");
+    return method(javaProvider_);
+  }
+
   bool useSharedAnimatedBackend() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("useSharedAnimatedBackend");
@@ -999,6 +1005,11 @@ bool JReactNativeFeatureFlagsCxxInterop::useNestedScrollViewAndroid(
   return ReactNativeFeatureFlags::useNestedScrollViewAndroid();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::usePullModelOnAndroid();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::useSharedAnimatedBackend();
@@ -1321,6 +1332,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "useNestedScrollViewAndroid",
         JReactNativeFeatureFlagsCxxInterop::useNestedScrollViewAndroid),
+      makeNativeMethod(
+        "usePullModelOnAndroid",
+        JReactNativeFeatureFlagsCxxInterop::usePullModelOnAndroid),
       makeNativeMethod(
         "useSharedAnimatedBackend",
         JReactNativeFeatureFlagsCxxInterop::useSharedAnimatedBackend),
