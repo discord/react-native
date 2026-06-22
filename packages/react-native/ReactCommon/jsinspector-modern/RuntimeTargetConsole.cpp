@@ -348,7 +348,7 @@ void consoleAssert(
         runtime,                                                         \
         {timestampMs, type, std::move(argsVec), std::move(stackTrace)}); \
   }
-#include "ForwardingConsoleMethods.def"
+#include "ForwardingConsoleMethods.h"
 #undef FORWARDING_CONSOLE_METHOD
 
 /*
@@ -732,7 +732,7 @@ void RuntimeTarget::installConsoleHandler() {
     // Install forwarding console methods.
 #define FORWARDING_CONSOLE_METHOD(name, type) \
   installConsoleMethod(#name, console_##name);
-#include "ForwardingConsoleMethods.def"
+#include "ForwardingConsoleMethods.h"
 #undef FORWARDING_CONSOLE_METHOD
 
     runtime.global().setProperty(runtime, "console", console);
