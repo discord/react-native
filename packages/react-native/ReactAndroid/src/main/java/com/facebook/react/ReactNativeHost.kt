@@ -11,6 +11,7 @@ package com.facebook.react
 
 import android.annotation.SuppressLint
 import android.app.Application
+import android.content.Context
 import com.facebook.react.bridge.JSExceptionHandler
 import com.facebook.react.bridge.JavaScriptExecutorFactory
 import com.facebook.react.bridge.ReactMarker
@@ -26,6 +27,8 @@ import com.facebook.react.devsupport.interfaces.DevLoadingViewManager
 import com.facebook.react.devsupport.interfaces.PausedInDebuggerOverlayManager
 import com.facebook.react.devsupport.interfaces.RedBoxHandler
 import com.facebook.react.internal.ChoreographerProvider
+import com.facebook.react.runtime.ReactSurfaceImpl
+import com.facebook.react.runtime.ReactSurfaceView
 
 /**
  * Simple class that holds an instance of [ReactInstanceManager]. This can be used in your
@@ -200,6 +203,12 @@ public abstract class ReactNativeHost protected constructor(private val mApplica
    * will use default direct android.view.Choreographer-based provider.
    */
   protected open fun getChoreographerProvider(): ChoreographerProvider? = null
+
+  /** Discord: lets the app supply a custom [ReactSurfaceView] subclass. */
+  public open fun createReactSurfaceView(
+      context: Context,
+      surfaceImpl: ReactSurfaceImpl,
+  ): ReactSurfaceView = ReactSurfaceView(context, surfaceImpl)
 
   private companion object {
     init {
