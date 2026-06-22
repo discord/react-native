@@ -1148,6 +1148,13 @@ constexpr static MapBuffer::Key TA_KEY_FONT_VARIATION_SETTINGS = 31;
 constexpr static MapBuffer::Key TE_KEY_NAME = 0;
 constexpr static MapBuffer::Key TE_KEY_PROPS = 1;
 
+// Discord text attributes. Kept in their own range (100+) so upstream key
+// additions cannot collide with them.
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_COLORS = 100;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_ANGLE = 103;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_WIDTH = 104;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_MODE = 105;
+
 // constants for ParagraphAttributes serialization
 constexpr static MapBuffer::Key PA_KEY_MAX_NUMBER_OF_LINES = 0;
 constexpr static MapBuffer::Key PA_KEY_ELLIPSIZE_MODE = 1;
@@ -1268,6 +1275,23 @@ inline MapBuffer toMapBuffer(const TextAttributes &textAttributes)
   }
   if (textAttributes.backgroundColor) {
     builder.putInt(TA_KEY_BACKGROUND_COLOR, toAndroidRepr(textAttributes.backgroundColor));
+  }
+  if (textAttributes.gradientColors.has_value()) {
+    auto gradientColorsBuilder = MapBufferBuilder();
+    for (size_t i = 0; i < textAttributes.gradientColors->size(); ++i) {
+      gradientColorsBuilder.putInt(
+          static_cast<MapBuffer::Key>(i), toAndroidRepr((*textAttributes.gradientColors)[i]));
+    }
+    builder.putMapBuffer(TA_KEY_GRADIENT_COLORS, gradientColorsBuilder.build());
+  }
+  if (!std::isnan(textAttributes.gradientAngle)) {
+    builder.putDouble(TA_KEY_GRADIENT_ANGLE, textAttributes.gradientAngle);
+  }
+  if (!std::isnan(textAttributes.gradientWidth)) {
+    builder.putDouble(TA_KEY_GRADIENT_WIDTH, textAttributes.gradientWidth);
+  }
+  if (textAttributes.gradientMode.has_value()) {
+    builder.putString(TA_KEY_GRADIENT_MODE, *textAttributes.gradientMode);
   }
   if (!std::isnan(textAttributes.opacity)) {
     builder.putDouble(TA_KEY_OPACITY, textAttributes.opacity);
