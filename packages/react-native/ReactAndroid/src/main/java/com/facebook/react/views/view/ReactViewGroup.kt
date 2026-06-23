@@ -534,12 +534,6 @@ public open class ReactViewGroup public constructor(context: Context?) :
             !childPreventClipping
     ) {
       setViewClipped(child, true)
-      if (!customDrawOrderDisabled()) {
-        drawingOrderHelper.handleRemoveView(child)
-        isChildrenDrawingOrderEnabled = drawingOrderHelper.shouldEnableCustomDrawingOrder()
-      } else {
-        isChildrenDrawingOrderEnabled = false
-      }
       // We can try saving on invalidate call here as the view that we remove is out of visible area
       // therefore invalidation is not necessary.
       removeViewInLayout(child)
@@ -548,12 +542,6 @@ public open class ReactViewGroup public constructor(context: Context?) :
         child.parent == null) {
       val adjustedIdx = idx - clippedSoFar
       check(adjustedIdx >= 0)
-      if (!customDrawOrderDisabled()) {
-        drawingOrderHelper.handleAddView(child)
-        isChildrenDrawingOrderEnabled = drawingOrderHelper.shouldEnableCustomDrawingOrder()
-      } else {
-        isChildrenDrawingOrderEnabled = false
-      }
       setViewClipped(child, false)
       addViewInLayout(child, adjustedIdx, defaultLayoutParam, true)
       invalidate()

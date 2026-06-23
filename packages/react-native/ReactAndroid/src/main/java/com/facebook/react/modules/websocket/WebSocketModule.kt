@@ -65,7 +65,7 @@ public class WebSocketModule(context: ReactApplicationContext) :
   /** CDP request IDs used to report each connection's events to the modern debugger server. */
   private val inspectorRequestIds: MutableMap<Int, String> = ConcurrentHashMap()
 
-  var mOnOpenHandler: OnOpenHandler = null;
+  public var mOnOpenHandler: OnOpenHandler? = null
 
   override fun invalidate() {
     for (socket in webSocketConnections.values) {
@@ -213,9 +213,7 @@ public class WebSocketModule(context: ReactApplicationContext) :
               put("protocol", response.header("Sec-WebSocket-Protocol", ""))
             }
             sendEvent("websocketOpen", params)
-            if (mOnOpenHandler != null) {
-              mOnOpenHandler.onOpen(webSocket, id);
-            }
+            mOnOpenHandler?.onOpen(webSocket, id)
           }
 
           override fun onClosing(webSocket: WebSocket, code: Int, reason: String) {
