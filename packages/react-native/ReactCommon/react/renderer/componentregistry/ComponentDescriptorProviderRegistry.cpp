@@ -7,6 +7,8 @@
 
 #include "ComponentDescriptorProviderRegistry.h"
 
+#include <react/featureflags/ReactNativeFeatureFlags.h>
+
 namespace facebook::react {
 
 static int8_t isBridgeless = -1;
