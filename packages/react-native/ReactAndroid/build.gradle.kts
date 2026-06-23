@@ -315,10 +315,42 @@ val downloadBoost by
       dest(downloadBoostDest)
     }
 
+// Gradle 9's tarTree (Apache Commons Compress) cannot expand Boost's GNU-tar archive
+// ("compressed in an unexpected way") even though the downloaded gzip is valid and fully
+// decompresses. Every other (smaller, GitHub-sourced) gzip dep extracts fine; only Boost trips the
+// stricter tar reader. System tar handles it, so extract explicitly and feed prepareBoost the
+// extracted directory tree instead of tarTree(archive). Only the boost/ headers subtree is consumed
+// by prepareBoost (everything else comes from boostThirdPartyJniPath), so extract just that.
+//
+// Gradle 9 cannot snapshot the extracted tree (it refuses to fingerprint it and aborts with
+// "Accessing unreadable inputs or outputs"), so extractBoost and the boost branch of prepareBoost
+// are marked untracked; explicit dependsOn wiring preserves task ordering.
+val boostExtractDir = File(downloadsDir, "boost_${BOOST_VERSION}_extracted")
+val extractBoost by
+    tasks.registering(Exec::class) {
+      dependsOn(downloadBoost)
+      doNotTrackState("Boost is extracted with system tar; Gradle cannot snapshot the extracted tree")
+      doFirst {
+        boostExtractDir.deleteRecursively()
+        boostExtractDir.mkdirs()
+      }
+      commandLine(
+          "tar",
+          "-xzf",
+          downloadBoostDest.absolutePath,
+          "-C",
+          boostExtractDir.absolutePath,
+          "boost_${BOOST_VERSION}/boost",
+      )
+    }
+
 val prepareBoost by
     tasks.registering(PrepareBoostTask::class) {
-      dependsOn(if (boostPathOverride != null) emptyList() else listOf(downloadBoost))
-      boostPath.setFrom(if (boostPathOverride != null) boostPath else tarTree(downloadBoostDest))
+      dependsOn(if (boostPathOverride != null) emptyList() else listOf(extractBoost))
+      if (boostPathOverride == null) {
+        doNotTrackState("Boost input tree is produced by system tar; Gradle cannot snapshot it")
+      }
+      boostPath.setFrom(if (boostPathOverride != null) boostPath else fileTree(boostExtractDir))
       boostThirdPartyJniPath.set(project.file("src/main/jni/third-party/boost"))
       boostVersion.set(BOOST_VERSION)
       outputDir.set(File(thirdPartyNdkDir, "boost"))
