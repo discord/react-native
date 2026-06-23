@@ -1103,7 +1103,7 @@ public class ReactHorizontalScrollView extends HorizontalScrollView
     if (ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()
         && clampedX
         && mEmittedOverScrollSinceScrollBegin == false) {
-      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f);
+      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f, false);
       mEmittedOverScrollSinceScrollBegin = true;
     }
 

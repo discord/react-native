@@ -140,8 +140,6 @@ public class UIManagerModule extends ReactContextBaseJavaModule
     }
 
     reactContext.addLifecycleEventListener(this);
-    mEventDispatcher.registerEventEmitter(
-        DEFAULT, getReactApplicationContext().getJSModule(RCTEventEmitter.class));
   }
 
   @Override

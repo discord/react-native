@@ -601,7 +601,8 @@ class ReactNestedScrollView extends NestedScrollView
         ReactScrollViewHelper.updateStateOnScrollChanged(
             this,
             mOnScrollDispatchHelper.getXFlingVelocity(),
-            mOnScrollDispatchHelper.getYFlingVelocity());
+            mOnScrollDispatchHelper.getYFlingVelocity(),
+            false);
         if (mVirtualViewContainerState != null) {
           mVirtualViewContainerState.updateState();
         }
@@ -1308,7 +1309,7 @@ class ReactNestedScrollView extends NestedScrollView
     if (ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()
         && clampedY
         && mEmittedOverScrollSinceScrollBegin == false) {
-      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f);
+      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f, false);
       mEmittedOverScrollSinceScrollBegin = true;
     }
 

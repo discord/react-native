@@ -1312,7 +1312,7 @@ public class ReactScrollView extends ScrollView
     if (ReactNativeFeatureFlags.shouldTriggerResponderTransferOnScrollAndroid()
         && clampedY
         && mEmittedOverScrollSinceScrollBegin == false) {
-      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f);
+      ReactScrollViewHelper.emitScrollEvent(this, 0f, 0f, false);
       mEmittedOverScrollSinceScrollBegin = true;
     }
 
