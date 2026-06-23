@@ -454,7 +454,7 @@ internal constructor(
   }
 
   /** Executes an [AddViewOperation] queued by the [ViewTransitionCoordinator]. */
-  public fun executeAddViewOperation(operation: AddViewOperation): Unit {
+  internal fun executeAddViewOperation(operation: AddViewOperation) {
     addViewAtInternal(operation.parent, operation.child, operation.index)
   }
 
@@ -617,7 +617,7 @@ internal constructor(
   }
 
   /** Executes a [RemoveViewOperation] queued by the [ViewTransitionCoordinator]. */
-  public fun executeRemoveViewOperation(operation: RemoveViewOperation): Unit {
+  internal fun executeRemoveViewOperation(operation: RemoveViewOperation) {
     removeViewAtInternal(
         operation.parentTag, operation.parentView, operation.childTag, operation.index)
   }
@@ -1184,7 +1184,7 @@ internal constructor(
   }
 
   /** Executes a [DeleteViewOperation] queued by the [ViewTransitionCoordinator]. */
-  public fun executeDeleteViewOperation(operation: DeleteViewOperation): Unit {
+  internal fun executeDeleteViewOperation(operation: DeleteViewOperation) {
     deleteViewInternal(operation.childTag)
   }
 
