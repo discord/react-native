@@ -127,4 +127,18 @@ export namespace StyleSheet {
    * styles.
    */
   export const absoluteFill: AbsoluteFillStyle;
+
+  /**
+   * Sometimes you may want `absoluteFill` but with a couple tweaks - `absoluteFillObject` can be
+   * used to create a customized entry in a `StyleSheet`, e.g.:
+   *
+   *   const styles = StyleSheet.create({
+   *     wrapper: {
+   *       ...StyleSheet.absoluteFillObject,
+   *       top: 10,
+   *       backgroundColor: 'transparent',
+   *     },
+   *   });
+   */
+  export const absoluteFillObject: AbsoluteFillStyle;
 }
