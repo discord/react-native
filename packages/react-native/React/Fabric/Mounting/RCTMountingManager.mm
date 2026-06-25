@@ -353,7 +353,7 @@ static void RCTPerformMountInstructions(
   UIView<RCTComponentViewProtocol> *view = [self->_componentViewRegistry findComponentViewWithTag:reactTag];
   if (!view) {
     // this view was probably collapsed out
-    RCTLogWarn(@"measure cannot find view with tag #%@", reactTag);
+    RCTLogWarn(@"measure cannot find view with tag #%ld", (long)reactTag);
     callback({});
     return;
   }
