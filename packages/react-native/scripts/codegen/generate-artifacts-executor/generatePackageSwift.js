@@ -24,7 +24,7 @@ function generatePackageSwift(
   outputDir /*: string */,
   reactNativePath /*: string */,
 ) {
-  const fullOutputPath = path.join(fs.realpathSync(projectRoot), outputDir);
+  const fullOutputPath = fs.realpathSync(path.resolve(projectRoot, outputDir));
   fs.mkdirSync(outputDir, {recursive: true});
   // Generate PAckage.swift File
   codegenLog('Generating Package.swift');
