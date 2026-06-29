@@ -91,9 +91,10 @@ Pod::Spec.new do |spec|
       hermes_compiler_path = File.dirname(Pod::Executable.execute_command('node', ['-p',
         "require.resolve(\"hermes-compiler\", {paths: [\"#{react_native_path}\"]})", __dir__]).strip
       )
+      hermes_compiler_relative_path = Pathname.new(hermes_compiler_path).relative_path_from(Pathname.new(react_native_path)).to_s
 
       spec.user_target_xcconfig = {
-        'HERMES_CLI_PATH' => "#{hermes_compiler_path}/hermesc/osx-bin/hermesc"
+        'HERMES_CLI_PATH' => "${REACT_NATIVE_PATH}/#{hermes_compiler_relative_path}/hermesc/osx-bin/hermesc"
       }
     end
 
