@@ -1314,13 +1314,17 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
 
       for (UIView *subview in self.currentContainerView.subviews) {
         if ([subview isKindOfClass:[UIImageView class]]) {
-          RCTCornerInsets cornerInsets = RCTGetCornerInsets(
-              RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
-              RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
+          // Note(Discord/Hanno): The parent already applies the mask/clipping so this should be unnecessary.
+          // It  has shown to cause CPU spikes + rendering hitches as this starts to cause offscreen draw passes in the render server.
+          //
+          // RCTCornerInsets cornerInsets = RCTGetCornerInsets(
+          //     RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
+          //     RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
 
-          // If the subview is an image view, we have to apply the mask directly to the image view's layer,
-          // otherwise the image might overflow with the border radius.
-          subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
+          // // If the subview is an image view, we have to apply the mask directly to the image view's layer,
+          // // otherwise the image might overflow with the border radius.
+          // subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
+          subview.layer.mask = nil;
         }
       }
     } else if (
