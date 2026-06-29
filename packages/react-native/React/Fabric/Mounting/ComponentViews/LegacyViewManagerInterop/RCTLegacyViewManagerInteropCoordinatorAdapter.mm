@@ -67,17 +67,6 @@
   NSMutableDictionary<NSString *, id> *diffedProps = [NSMutableDictionary new];
 
   [newProps enumerateKeysAndObjectsUsingBlock:^(NSString *key, id newProp, __unused BOOL *stop) {
-   if ([key isEqualToString:@"overflow"]) {
-      /*
-      - RCTLegacyViewManagerInteropComponentView is itself a Fabric RCTViewComponentView, so super applies Fabric ViewProps like overflow, border radius, clipping, etc. to the wrapper.
-      - LegacyViewManagerInteropViewProps also stores the raw props in otherProps.
-      - RCTLegacyViewManagerInteropComponentView then forwards otherProps to the Paper view via _adapter setProps.
-      - Paper’s RCTViewManager handles overflow by setting view.clipsToBounds.
-      So the same overflow: hidden semantics get applied twice:
-      */
-      return;
-    }
-
     id oldProp = _oldProps[key];
     if ([self _prop:newProp isDifferentFrom:oldProp]) {
       diffedProps[key] = newProp;
