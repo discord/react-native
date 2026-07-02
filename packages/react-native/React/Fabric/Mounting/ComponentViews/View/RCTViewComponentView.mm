@@ -1061,7 +1061,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     BOOL clipToPaddingBox = ReactNativeFeatureFlags::enableIOSViewClipToPaddingBox();
     if (!clipToPaddingBox) {
       if (layerCornersAreRepresentable) {
-        RCTApplyLayerCornerConfiguration(currentContainerView.layer, *layerCornerConfiguration);
+        RCTApplyLayerCornerConfiguration(self.currentContainerView.layer, *layerCornerConfiguration);
       } else {
         CALayer *maskLayer =
             [self createMaskLayer:self.bounds
@@ -1070,19 +1070,21 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
         self.currentContainerView.layer.mask = maskLayer;
       }
 
-      for (UIView *subview in self.currentContainerView.subviews) {
-        if ([subview isKindOfClass:[UIImageView class]]) {
-          // Note(Discord/Hanno): The parent already applies the mask/clipping so this should be unnecessary.
-          // It  has shown to cause CPU spikes + rendering hitches as this starts to cause offscreen draw passes in the render server.
-          //
-          // RCTCornerInsets cornerInsets = RCTGetCornerInsets(
-          //     RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
-          //     RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
+      if (!layerCornersAreRepresentable &&
+          (borderMetrics.borderColors.left || borderMetrics.borderColors.right || borderMetrics.borderColors.top ||
+           borderMetrics.borderColors.bottom)) {
+        for (UIView *subview in self.currentContainerView.subviews) {
+          if ([subview isKindOfClass:[UIImageView class]]) {
+              RCTCornerInsets cornerInsets = RCTGetCornerInsets(
+                  RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
+                  RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
 
-          // // If the subview is an image view, we have to apply the mask directly to the image view's layer,
-          // // otherwise the image might overflow with the border radius.
-          // subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
-          subview.layer.mask = nil;
+              // If the subview is an image view, we have to apply the mask directly to the image view's layer,
+              // otherwise the image might overflow with the border radius.
+              // Applying a mask is rendering wise expensive so we only apply it when needed, which is only
+              // for none uniform border radii (that are actually visible by color).
+              subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
+          }
         }
       }
     } else if (
@@ -1094,7 +1096,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
                                                      RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths))];
       self.currentContainerView.layer.mask = maskLayer;
     } else {
-      RCTApplyLayerCornerConfiguration(currentContainerView.layer, *layerCornerConfiguration);
+      RCTApplyLayerCornerConfiguration(self.currentContainerView.layer, *layerCornerConfiguration);
     }
   }
 }
