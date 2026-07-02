@@ -11,6 +11,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
+#import <optional>
 #import <ranges>
 
 #import <RCTSwiftUIWrapper/RCTSwiftUIContainerViewWrapper.h>
@@ -19,6 +20,7 @@
 #import <React/RCTBorderDrawing.h>
 #import <React/RCTBoxShadow.h>
 #import <React/RCTConversions.h>
+#import <React/RCTLayerCornerConfiguration.h>
 #import <React/RCTLinearGradient.h>
 #import <React/RCTLocalizedString.h>
 #import <React/RCTRadialGradient.h>
@@ -855,18 +857,6 @@ static RCTBorderColors RCTCreateRCTBorderColorsFromBorderColors(BorderColors bor
       .right = RCTUIColorFromSharedColor(borderColors.right)};
 }
 
-static CALayerCornerCurve CornerCurveFromBorderCurve(BorderCurve borderCurve)
-{
-  // The constants are available only starting from iOS 13
-  // CALayerCornerCurve is a typealias on NSString *
-  switch (borderCurve) {
-    case BorderCurve::Continuous:
-      return @"continuous"; // kCACornerCurveContinuous;
-    case BorderCurve::Circular:
-      return @"circular"; // kCACornerCurveCircular;
-  }
-}
-
 static RCTBorderStyle RCTBorderStyleFromBorderStyle(BorderStyle borderStyle)
 {
   switch (borderStyle) {
@@ -1041,6 +1031,11 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     [self setHoverStyle:hoverStyle];
   }
 #endif
+
+  const std::optional<RCTLayerCornerConfiguration> layerCornerConfiguration =
+      RCTGetLayerCornerConfiguration(borderMetrics);
+  const bool layerCornersAreRepresentable = layerCornerConfiguration.has_value();
+
   const bool useCoreAnimationBorderRendering =
       borderMetrics.borderColors.isUniform() && borderMetrics.borderWidths.isUniform() &&
       borderMetrics.borderStyles.isUniform() && borderMetrics.borderStyles.left == BorderStyle::Solid &&
@@ -1085,8 +1080,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     layer.borderWidth = (CGFloat)borderMetrics.borderWidths.left;
     UIColor *borderColor = RCTUIColorFromSharedColor(borderMetrics.borderColors.left);
     layer.borderColor = borderColor.CGColor;
-    layer.cornerRadius = (CGFloat)borderMetrics.borderRadii.topLeft.horizontal;
-    layer.cornerCurve = CornerCurveFromBorderCurve(borderMetrics.borderCurves.topLeft);
+    RCTApplyLayerCornerConfiguration(layer, *layerCornerConfiguration);
   } else {
     if (!_borderLayer) {
       CALayer *borderLayer = [CALayer new];
@@ -1126,7 +1120,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     _outlineLayer.frame = CGRectInset(
         layer.bounds, -_props->outlineOffset - _props->outlineWidth, -_props->outlineOffset - _props->outlineWidth);
 
-    if (borderMetrics.borderRadii.isUniform() && borderMetrics.borderRadii.topLeft.horizontal == 0) {
+    if (layerCornersAreRepresentable && layerCornerConfiguration->cornerRadius == 0) {
       UIColor *outlineColor = RCTUIColorFromSharedColor(_props->outlineColor);
       _outlineLayer.borderWidth = _props->outlineWidth;
       _outlineLayer.borderColor = outlineColor.CGColor;
@@ -1302,8 +1296,8 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   if (self.currentContainerView.clipsToBounds) {
     BOOL clipToPaddingBox = ReactNativeFeatureFlags::enableIOSViewClipToPaddingBox();
     if (!clipToPaddingBox) {
-      if (borderMetrics.borderRadii.isUniform()) {
-        self.currentContainerView.layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
+      if (layerCornersAreRepresentable) {
+        RCTApplyLayerCornerConfiguration(self.currentContainerView.layer, *layerCornerConfiguration);
       } else {
         CALayer *maskLayer =
             [self createMaskLayer:self.bounds
@@ -1312,19 +1306,21 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
         self.currentContainerView.layer.mask = maskLayer;
       }
 
-      for (UIView *subview in self.currentContainerView.subviews) {
-        if ([subview isKindOfClass:[UIImageView class]]) {
-          // Note(Discord/Hanno): The parent already applies the mask/clipping so this should be unnecessary.
-          // It  has shown to cause CPU spikes + rendering hitches as this starts to cause offscreen draw passes in the render server.
-          //
-          // RCTCornerInsets cornerInsets = RCTGetCornerInsets(
-          //     RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
-          //     RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
+      if (!layerCornersAreRepresentable &&
+          (borderMetrics.borderColors.left || borderMetrics.borderColors.right || borderMetrics.borderColors.top ||
+           borderMetrics.borderColors.bottom)) {
+        for (UIView *subview in self.currentContainerView.subviews) {
+          if ([subview isKindOfClass:[UIImageView class]]) {
+              RCTCornerInsets cornerInsets = RCTGetCornerInsets(
+                  RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
+                  RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths));
 
-          // // If the subview is an image view, we have to apply the mask directly to the image view's layer,
-          // // otherwise the image might overflow with the border radius.
-          // subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
-          subview.layer.mask = nil;
+              // If the subview is an image view, we have to apply the mask directly to the image view's layer,
+              // otherwise the image might overflow with the border radius.
+              // Applying a mask is rendering wise expensive so we only apply it when needed, which is only
+              // for none uniform border radii (that are actually visible by color).
+              subview.layer.mask = [self createMaskLayer:subview.bounds cornerInsets:cornerInsets];
+          }
         }
       }
     } else if (
@@ -1336,7 +1332,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
                                                      RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths))];
       self.currentContainerView.layer.mask = maskLayer;
     } else {
-      self.currentContainerView.layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
+      RCTApplyLayerCornerConfiguration(self.currentContainerView.layer, *layerCornerConfiguration);
     }
   }
 }
@@ -1348,10 +1344,9 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   // Bounds is needed here to account for scaling transforms properly and ensure
   // we do not scale twice
   layer.frame = CGRectMake(0, 0, self.layer.bounds.size.width, self.layer.bounds.size.height);
-  if (borderMetrics.borderRadii.isUniform()) {
+  if (const auto cornerConfiguration = RCTGetLayerCornerConfiguration(borderMetrics)) {
     layer.mask = nil;
-    layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
-    layer.cornerCurve = CornerCurveFromBorderCurve(borderMetrics.borderCurves.topLeft);
+    RCTApplyLayerCornerConfiguration(layer, *cornerConfiguration);
   } else {
     CAShapeLayer *maskLayer = [self
         createMaskLayer:self.bounds
