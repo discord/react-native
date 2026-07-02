@@ -11,6 +11,7 @@
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>
 #import <objc/runtime.h>
+#import <optional>
 #import <ranges>
 
 #import <RCTSwiftUIWrapper/RCTSwiftUIContainerViewWrapper.h>
@@ -19,6 +20,7 @@
 #import <React/RCTBorderDrawing.h>
 #import <React/RCTBoxShadow.h>
 #import <React/RCTConversions.h>
+#import <React/RCTLayerCornerConfiguration.h>
 #import <React/RCTLinearGradient.h>
 #import <React/RCTLocalizedString.h>
 #import <React/RCTRadialGradient.h>
@@ -855,110 +857,6 @@ static RCTBorderColors RCTCreateRCTBorderColorsFromBorderColors(BorderColors bor
       .right = RCTUIColorFromSharedColor(borderColors.right)};
 }
 
-static CALayerCornerCurve CornerCurveFromBorderCurve(BorderCurve borderCurve)
-{
-  // The constants are available only starting from iOS 13
-  // CALayerCornerCurve is a typealias on NSString *
-  switch (borderCurve) {
-    case BorderCurve::Continuous:
-      return @"continuous"; // kCACornerCurveContinuous;
-    case BorderCurve::Circular:
-      return @"circular"; // kCACornerCurveCircular;
-  }
-}
-
-struct RCTLayerCornerConfiguration {
-  CGFloat cornerRadius{0};
-  CACornerMask maskedCorners{0};
-  BorderCurve cornerCurve{BorderCurve::Circular};
-  bool hasRoundedCorner{false};
-};
-
-static bool RCTUpdateLayerCornerConfiguration(
-    const CornerRadii &cornerRadii,
-    BorderCurve cornerCurve,
-    CACornerMask cornerMask,
-    RCTLayerCornerConfiguration &cornerConfiguration)
-{
-  if (cornerRadii.horizontal != cornerRadii.vertical) {
-    return false;
-  }
-
-  if (cornerRadii.horizontal == 0) {
-    return true;
-  }
-
-  CGFloat cornerRadius = (CGFloat)cornerRadii.horizontal;
-  if (cornerConfiguration.hasRoundedCorner) {
-    if (cornerConfiguration.cornerRadius != cornerRadius) {
-      return false;
-    }
-
-    if (cornerConfiguration.cornerCurve != cornerCurve) {
-      return false;
-    }
-  } else {
-    cornerConfiguration.cornerRadius = cornerRadius;
-    cornerConfiguration.cornerCurve = cornerCurve;
-    cornerConfiguration.hasRoundedCorner = true;
-  }
-
-  cornerConfiguration.maskedCorners |= cornerMask;
-  return true;
-}
-
-static bool RCTGetLayerCornerConfiguration(
-    const BorderMetrics &borderMetrics,
-    RCTLayerCornerConfiguration &cornerConfiguration)
-{
-  cornerConfiguration = RCTLayerCornerConfiguration{};
-
-  bool topLeftIsRepresentable = RCTUpdateLayerCornerConfiguration(
-      borderMetrics.borderRadii.topLeft,
-      borderMetrics.borderCurves.topLeft,
-      kCALayerMinXMinYCorner,
-      cornerConfiguration);
-  if (!topLeftIsRepresentable) {
-    return false;
-  }
-
-  bool topRightIsRepresentable = RCTUpdateLayerCornerConfiguration(
-      borderMetrics.borderRadii.topRight,
-      borderMetrics.borderCurves.topRight,
-      kCALayerMaxXMinYCorner,
-      cornerConfiguration);
-  if (!topRightIsRepresentable) {
-    return false;
-  }
-
-  bool bottomLeftIsRepresentable = RCTUpdateLayerCornerConfiguration(
-      borderMetrics.borderRadii.bottomLeft,
-      borderMetrics.borderCurves.bottomLeft,
-      kCALayerMinXMaxYCorner,
-      cornerConfiguration);
-  if (!bottomLeftIsRepresentable) {
-    return false;
-  }
-
-  bool bottomRightIsRepresentable = RCTUpdateLayerCornerConfiguration(
-      borderMetrics.borderRadii.bottomRight,
-      borderMetrics.borderCurves.bottomRight,
-      kCALayerMaxXMaxYCorner,
-      cornerConfiguration);
-  if (!bottomRightIsRepresentable) {
-    return false;
-  }
-
-  if (!cornerConfiguration.hasRoundedCorner) {
-    cornerConfiguration.maskedCorners = kCALayerMinXMinYCorner
-                                        | kCALayerMaxXMinYCorner
-                                        | kCALayerMinXMaxYCorner
-                                        | kCALayerMaxXMaxYCorner;
-  }
-
-  return true;
-}
-
 static RCTBorderStyle RCTBorderStyleFromBorderStyle(BorderStyle borderStyle)
 {
   switch (borderStyle) {
@@ -1134,8 +1032,9 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   }
 #endif
 
-  RCTLayerCornerConfiguration layerCornerConfiguration;
-  const bool layerCornersAreRepresentable = RCTGetLayerCornerConfiguration(borderMetrics, layerCornerConfiguration);
+  const std::optional<RCTLayerCornerConfiguration> layerCornerConfiguration =
+      RCTGetLayerCornerConfiguration(borderMetrics);
+  const bool layerCornersAreRepresentable = layerCornerConfiguration.has_value();
 
   const bool useCoreAnimationBorderRendering =
       borderMetrics.borderColors.isUniform() && borderMetrics.borderWidths.isUniform() &&
@@ -1181,9 +1080,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     layer.borderWidth = (CGFloat)borderMetrics.borderWidths.left;
     UIColor *borderColor = RCTUIColorFromSharedColor(borderMetrics.borderColors.left);
     layer.borderColor = borderColor.CGColor;
-    layer.cornerRadius = layerCornerConfiguration.cornerRadius;
-    layer.maskedCorners = layerCornerConfiguration.maskedCorners;
-    layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
+    RCTApplyLayerCornerConfiguration(layer, *layerCornerConfiguration);
   } else {
     if (!_borderLayer) {
       CALayer *borderLayer = [CALayer new];
@@ -1223,7 +1120,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     _outlineLayer.frame = CGRectInset(
         layer.bounds, -_props->outlineOffset - _props->outlineWidth, -_props->outlineOffset - _props->outlineWidth);
 
-    if (layerCornersAreRepresentable && layerCornerConfiguration.cornerRadius == 0) {
+    if (layerCornersAreRepresentable && layerCornerConfiguration->cornerRadius == 0) {
       UIColor *outlineColor = RCTUIColorFromSharedColor(_props->outlineColor);
       _outlineLayer.borderWidth = _props->outlineWidth;
       _outlineLayer.borderColor = outlineColor.CGColor;
@@ -1401,9 +1298,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     BOOL clipToPaddingBox = ReactNativeFeatureFlags::enableIOSViewClipToPaddingBox();
     if (!clipToPaddingBox) {
       if (layerCornersAreRepresentable) {
-        currentContainerView.layer.cornerRadius = layerCornerConfiguration.cornerRadius;
-        currentContainerView.layer.maskedCorners = layerCornerConfiguration.maskedCorners;
-        currentContainerView.layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
+        RCTApplyLayerCornerConfiguration(currentContainerView.layer, *layerCornerConfiguration);
       } else {
         CALayer *maskLayer =
             [self createMaskLayer:self.bounds
@@ -1439,9 +1334,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
                                                      RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths))];
       currentContainerView.layer.mask = maskLayer;
     } else {
-      currentContainerView.layer.cornerRadius = layerCornerConfiguration.cornerRadius;
-      currentContainerView.layer.maskedCorners = layerCornerConfiguration.maskedCorners;
-      currentContainerView.layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
+      RCTApplyLayerCornerConfiguration(currentContainerView.layer, *layerCornerConfiguration);
     }
   }
 }
@@ -1453,13 +1346,9 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   // Bounds is needed here to account for scaling transforms properly and ensure
   // we do not scale twice
   layer.frame = CGRectMake(0, 0, self.layer.bounds.size.width, self.layer.bounds.size.height);
-  RCTLayerCornerConfiguration cornerConfiguration;
-  const bool cornersAreRepresentable = RCTGetLayerCornerConfiguration(borderMetrics, cornerConfiguration);
-  if (cornersAreRepresentable) {
+  if (const auto cornerConfiguration = RCTGetLayerCornerConfiguration(borderMetrics)) {
     layer.mask = nil;
-    layer.cornerRadius = cornerConfiguration.cornerRadius;
-    layer.maskedCorners = cornerConfiguration.maskedCorners;
-    layer.cornerCurve = CornerCurveFromBorderCurve(cornerConfiguration.cornerCurve);
+    RCTApplyLayerCornerConfiguration(layer, *cornerConfiguration);
   } else {
     CAShapeLayer *maskLayer = [self
         createMaskLayer:self.bounds
