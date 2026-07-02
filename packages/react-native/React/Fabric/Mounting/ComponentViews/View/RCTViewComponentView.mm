@@ -867,6 +867,98 @@ static CALayerCornerCurve CornerCurveFromBorderCurve(BorderCurve borderCurve)
   }
 }
 
+struct RCTLayerCornerConfiguration {
+  CGFloat cornerRadius{0};
+  CACornerMask maskedCorners{0};
+  BorderCurve cornerCurve{BorderCurve::Circular};
+  bool hasRoundedCorner{false};
+};
+
+static bool RCTUpdateLayerCornerConfiguration(
+    const CornerRadii &cornerRadii,
+    BorderCurve cornerCurve,
+    CACornerMask cornerMask,
+    RCTLayerCornerConfiguration &cornerConfiguration)
+{
+  if (cornerRadii.horizontal != cornerRadii.vertical) {
+    return false;
+  }
+
+  if (cornerRadii.horizontal == 0) {
+    return true;
+  }
+
+  CGFloat cornerRadius = (CGFloat)cornerRadii.horizontal;
+  if (cornerConfiguration.hasRoundedCorner) {
+    if (cornerConfiguration.cornerRadius != cornerRadius) {
+      return false;
+    }
+
+    if (cornerConfiguration.cornerCurve != cornerCurve) {
+      return false;
+    }
+  } else {
+    cornerConfiguration.cornerRadius = cornerRadius;
+    cornerConfiguration.cornerCurve = cornerCurve;
+    cornerConfiguration.hasRoundedCorner = true;
+  }
+
+  cornerConfiguration.maskedCorners |= cornerMask;
+  return true;
+}
+
+static bool RCTGetLayerCornerConfiguration(
+    const BorderMetrics &borderMetrics,
+    RCTLayerCornerConfiguration &cornerConfiguration)
+{
+  cornerConfiguration = RCTLayerCornerConfiguration{};
+
+  bool topLeftIsRepresentable = RCTUpdateLayerCornerConfiguration(
+      borderMetrics.borderRadii.topLeft,
+      borderMetrics.borderCurves.topLeft,
+      kCALayerMinXMinYCorner,
+      cornerConfiguration);
+  if (!topLeftIsRepresentable) {
+    return false;
+  }
+
+  bool topRightIsRepresentable = RCTUpdateLayerCornerConfiguration(
+      borderMetrics.borderRadii.topRight,
+      borderMetrics.borderCurves.topRight,
+      kCALayerMaxXMinYCorner,
+      cornerConfiguration);
+  if (!topRightIsRepresentable) {
+    return false;
+  }
+
+  bool bottomLeftIsRepresentable = RCTUpdateLayerCornerConfiguration(
+      borderMetrics.borderRadii.bottomLeft,
+      borderMetrics.borderCurves.bottomLeft,
+      kCALayerMinXMaxYCorner,
+      cornerConfiguration);
+  if (!bottomLeftIsRepresentable) {
+    return false;
+  }
+
+  bool bottomRightIsRepresentable = RCTUpdateLayerCornerConfiguration(
+      borderMetrics.borderRadii.bottomRight,
+      borderMetrics.borderCurves.bottomRight,
+      kCALayerMaxXMaxYCorner,
+      cornerConfiguration);
+  if (!bottomRightIsRepresentable) {
+    return false;
+  }
+
+  if (!cornerConfiguration.hasRoundedCorner) {
+    cornerConfiguration.maskedCorners = kCALayerMinXMinYCorner
+                                        | kCALayerMaxXMinYCorner
+                                        | kCALayerMinXMaxYCorner
+                                        | kCALayerMaxXMaxYCorner;
+  }
+
+  return true;
+}
+
 static RCTBorderStyle RCTBorderStyleFromBorderStyle(BorderStyle borderStyle)
 {
   switch (borderStyle) {
@@ -995,7 +1087,6 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   }
 
   const auto borderMetrics = _props->resolveBorderMetrics(_layoutMetrics);
-  BOOL const borderRadiiCircular = areBorderRadiiCircular(borderMetrics.borderRadii);
 
   // Stage 1. Shadow Path
   BOOL const layerHasShadow = layer.shadowOpacity > 0 && CGColorGetAlpha(layer.shadowColor) > 0;
@@ -1042,10 +1133,14 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     [self setHoverStyle:hoverStyle];
   }
 #endif
+
+  RCTLayerCornerConfiguration layerCornerConfiguration;
+  const bool layerCornersAreRepresentable = RCTGetLayerCornerConfiguration(borderMetrics, layerCornerConfiguration);
+
   const bool useCoreAnimationBorderRendering =
       borderMetrics.borderColors.isUniform() && borderMetrics.borderWidths.isUniform() &&
       borderMetrics.borderStyles.isUniform() && borderMetrics.borderStyles.left == BorderStyle::Solid &&
-      borderRadiiCircular &&
+      layerCornersAreRepresentable &&
       (
           // iOS draws borders in front of the content whereas CSS draws them behind
           // the content. For this reason, only use iOS border drawing when clipping
@@ -1086,8 +1181,9 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     layer.borderWidth = (CGFloat)borderMetrics.borderWidths.left;
     UIColor *borderColor = RCTUIColorFromSharedColor(borderMetrics.borderColors.left);
     layer.borderColor = borderColor.CGColor;
-    layer.cornerRadius = (CGFloat)borderMetrics.borderRadii.topLeft.horizontal;
-    layer.cornerCurve = CornerCurveFromBorderCurve(borderMetrics.borderCurves.topLeft);
+    layer.cornerRadius = layerCornerConfiguration.cornerRadius;
+    layer.maskedCorners = layerCornerConfiguration.maskedCorners;
+    layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
   } else {
     if (!_borderLayer) {
       CALayer *borderLayer = [CALayer new];
@@ -1127,7 +1223,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
     _outlineLayer.frame = CGRectInset(
         layer.bounds, -_props->outlineOffset - _props->outlineWidth, -_props->outlineOffset - _props->outlineWidth);
 
-    if (borderRadiiCircular && borderMetrics.borderRadii.topLeft.horizontal == 0) {
+    if (layerCornersAreRepresentable && layerCornerConfiguration.cornerRadius == 0) {
       UIColor *outlineColor = RCTUIColorFromSharedColor(_props->outlineColor);
       _outlineLayer.borderWidth = _props->outlineWidth;
       _outlineLayer.borderColor = outlineColor.CGColor;
@@ -1299,24 +1395,28 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   }
 
   // clipping
-  self.currentContainerView.layer.mask = nil;
-  if (self.currentContainerView.clipsToBounds) {
+  UIView *currentContainerView = self.currentContainerView;
+  currentContainerView.layer.mask = nil;
+  if (currentContainerView.clipsToBounds) {
     BOOL clipToPaddingBox = ReactNativeFeatureFlags::enableIOSViewClipToPaddingBox();
     if (!clipToPaddingBox) {
-      if (borderRadiiCircular) {
-        self.currentContainerView.layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
+      if (layerCornersAreRepresentable) {
+        currentContainerView.layer.cornerRadius = layerCornerConfiguration.cornerRadius;
+        currentContainerView.layer.maskedCorners = layerCornerConfiguration.maskedCorners;
+        currentContainerView.layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
       } else {
         CALayer *maskLayer =
             [self createMaskLayer:self.bounds
                      cornerInsets:RCTGetCornerInsets(
                                       RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii), UIEdgeInsetsZero)];
-        self.currentContainerView.layer.mask = maskLayer;
+        currentContainerView.layer.cornerRadius = 0;
+        currentContainerView.layer.mask = maskLayer;
       }
 
-      if (!borderRadiiCircular &&
+      if (!layerCornersAreRepresentable &&
           (borderMetrics.borderColors.left || borderMetrics.borderColors.right || borderMetrics.borderColors.top ||
            borderMetrics.borderColors.bottom)) {
-        for (UIView *subview in self.currentContainerView.subviews) {
+        for (UIView *subview in currentContainerView.subviews) {
           if ([subview isKindOfClass:[UIImageView class]]) {
             RCTCornerInsets cornerInsets = RCTGetCornerInsets(
                 RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
@@ -1332,14 +1432,16 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
       }
     } else if (
         !borderMetrics.borderWidths.isUniform() || borderMetrics.borderWidths.left != 0 ||
-        !borderRadiiCircular) {
+        !layerCornersAreRepresentable) {
       CALayer *maskLayer = [self createMaskLayer:RCTCGRectFromRect(_layoutMetrics.getPaddingFrame())
                                     cornerInsets:RCTGetCornerInsets(
                                                      RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii),
                                                      RCTUIEdgeInsetsFromEdgeInsets(borderMetrics.borderWidths))];
-      self.currentContainerView.layer.mask = maskLayer;
+      currentContainerView.layer.mask = maskLayer;
     } else {
-      self.currentContainerView.layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
+      currentContainerView.layer.cornerRadius = layerCornerConfiguration.cornerRadius;
+      currentContainerView.layer.maskedCorners = layerCornerConfiguration.maskedCorners;
+      currentContainerView.layer.cornerCurve = CornerCurveFromBorderCurve(layerCornerConfiguration.cornerCurve);
     }
   }
 }
@@ -1351,10 +1453,13 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   // Bounds is needed here to account for scaling transforms properly and ensure
   // we do not scale twice
   layer.frame = CGRectMake(0, 0, self.layer.bounds.size.width, self.layer.bounds.size.height);
-  if (areBorderRadiiCircular(borderMetrics.borderRadii)) {
+  RCTLayerCornerConfiguration cornerConfiguration;
+  const bool cornersAreRepresentable = RCTGetLayerCornerConfiguration(borderMetrics, cornerConfiguration);
+  if (cornersAreRepresentable) {
     layer.mask = nil;
-    layer.cornerRadius = borderMetrics.borderRadii.topLeft.horizontal;
-    layer.cornerCurve = CornerCurveFromBorderCurve(borderMetrics.borderCurves.topLeft);
+    layer.cornerRadius = cornerConfiguration.cornerRadius;
+    layer.maskedCorners = cornerConfiguration.maskedCorners;
+    layer.cornerCurve = CornerCurveFromBorderCurve(cornerConfiguration.cornerCurve);
   } else {
     CAShapeLayer *maskLayer = [self
         createMaskLayer:self.bounds
@@ -1721,6 +1826,7 @@ static NSString *RCTRecursiveAccessibilityLabel(UIView *view)
   // corner
   destinationView.layer.cornerRadius = sourceView.layer.cornerRadius;
   sourceView.layer.cornerRadius = 0;
+  destinationView.layer.maskedCorners = sourceView.layer.maskedCorners;
   destinationView.layer.cornerCurve = sourceView.layer.cornerCurve;
 
   // custom layers
