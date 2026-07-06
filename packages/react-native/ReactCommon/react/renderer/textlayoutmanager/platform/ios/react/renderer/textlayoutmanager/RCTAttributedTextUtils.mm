@@ -331,6 +331,14 @@ NSMutableDictionary<NSAttributedStringKey, id> *RCTNSTextAttributesFromTextAttri
     attributes[NSShadowAttributeName] = shadow;
   }
 
+  // We don't use NSStrokeWidthAttributeName because it centers the stroke on the text path
+  // Instead, we do custom two-pass rendering to get true outer stroke
+  if (!isnan(textAttributes.textStrokeWidth) && textAttributes.textStrokeWidth > 0) {
+    UIColor *strokeColorToUse = RCTUIColorFromSharedColor(textAttributes.textStrokeColor) ?: effectiveForegroundColor;
+    attributes[@"RCTTextStrokeWidth"] = @(textAttributes.textStrokeWidth);
+    attributes[@"RCTTextStrokeColor"] = strokeColorToUse;
+  }
+
   // Special
   if (textAttributes.isHighlighted.value_or(false)) {
     attributes[RCTAttributedStringIsHighlightedAttributeName] = @YES;
