@@ -354,7 +354,7 @@ static void RCTPerformMountInstructions(
   if (!view) {
     // this view was probably collapsed out
     RCTLogWarn(@"measure cannot find view with tag #%ld", (long)reactTag);
-    callback({});
+    callback(folly::dynamic::array(0.f,0.f,0.f,0.f,0.f,0.f));
     return;
   }
 
