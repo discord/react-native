@@ -136,7 +136,9 @@ inline static UIFont *RCTEffectiveFontFromTextAttributes(const TextAttributes &t
   return RCTFontWithFontProperties(fontProperties);
 }
 
-inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(const TextAttributes &textAttributes)
+inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(
+    const TextAttributes &textAttributes,
+    NSMutableDictionary<NSAttributedStringKey, id> *attributes)
 {
   UIColor *effectiveForegroundColor = RCTUIColorFromSharedColor(textAttributes.foregroundColor) ?: [UIColor blackColor];
 
@@ -151,40 +153,67 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(const TextA
 
     if ([cgColors count] > 0) {
       BOOL isClampMode = textAttributes.gradientMode.value_or("") == "clamp";
-      if (!isClampMode) {
-        // Mirror mode (default) duplicates the first color at the end.
-        [cgColors addObject:cgColors[0]];
-      }
-
-      CAGradientLayer *gradient = [CAGradientLayer layer];
-      CGFloat patternWidth =
-          (!isnan(textAttributes.gradientWidth) && textAttributes.gradientWidth > 0) ? textAttributes.gradientWidth : 100;
-      CGFloat lineHeight = !isnan(textAttributes.lineHeight)
-          ? textAttributes.lineHeight
-          : (!isnan(textAttributes.fontSize) ? textAttributes.fontSize : 14);
-      CGFloat height = lineHeight * RCTEffectiveFontSizeMultiplierFromTextAttributes(textAttributes);
-      gradient.frame = CGRectMake(0, 0, patternWidth, height);
-      gradient.colors = cgColors;
-
       CGFloat angle = !isnan(textAttributes.gradientAngle) ? textAttributes.gradientAngle : 0.0;
-      CGFloat radians = angle * M_PI / 180.0;
 
-      CGFloat startX = 0.5 - 0.5 * cos(radians);
-      CGFloat startY = 0.5 - 0.5 * sin(radians);
-      CGFloat endX = 0.5 + 0.5 * cos(radians);
-      CGFloat endY = 0.5 + 0.5 * sin(radians);
+      if (isClampMode) {
+        // Clamp mode matches Android's Shader.TileMode.CLAMP. Rather than tiling a pattern image
+        // (which wraps vertically and leaves descenders re-tiled), the fill is drawn by
+        // RCTTextLayoutManager as a single glyph-clipped gradient that clamps to its edge colors.
+        // Carry the gradient parameters as attributes for that custom draw path, and keep a solid
+        // fallback foreground (the last/edge color) so measurement and any non-custom draw path
+        // remain correct.
+        NSArray *gradientColors = cgColors;
+        if (!isnan(textAttributes.opacity)) {
+          NSMutableArray *fadedColors = [NSMutableArray arrayWithCapacity:cgColors.count];
+          for (id cgColor in cgColors) {
+            CGColorRef color = (__bridge CGColorRef)cgColor;
+            CGColorRef fadedColor =
+                CGColorCreateCopyWithAlpha(color, CGColorGetAlpha(color) * textAttributes.opacity);
+            [fadedColors addObject:(__bridge id)fadedColor];
+            CGColorRelease(fadedColor);
+          }
+          gradientColors = fadedColors;
+        }
 
-      gradient.startPoint = CGPointMake(startX, startY);
-      gradient.endPoint = CGPointMake(endX, endY);
+        if (attributes != nil) {
+          attributes[@"RCTTextGradientColors"] = gradientColors;
+          attributes[@"RCTTextGradientAngle"] = @(angle);
+        }
 
-      UIGraphicsImageRenderer *renderer =
-          [[UIGraphicsImageRenderer alloc] initWithSize:gradient.frame.size];
-      UIImage *gradientImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *rendererContext) {
-        [gradient renderInContext:rendererContext.CGContext];
-      }];
+        effectiveForegroundColor = [UIColor colorWithCGColor:(__bridge CGColorRef)cgColors.lastObject];
+      } else {
+        // Mirror mode (default) duplicates the first color at the end and tiles a pattern image.
+        [cgColors addObject:cgColors[0]];
 
-      if (gradientImage) {
-        effectiveForegroundColor = [UIColor colorWithPatternImage:gradientImage];
+        CAGradientLayer *gradient = [CAGradientLayer layer];
+        CGFloat patternWidth = (!isnan(textAttributes.gradientWidth) && textAttributes.gradientWidth > 0)
+            ? textAttributes.gradientWidth
+            : 100;
+        CGFloat lineHeight = !isnan(textAttributes.lineHeight)
+            ? textAttributes.lineHeight
+            : (!isnan(textAttributes.fontSize) ? textAttributes.fontSize : 14);
+        CGFloat height = lineHeight * RCTEffectiveFontSizeMultiplierFromTextAttributes(textAttributes);
+        gradient.frame = CGRectMake(0, 0, patternWidth, height);
+        gradient.colors = cgColors;
+
+        CGFloat radians = angle * M_PI / 180.0;
+
+        CGFloat startX = 0.5 - 0.5 * cos(radians);
+        CGFloat startY = 0.5 - 0.5 * sin(radians);
+        CGFloat endX = 0.5 + 0.5 * cos(radians);
+        CGFloat endY = 0.5 + 0.5 * sin(radians);
+
+        gradient.startPoint = CGPointMake(startX, startY);
+        gradient.endPoint = CGPointMake(endX, endY);
+
+        UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:gradient.frame.size];
+        UIImage *gradientImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *rendererContext) {
+          [gradient renderInContext:rendererContext.CGContext];
+        }];
+
+        if (gradientImage) {
+          effectiveForegroundColor = [UIColor colorWithPatternImage:gradientImage];
+        }
       }
     }
   }
@@ -221,7 +250,7 @@ NSMutableDictionary<NSAttributedStringKey, id> *RCTNSTextAttributesFromTextAttri
   }
 
   // Colors
-  UIColor *effectiveForegroundColor = RCTEffectiveForegroundColorFromTextAttributes(textAttributes);
+  UIColor *effectiveForegroundColor = RCTEffectiveForegroundColorFromTextAttributes(textAttributes, attributes);
 
   if (textAttributes.foregroundColor || !isnan(textAttributes.opacity) ||
       textAttributes.gradientColors.has_value()) {

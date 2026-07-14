@@ -126,59 +126,135 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
                            }
                          }];
   }
-  if (strokeWidth > 0 && strokeColor) {
+
+  // Clamp-mode gradient fill parameters (see RCTAttributedTextUtils.mm). When present, the fill is
+  // drawn as a single glyph-clipped gradient that clamps to its edge colors - the iOS equivalent of
+  // Android's Shader.TileMode.CLAMP - instead of the tiled pattern image used for mirror mode.
+  __block NSArray *gradientColors = nil;
+  __block CGFloat gradientAngle = 0.0;
+  [textStorage enumerateAttribute:@"RCTTextGradientColors"
+                          inRange:characterRange
+                          options:0
+                       usingBlock:^(id value, NSRange range, BOOL *stop) {
+                         if ([value isKindOfClass:[NSArray class]] && [(NSArray *)value count] > 0) {
+                           gradientColors = value;
+                           *stop = YES;
+                         }
+                       }];
+  if (gradientColors != nil) {
+    [textStorage enumerateAttribute:@"RCTTextGradientAngle"
+                            inRange:characterRange
+                            options:0
+                         usingBlock:^(id value, NSRange range, BOOL *stop) {
+                           if ([value isKindOfClass:[NSNumber class]]) {
+                             gradientAngle = [value floatValue];
+                             *stop = YES;
+                           }
+                         }];
+  }
+
+  BOOL hasStroke = (strokeWidth > 0 && strokeColor != nil);
+  BOOL hasGradientFill = (gradientColors != nil);
+
+  if (hasStroke || hasGradientFill) {
     CGContextRef context = UIGraphicsGetCurrentContext();
-    CGContextSetLineWidth(context, strokeWidth);
-    CGContextSetLineJoin(context, kCGLineJoinRound);
-    CGContextSetLineCap(context, kCGLineCapRound);
 
     // Shift glyphs by strokeWidth/2 when there's room so the outward stroke fits; otherwise
     // center whatever slack is left. `_measureTextStorage:` grew the returned size by
     // strokeWidth, so `frame.size` is already inflated - `frame.size - strokeWidth` recovers
     // the natural text size and `viewBounds - frame + strokeWidth` is the slack around it.
-    CGFloat slackX = viewBounds.size.width - frame.size.width + strokeWidth;
-    CGFloat slackY = viewBounds.size.height - frame.size.height + strokeWidth;
-    CGFloat strokeShiftX =
-        (slackX <= 0) ? 0 : (slackX >= strokeWidth ? strokeWidth / 2.0 : slackX / 2.0);
-    CGFloat strokeShiftY =
-        (slackY <= 0) ? 0 : (slackY >= strokeWidth ? strokeWidth / 2.0 : slackY / 2.0);
+    // With no stroke both shifts are 0, so the fill lands exactly where drawGlyphsForGlyphRange
+    // would have placed it.
+    CGFloat strokeShiftX = 0;
+    CGFloat strokeShiftY = 0;
+    if (hasStroke) {
+      CGFloat slackX = viewBounds.size.width - frame.size.width + strokeWidth;
+      CGFloat slackY = viewBounds.size.height - frame.size.height + strokeWidth;
+      strokeShiftX = (slackX <= 0) ? 0 : (slackX >= strokeWidth ? strokeWidth / 2.0 : slackX / 2.0);
+      strokeShiftY = (slackY <= 0) ? 0 : (slackY >= strokeWidth ? strokeWidth / 2.0 : slackY / 2.0);
 
-    // PASS 1: Draw stroke outline
+      // PASS 1: Draw stroke outline
+      CGContextSetLineWidth(context, strokeWidth);
+      CGContextSetLineJoin(context, kCGLineJoinRound);
+      CGContextSetLineCap(context, kCGLineCapRound);
+
+      CGContextSaveGState(context);
+      CGContextSetTextDrawingMode(context, kCGTextStroke);
+
+      NSMutableAttributedString *strokeText = [textStorage mutableCopy];
+      [strokeText addAttribute:NSForegroundColorAttributeName value:strokeColor range:characterRange];
+
+      CGContextSetTextMatrix(context, CGAffineTransformIdentity);
+      CGContextTranslateCTM(
+          context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
+      CGContextScaleCTM(context, 1.0, -1.0);
+
+      CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)strokeText);
+      CGMutablePathRef path = CGPathCreateMutable();
+      CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
+      CTFrameRef ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+      CTFrameDraw(ctFrame, context);
+      CFRelease(ctFrame);
+      CFRelease(path);
+      CFRelease(framesetter);
+      CGContextRestoreGState(context);
+    }
+
+    // PASS 2: Draw fill on top, in the same flipped CoreText space as the stroke pass.
     CGContextSaveGState(context);
-    CGContextSetTextDrawingMode(context, kCGTextStroke);
-
-    NSMutableAttributedString *strokeText = [textStorage mutableCopy];
-    [strokeText addAttribute:NSForegroundColorAttributeName value:strokeColor range:characterRange];
+    CGContextSetTextDrawingMode(context, hasGradientFill ? kCGTextClip : kCGTextFill);
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(
         context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
     CGContextScaleCTM(context, 1.0, -1.0);
 
-    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)strokeText);
+    CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)textStorage);
     CGMutablePathRef path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
     CTFrameRef ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
+    // For a gradient fill this only accumulates the glyph outlines into the clip; for a solid
+    // fill it draws the glyphs directly.
     CTFrameDraw(ctFrame, context);
-    CFRelease(ctFrame);
-    CFRelease(path);
-    CFRelease(framesetter);
-    CGContextRestoreGState(context);
 
-    // PASS 2: Draw fill on top
-    CGContextSaveGState(context);
-    CGContextSetTextDrawingMode(context, kCGTextFill);
+    if (hasGradientFill) {
+      // `usedRectForTextContainer` includes the descent, so sizing the gradient axis to it
+      // guarantees descenders (which extend below the last stop) are covered by the clamped edge
+      // color rather than being left uncovered or re-tiled.
+      CGRect glyphBounds = [layoutManager usedRectForTextContainer:textContainer];
 
-    CGContextSetTextMatrix(context, CGAffineTransformIdentity);
-    CGContextTranslateCTM(
-        context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
-    CGContextScaleCTM(context, 1.0, -1.0);
+      // Map the angle to start/end points across the glyph bounds. Coordinates are in the flipped
+      // CoreText space established above (origin bottom-left, y increasing upward), so the visual
+      // top of the text sits at the highest y. This matches the normalized start/end convention
+      // used for mirror mode in RCTAttributedTextUtils.mm.
+      CGFloat radians = gradientAngle * M_PI / 180.0;
+      CGFloat startNormX = 0.5 - 0.5 * cos(radians);
+      CGFloat startNormY = 0.5 - 0.5 * sin(radians);
+      CGFloat endNormX = 0.5 + 0.5 * cos(radians);
+      CGFloat endNormY = 0.5 + 0.5 * sin(radians);
 
-    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)textStorage);
-    path = CGPathCreateMutable();
-    CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
-    ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
-    CTFrameDraw(ctFrame, context);
+      CGFloat topY = frame.size.height - glyphBounds.origin.y;
+      CGPoint start = CGPointMake(
+          glyphBounds.origin.x + startNormX * glyphBounds.size.width, topY - startNormY * glyphBounds.size.height);
+      CGPoint end = CGPointMake(
+          glyphBounds.origin.x + endNormX * glyphBounds.size.width, topY - endNormY * glyphBounds.size.height);
+
+      CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+      CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (CFArrayRef)gradientColors, NULL);
+      if (gradient != NULL) {
+        // kCGGradientDrawsBefore/AfterStartLocation clamps pixels beyond the gradient ends to the
+        // edge colors - the iOS equivalent of Shader.TileMode.CLAMP.
+        CGContextDrawLinearGradient(
+            context,
+            gradient,
+            start,
+            end,
+            kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation);
+        CGGradientRelease(gradient);
+      }
+      CGColorSpaceRelease(colorSpace);
+    }
+
     CFRelease(ctFrame);
     CFRelease(path);
     CFRelease(framesetter);
