@@ -52,6 +52,23 @@ BOOL RCTIsAttributedStringEffectivelySame(
     NSDictionary<NSAttributedStringKey, id> *insensitiveAttributes,
     const facebook::react::TextAttributes &baseTextAttributes);
 
+/*
+ * Normalized [0, 1] start/end points (top-left origin, y increasing downward) describing the
+ * gradient line for `angleDegrees`, following the same convention as `CAGradientLayer`: 0deg runs
+ * left->right, 90deg runs top->bottom, and increasing angles rotate from there. Callers map these
+ * onto their target rect (e.g. the layer frame, or glyph bounds in a flipped context). Sharing this
+ * keeps text gradient direction identical across mirror and clamp modes and across the two files
+ * that draw them.
+ */
+static inline void RCTNormalizedGradientPointsForAngle(CGFloat angleDegrees, CGPoint *outStart, CGPoint *outEnd)
+{
+  CGFloat radians = angleDegrees * M_PI / 180.0;
+  CGFloat halfCos = 0.5 * cos(radians);
+  CGFloat halfSin = 0.5 * sin(radians);
+  *outStart = CGPointMake(0.5 - halfCos, 0.5 - halfSin);
+  *outEnd = CGPointMake(0.5 + halfCos, 0.5 + halfSin);
+}
+
 static inline NSData *RCTWrapEventEmitter(const facebook::react::SharedEventEmitter &eventEmitter)
 {
   auto eventEmitterPtr = new std::weak_ptr<const facebook::react::EventEmitter>(eventEmitter);

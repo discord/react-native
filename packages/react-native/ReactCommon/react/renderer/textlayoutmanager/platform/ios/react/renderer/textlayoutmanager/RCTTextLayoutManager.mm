@@ -56,6 +56,27 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
   return strokeWidth;
 }
 
+// Returns the first value for `attributeName` within `range` that is a kind of `expectedClass`, or
+// nil if there is none. Used to read the custom stroke/gradient attributes off the text storage.
+static id RCTFirstTextAttributeValue(
+    NSAttributedString *attributedString,
+    NSAttributedStringKey attributeName,
+    NSRange range,
+    Class expectedClass)
+{
+  __block id result = nil;
+  [attributedString enumerateAttribute:attributeName
+                               inRange:range
+                               options:0
+                            usingBlock:^(id value, NSRange valueRange, BOOL *stop) {
+                              if ([value isKindOfClass:expectedClass]) {
+                                result = value;
+                                *stop = YES;
+                              }
+                            }];
+  return result;
+}
+
 // Draws `attributedString` with CoreText in the flipped coordinate space shared by the custom
 // stroke and gradient-fill passes, using `drawingMode` (stroke / fill / clip). The caller owns the
 // surrounding graphics-state save/restore: a clip accumulated via kCGTextClip must outlive this
@@ -141,43 +162,23 @@ static void RCTDrawAttributedStringInFlippedContext(
   NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
 
   CGFloat strokeWidth = getStrokeWidth(textStorage);
-  __block UIColor *strokeColor = nil;
-  if (strokeWidth > 0) {
-    [textStorage enumerateAttribute:@"RCTTextStrokeColor"
-                            inRange:characterRange
-                            options:0
-                         usingBlock:^(id value, NSRange range, BOOL *stop) {
-                           if ([value isKindOfClass:[UIColor class]]) {
-                             strokeColor = value;
-                             *stop = YES;
-                           }
-                         }];
-  }
+  UIColor *strokeColor = strokeWidth > 0
+      ? RCTFirstTextAttributeValue(textStorage, @"RCTTextStrokeColor", characterRange, [UIColor class])
+      : nil;
 
   // Clamp-mode gradient fill parameters (see RCTAttributedTextUtils.mm). When present, the fill is
   // drawn as a single glyph-clipped gradient that clamps to its edge colors - the iOS equivalent of
   // Android's Shader.TileMode.CLAMP - instead of the tiled pattern image used for mirror mode.
-  __block NSArray *gradientColors = nil;
-  __block CGFloat gradientAngle = 0.0;
-  [textStorage enumerateAttribute:@"RCTTextGradientColors"
-                          inRange:characterRange
-                          options:0
-                       usingBlock:^(id value, NSRange range, BOOL *stop) {
-                         if ([value isKindOfClass:[NSArray class]] && [(NSArray *)value count] > 0) {
-                           gradientColors = value;
-                           *stop = YES;
-                         }
-                       }];
+  NSArray *gradientColors =
+      RCTFirstTextAttributeValue(textStorage, @"RCTTextGradientColors", characterRange, [NSArray class]);
+  if (gradientColors.count == 0) {
+    gradientColors = nil;
+  }
+  CGFloat gradientAngle = 0.0;
   if (gradientColors != nil) {
-    [textStorage enumerateAttribute:@"RCTTextGradientAngle"
-                            inRange:characterRange
-                            options:0
-                         usingBlock:^(id value, NSRange range, BOOL *stop) {
-                           if ([value isKindOfClass:[NSNumber class]]) {
-                             gradientAngle = [value floatValue];
-                             *stop = YES;
-                           }
-                         }];
+    NSNumber *angleValue =
+        RCTFirstTextAttributeValue(textStorage, @"RCTTextGradientAngle", characterRange, [NSNumber class]);
+    gradientAngle = angleValue != nil ? angleValue.floatValue : 0.0;
   }
 
   BOOL hasStroke = (strokeWidth > 0 && strokeColor != nil);
@@ -235,21 +236,19 @@ static void RCTDrawAttributedStringInFlippedContext(
       // color rather than being left uncovered or re-tiled.
       CGRect glyphBounds = [layoutManager usedRectForTextContainer:textContainer];
 
-      // Map the angle to start/end points across the glyph bounds. Coordinates are in the flipped
-      // CoreText space established by the draw helper (origin bottom-left, y increasing upward), so
-      // the visual top of the text sits at the highest y. This matches the normalized start/end
-      // convention used for mirror mode in RCTAttributedTextUtils.mm.
-      CGFloat radians = gradientAngle * M_PI / 180.0;
-      CGFloat startNormX = 0.5 - 0.5 * cos(radians);
-      CGFloat startNormY = 0.5 - 0.5 * sin(radians);
-      CGFloat endNormX = 0.5 + 0.5 * cos(radians);
-      CGFloat endNormY = 0.5 + 0.5 * sin(radians);
+      // Same normalized start/end convention as mirror mode; mapped onto the glyph bounds. The
+      // normalized points use a top-left origin with y increasing downward, while the draw helper
+      // set up a flipped CoreText space (origin bottom-left, y increasing upward), so the y axis is
+      // flipped here (topY - normY * height) and the visual top of the text sits at the highest y.
+      CGPoint startNorm;
+      CGPoint endNorm;
+      RCTNormalizedGradientPointsForAngle(gradientAngle, &startNorm, &endNorm);
 
       CGFloat topY = frame.size.height - glyphBounds.origin.y;
       CGPoint start = CGPointMake(
-          glyphBounds.origin.x + startNormX * glyphBounds.size.width, topY - startNormY * glyphBounds.size.height);
+          glyphBounds.origin.x + startNorm.x * glyphBounds.size.width, topY - startNorm.y * glyphBounds.size.height);
       CGPoint end = CGPointMake(
-          glyphBounds.origin.x + endNormX * glyphBounds.size.width, topY - endNormY * glyphBounds.size.height);
+          glyphBounds.origin.x + endNorm.x * glyphBounds.size.width, topY - endNorm.y * glyphBounds.size.height);
 
       CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
       CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (CFArrayRef)gradientColors, NULL);

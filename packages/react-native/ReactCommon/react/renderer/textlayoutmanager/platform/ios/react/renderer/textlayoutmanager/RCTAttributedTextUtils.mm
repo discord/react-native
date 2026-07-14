@@ -196,15 +196,11 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(
         gradient.frame = CGRectMake(0, 0, patternWidth, height);
         gradient.colors = cgColors;
 
-        CGFloat radians = angle * M_PI / 180.0;
-
-        CGFloat startX = 0.5 - 0.5 * cos(radians);
-        CGFloat startY = 0.5 - 0.5 * sin(radians);
-        CGFloat endX = 0.5 + 0.5 * cos(radians);
-        CGFloat endY = 0.5 + 0.5 * sin(radians);
-
-        gradient.startPoint = CGPointMake(startX, startY);
-        gradient.endPoint = CGPointMake(endX, endY);
+        CGPoint startPoint;
+        CGPoint endPoint;
+        RCTNormalizedGradientPointsForAngle(angle, &startPoint, &endPoint);
+        gradient.startPoint = startPoint;
+        gradient.endPoint = endPoint;
 
         UIGraphicsImageRenderer *renderer = [[UIGraphicsImageRenderer alloc] initWithSize:gradient.frame.size];
         UIImage *gradientImage = [renderer imageWithActions:^(UIGraphicsImageRendererContext *rendererContext) {
