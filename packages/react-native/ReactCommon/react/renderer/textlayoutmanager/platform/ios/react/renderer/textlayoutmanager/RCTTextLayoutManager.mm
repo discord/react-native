@@ -42,7 +42,7 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
     return 0;
   }
   __block CGFloat strokeWidth = 0;
-  [attributedString enumerateAttribute:@"RCTTextStrokeWidth"
+  [attributedString enumerateAttribute:RCTTextStrokeWidthAttributeName
                                inRange:NSMakeRange(0, attributedString.length)
                                options:0
                             usingBlock:^(id value, NSRange range, BOOL *stop) {
@@ -163,23 +163,21 @@ static void RCTDrawAttributedStringInFlippedContext(
 
   CGFloat strokeWidth = getStrokeWidth(textStorage);
   UIColor *strokeColor = strokeWidth > 0
-      ? RCTFirstTextAttributeValue(textStorage, @"RCTTextStrokeColor", characterRange, [UIColor class])
+      ? RCTFirstTextAttributeValue(textStorage, RCTTextStrokeColorAttributeName, characterRange, [UIColor class])
       : nil;
 
   // Clamp-mode gradient fill parameters (see RCTAttributedTextUtils.mm). When present, the fill is
   // drawn as a single glyph-clipped gradient that clamps to its edge colors - the iOS equivalent of
   // Android's Shader.TileMode.CLAMP - instead of the tiled pattern image used for mirror mode.
   NSArray *gradientColors =
-      RCTFirstTextAttributeValue(textStorage, @"RCTTextGradientColors", characterRange, [NSArray class]);
+      RCTFirstTextAttributeValue(textStorage, RCTTextGradientColorsAttributeName, characterRange, [NSArray class]);
   if (gradientColors.count == 0) {
     gradientColors = nil;
   }
-  CGFloat gradientAngle = 0.0;
-  if (gradientColors != nil) {
-    NSNumber *angleValue =
-        RCTFirstTextAttributeValue(textStorage, @"RCTTextGradientAngle", characterRange, [NSNumber class]);
-    gradientAngle = angleValue != nil ? angleValue.floatValue : 0.0;
-  }
+  // `floatValue` on a nil NSNumber is 0, which is also the desired default when the angle is absent.
+  CGFloat gradientAngle =
+      [RCTFirstTextAttributeValue(textStorage, RCTTextGradientAngleAttributeName, characterRange, [NSNumber class])
+          floatValue];
 
   BOOL hasStroke = (strokeWidth > 0 && strokeColor != nil);
   BOOL hasGradientFill = (gradientColors != nil);
@@ -250,7 +248,12 @@ static void RCTDrawAttributedStringInFlippedContext(
       CGPoint end = CGPointMake(
           glyphBounds.origin.x + endNorm.x * glyphBounds.size.width, topY - endNorm.y * glyphBounds.size.height);
 
-      CGColorSpaceRef colorSpace = CGColorSpaceCreateDeviceRGB();
+      // Device RGB is immutable and shareable, so create it once rather than per draw.
+      static CGColorSpaceRef colorSpace;
+      static dispatch_once_t colorSpaceToken;
+      dispatch_once(&colorSpaceToken, ^{
+        colorSpace = CGColorSpaceCreateDeviceRGB();
+      });
       CGGradientRef gradient = CGGradientCreateWithColors(colorSpace, (CFArrayRef)gradientColors, NULL);
       if (gradient != NULL) {
         // kCGGradientDrawsBefore/AfterStartLocation clamps pixels beyond the gradient ends to the
@@ -263,7 +266,6 @@ static void RCTDrawAttributedStringInFlippedContext(
             kCGGradientDrawsBeforeStartLocation | kCGGradientDrawsAfterEndLocation);
         CGGradientRelease(gradient);
       }
-      CGColorSpaceRelease(colorSpace);
     }
 
     CGContextRestoreGState(context);

@@ -19,6 +19,15 @@ NSString *const RCTAttributedStringEventEmitterKey = @"EventEmitter";
 // String representation of either `role` or `accessibilityRole`
 NSString *const RCTTextAttributesAccessibilityRoleAttributeName = @"AccessibilityRole";
 
+// Private attribute keys used to carry parameters for the custom glyph-level draw passes in
+// RCTTextLayoutManager (outer stroke and clamp-mode gradient fill). Written in
+// RCTNSTextAttributesFromTextAttributes and read back at draw time; kept as shared constants so the
+// producer and consumer can't drift.
+NSString *const RCTTextStrokeWidthAttributeName = @"RCTTextStrokeWidth";
+NSString *const RCTTextStrokeColorAttributeName = @"RCTTextStrokeColor";
+NSString *const RCTTextGradientColorsAttributeName = @"RCTTextGradientColors";
+NSString *const RCTTextGradientAngleAttributeName = @"RCTTextGradientAngle";
+
 /*
  * Creates `NSTextAttributes` from given `facebook::react::TextAttributes`
  */

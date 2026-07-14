@@ -175,10 +175,8 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(
           gradientColors = fadedColors;
         }
 
-        if (attributes != nil) {
-          attributes[@"RCTTextGradientColors"] = gradientColors;
-          attributes[@"RCTTextGradientAngle"] = @(angle);
-        }
+        attributes[RCTTextGradientColorsAttributeName] = gradientColors;
+        attributes[RCTTextGradientAngleAttributeName] = @(angle);
 
         effectiveForegroundColor = [UIColor colorWithCGColor:(__bridge CGColorRef)cgColors.lastObject];
       } else {
@@ -355,8 +353,8 @@ NSMutableDictionary<NSAttributedStringKey, id> *RCTNSTextAttributesFromTextAttri
   // Instead, we do custom two-pass rendering to get true outer stroke
   if (!isnan(textAttributes.textStrokeWidth) && textAttributes.textStrokeWidth > 0) {
     UIColor *strokeColorToUse = RCTUIColorFromSharedColor(textAttributes.textStrokeColor) ?: effectiveForegroundColor;
-    attributes[@"RCTTextStrokeWidth"] = @(textAttributes.textStrokeWidth);
-    attributes[@"RCTTextStrokeColor"] = strokeColorToUse;
+    attributes[RCTTextStrokeWidthAttributeName] = @(textAttributes.textStrokeWidth);
+    attributes[RCTTextStrokeColorAttributeName] = strokeColorToUse;
   }
 
   // Special
