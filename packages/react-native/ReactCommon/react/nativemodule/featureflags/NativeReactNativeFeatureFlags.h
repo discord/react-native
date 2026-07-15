@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<3a4e198b27be6df0f2d707c60b635278>>
+ * @generated SignedSource<<f0ba07e827ec7a1cfcdbc6c7e6a45696>>
  */
 
 /**
@@ -77,6 +77,8 @@ class NativeReactNativeFeatureFlags
   bool enableFontScaleChangesUpdatingLayout(jsi::Runtime& runtime);
 
   bool enableIOSBorderBoxShadowPathByDefault(jsi::Runtime& runtime);
+
+  bool enableIOSBorderBoxShadowBackdrop(jsi::Runtime& runtime);
 
   bool enableIOSExperimentalAutoFocusImplementation(jsi::Runtime& runtime);
 

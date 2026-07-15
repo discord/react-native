@@ -13,6 +13,10 @@
 #import <react/renderer/core/Props.h>
 #import <react/renderer/core/State.h>
 
+namespace facebook::react {
+struct ShadowViewEnvironment;
+}
+
 NS_ASSUME_NONNULL_BEGIN
 
 /*
@@ -24,9 +28,11 @@ typedef NS_OPTIONS(NSInteger, RNComponentViewUpdateMask) {
   RNComponentViewUpdateMaskEventEmitter = 1 << 1,
   RNComponentViewUpdateMaskState = 1 << 2,
   RNComponentViewUpdateMaskLayoutMetrics = 1 << 3,
+  RNComponentViewUpdateMaskEnvironment = 1 << 4,
 
   RNComponentViewUpdateMaskAll = RNComponentViewUpdateMaskProps | RNComponentViewUpdateMaskEventEmitter |
-      RNComponentViewUpdateMaskState | RNComponentViewUpdateMaskLayoutMetrics
+      RNComponentViewUpdateMaskState | RNComponentViewUpdateMaskLayoutMetrics |
+      RNComponentViewUpdateMaskEnvironment
 };
 
 /*
@@ -91,6 +97,13 @@ typedef NS_OPTIONS(NSInteger, RNComponentViewUpdateMask) {
  */
 - (void)updateLayoutMetrics:(const facebook::react::LayoutMetrics &)layoutMetrics
            oldLayoutMetrics:(const facebook::react::LayoutMetrics &)oldLayoutMetrics;
+
+/*
+ * Called when rendering context derived from the mounted Fabric tree changes.
+ * The default implementation intentionally does nothing.
+ */
+- (void)updateEnvironment:(const facebook::react::ShadowViewEnvironment &)environment
+           oldEnvironment:(const facebook::react::ShadowViewEnvironment &)oldEnvironment;
 
 /*
  * Called when receiving a command

@@ -84,6 +84,8 @@ static void RCTPerformMountInstructions(
         [newChildComponentView updateState:newChildShadowView.state oldState:nullptr];
         [newChildComponentView updateLayoutMetrics:newChildShadowView.layoutMetrics
                                   oldLayoutMetrics:EmptyLayoutMetrics];
+        ShadowViewEnvironment emptyEnvironment{};
+        [newChildComponentView updateEnvironment:newChildShadowView.environment oldEnvironment:emptyEnvironment];
         [newChildComponentView finalizeUpdates:RNComponentViewUpdateMaskAll];
 
         [parentViewDescriptor.view mountChildComponentView:newChildComponentView index:mutation.index];
@@ -127,6 +129,12 @@ static void RCTPerformMountInstructions(
           [newChildComponentView updateLayoutMetrics:newChildShadowView.layoutMetrics
                                     oldLayoutMetrics:oldChildShadowView.layoutMetrics];
           mask |= RNComponentViewUpdateMaskLayoutMetrics;
+        }
+
+        if (oldChildShadowView.environment != newChildShadowView.environment) {
+          [newChildComponentView updateEnvironment:newChildShadowView.environment
+                                    oldEnvironment:oldChildShadowView.environment];
+          mask |= RNComponentViewUpdateMaskEnvironment;
         }
 
         if (mask != RNComponentViewUpdateMaskNone) {

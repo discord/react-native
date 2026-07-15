@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<d87b475d6c907f2026a501fb210b7fc4>>
+ * @generated SignedSource<<dea39d4a479eeb23b59d274a1d1a0c5b>>
  */
 
 /**
@@ -108,6 +108,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableIOSBorderBoxShadowPathByDefault() override {
+    return false;
+  }
+
+  bool enableIOSBorderBoxShadowBackdrop() override {
     return false;
   }
 

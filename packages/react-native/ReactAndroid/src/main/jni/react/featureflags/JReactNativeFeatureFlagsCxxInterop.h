@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c9e38024b670a65ffa77060023923b02>>
+ * @generated SignedSource<<f747d475f85097c7de19ea9f74aa80b4>>
  */
 
 /**
@@ -91,6 +91,9 @@ class JReactNativeFeatureFlagsCxxInterop
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableIOSBorderBoxShadowPathByDefault(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
+
+  static bool enableIOSBorderBoxShadowBackdrop(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableIOSExperimentalAutoFocusImplementation(

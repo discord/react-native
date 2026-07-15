@@ -21,6 +21,7 @@
 #import <React/RCTLayerCornerConfiguration.h>
 #import <React/RCTLinearGradient.h>
 #import <React/RCTLocalizedString.h>
+#import <React/RCTLog.h>
 #import <React/RCTRadialGradient.h>
 #import <react/debug/react_native_assert.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
@@ -37,10 +38,77 @@
 using namespace facebook::react;
 
 const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
+// The backplate must sit below the normal background so translucent content
+// blends over it while the backplate still occludes the shadow interior.
+const CGFloat SHADOW_BACKDROP_ZPOSITION = BACKGROUND_COLOR_ZPOSITION - 1.0f;
+
+static NSString *RCTShadowBackdropReasonString(ShadowBackdropReason reason)
+{
+  switch (reason) {
+    case ShadowBackdropReason::None:
+      return @"none";
+    case ShadowBackdropReason::EarlierSibling:
+      return @"earlier-sibling";
+    case ShadowBackdropReason::TranslucentAncestor:
+      return @"translucent-ancestor";
+    case ShadowBackdropReason::UnknownAncestor:
+      return @"unknown-ancestor";
+    case ShadowBackdropReason::VisualEffect:
+      return @"visual-effect";
+    case ShadowBackdropReason::RoundedAncestor:
+      return @"rounded-ancestor";
+    case ShadowBackdropReason::OutsideProvider:
+      return @"outside-provider";
+    case ShadowBackdropReason::DynamicColor:
+      return @"dynamic-color";
+  }
+
+  react_native_assert(false);
+  return @"invalid";
+}
+
+static BOOL RCTShadowBackdropColorIsConcreteOpaque(UIColor *color)
+{
+  UITraitCollection *lightTraits =
+      [UITraitCollection traitCollectionWithUserInterfaceStyle:UIUserInterfaceStyleLight];
+  UITraitCollection *darkTraits =
+      [UITraitCollection traitCollectionWithUserInterfaceStyle:UIUserInterfaceStyleDark];
+  UITraitCollection *highContrastTraits =
+      [UITraitCollection traitCollectionWithAccessibilityContrast:UIAccessibilityContrastHigh];
+  UITraitCollection *highContrastLightTraits =
+      [UITraitCollection traitCollectionWithTraitsFromCollections:@[ lightTraits, highContrastTraits ]];
+  UITraitCollection *highContrastDarkTraits =
+      [UITraitCollection traitCollectionWithTraitsFromCollections:@[ darkTraits, highContrastTraits ]];
+
+  UIColor *lightColor = [color resolvedColorWithTraitCollection:lightTraits];
+  UIColor *darkColor = [color resolvedColorWithTraitCollection:darkTraits];
+  UIColor *highContrastLightColor = [color resolvedColorWithTraitCollection:highContrastLightTraits];
+  UIColor *highContrastDarkColor = [color resolvedColorWithTraitCollection:highContrastDarkTraits];
+  CGColorRef lightCGColor = lightColor.CGColor;
+  CGColorRef darkCGColor = darkColor.CGColor;
+  CGColorRef highContrastLightCGColor = highContrastLightColor.CGColor;
+  CGColorRef highContrastDarkCGColor = highContrastDarkColor.CGColor;
+
+  // A provider has to remain the same opaque color for every supported trait.
+  // Otherwise the backplate could diverge from its ancestor after a trait change.
+  if (CGColorGetAlpha(lightCGColor) < 0.999 || CGColorGetAlpha(darkCGColor) < 0.999 ||
+      CGColorGetAlpha(highContrastLightCGColor) < 0.999 || CGColorGetAlpha(highContrastDarkCGColor) < 0.999) {
+    return NO;
+  }
+
+  return CGColorEqualToColor(lightCGColor, darkCGColor) &&
+      CGColorEqualToColor(lightCGColor, highContrastLightCGColor) &&
+      CGColorEqualToColor(lightCGColor, highContrastDarkCGColor);
+}
+
+@interface RCTViewComponentView ()
+- (void)invalidateLayer;
+@end
 
 @implementation RCTViewComponentView {
   UIColor *_backgroundColor;
   CALayer *_backgroundColorLayer;
+  CAShapeLayer *_shadowBackdropLayer;
   __weak CALayer *_borderLayer;
   CALayer *_outlineLayer;
   NSMutableArray<CALayer *> *_boxShadowLayers;
@@ -56,6 +124,11 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   NSMutableSet<NSString *> *_accessibilityOrderNativeIDs;
   NSMutableArray<NSObject *> *_accessibilityElements;
   RCTViewAccessibilityElement *_axElementDescribingSelf;
+  ShadowBackdrop _shadowBackdrop;
+  ShadowBackdropKind _lastShadowBackdropKind;
+  ShadowBackdropReason _lastShadowBackdropReason;
+  NSInteger _lastShadowBackdropProviderTag;
+  NSInteger _lastShadowBackdropBarrierTag;
 }
 
 #ifdef RCT_DYNAMIC_FRAMEWORKS
@@ -73,6 +146,10 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
     self.multipleTouchEnabled = YES;
     _useCustomContainerView = NO;
     _removeClippedSubviews = NO;
+    _lastShadowBackdropKind = ShadowBackdropKind::None;
+    _lastShadowBackdropReason = ShadowBackdropReason::None;
+    _lastShadowBackdropProviderTag = -1;
+    _lastShadowBackdropBarrierTag = -1;
   }
   return self;
 }
@@ -150,6 +227,7 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   } else {
     [self.currentContainerView insertSubview:childComponentView atIndex:index];
   }
+
 }
 
 - (void)unmountChildComponentView:(UIView<RCTComponentViewProtocol> *)childComponentView index:(NSInteger)index
@@ -554,6 +632,17 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   _eventEmitter = std::static_pointer_cast<const ViewEventEmitter>(eventEmitter);
 }
 
+- (void)updateEnvironment:(const ShadowViewEnvironment &)environment
+           oldEnvironment:(const ShadowViewEnvironment &)oldEnvironment
+{
+  if (oldEnvironment == environment) {
+    return;
+  }
+
+  _shadowBackdrop = environment.shadowBackdrop;
+  _needsInvalidateLayer = YES;
+}
+
 - (void)updateLayoutMetrics:(const LayoutMetrics &)layoutMetrics
            oldLayoutMetrics:(const LayoutMetrics &)oldLayoutMetrics
 {
@@ -599,12 +688,11 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
 {
   [super finalizeUpdates:updateMask];
   _useCustomContainerView = [self styleWouldClipOverflowInk];
-  if (!_needsInvalidateLayer) {
-    return;
+  if (_needsInvalidateLayer) {
+    _needsInvalidateLayer = NO;
+    [self invalidateLayer];
   }
 
-  _needsInvalidateLayer = NO;
-  [self invalidateLayer];
 }
 
 - (void)prepareForRecycle
@@ -626,6 +714,13 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   _removeClippedSubviews = NO;
   _reactSubviews = [NSMutableArray new];
   _accessibilityElements = [NSMutableArray new];
+  [_shadowBackdropLayer removeFromSuperlayer];
+  _shadowBackdropLayer = nil;
+  _shadowBackdrop = {};
+  _lastShadowBackdropKind = ShadowBackdropKind::None;
+  _lastShadowBackdropReason = ShadowBackdropReason::None;
+  _lastShadowBackdropProviderTag = -1;
+  _lastShadowBackdropBarrierTag = -1;
 }
 
 - (void)setPropKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN:(NSSet<NSString *> *_Nullable)props
@@ -823,6 +918,55 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   }
 }
 
+- (void)logShadowBackdrop:(const ShadowBackdrop &)shadowBackdrop
+{
+  if (_lastShadowBackdropKind == shadowBackdrop.kind &&
+      _lastShadowBackdropReason == shadowBackdrop.reason &&
+      _lastShadowBackdropProviderTag == shadowBackdrop.providerTag &&
+      _lastShadowBackdropBarrierTag == shadowBackdrop.barrierTag) {
+    return;
+  }
+
+  _lastShadowBackdropKind = shadowBackdrop.kind;
+  _lastShadowBackdropReason = shadowBackdrop.reason;
+  _lastShadowBackdropProviderTag = shadowBackdrop.providerTag;
+  _lastShadowBackdropBarrierTag = shadowBackdrop.barrierTag;
+
+  if (shadowBackdrop.kind != ShadowBackdropKind::Barrier) {
+    return;
+  }
+
+  NSString *reason = RCTShadowBackdropReasonString(shadowBackdrop.reason);
+  RCTLogInfo(
+      @"[HannoDebug][ShadowBackdrop] host=%ld result=barrier reason=%@ provider=%ld barrier=%ld",
+      (long)self.tag,
+      reason,
+      (long)shadowBackdrop.providerTag,
+      (long)shadowBackdrop.barrierTag);
+}
+
+- (void)updateShadowBackdropLayerWithColor:(UIColor *)color cornerInsets:(RCTCornerInsets)cornerInsets
+{
+  if (color == nil) {
+    [_shadowBackdropLayer removeFromSuperlayer];
+    _shadowBackdropLayer = nil;
+    return;
+  }
+
+  if (_shadowBackdropLayer == nil) {
+    _shadowBackdropLayer = [CAShapeLayer layer];
+    _shadowBackdropLayer.zPosition = SHADOW_BACKDROP_ZPOSITION;
+    [self.layer addSublayer:_shadowBackdropLayer];
+  }
+
+  CGPathRef shadowBackdropPath = RCTPathCreateWithRoundedRect(self.bounds, cornerInsets, nil, NO);
+  _shadowBackdropLayer.frame = self.bounds;
+  _shadowBackdropLayer.path = shadowBackdropPath;
+  CGPathRelease(shadowBackdropPath);
+  _shadowBackdropLayer.fillColor = color.CGColor;
+  [_shadowBackdropLayer removeAllAnimations];
+}
+
 - (void)invalidateLayer
 {
   CALayer *layer = self.layer;
@@ -832,6 +976,13 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   }
 
   const auto borderMetrics = _props->resolveBorderMetrics(_layoutMetrics);
+  RCTCornerRadii cornerRadii = RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii);
+  const RCTCornerInsets cornerInsets = RCTGetCornerInsets(cornerRadii, UIEdgeInsetsZero);
+  UIColor *shadowBackdropColor = nil;
+  const bool shadowBackdropEnabled =
+      ReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop();
+  ShadowBackdrop shadowBackdrop{};
+  const bool shouldLogShadowBackdrop = shadowBackdropEnabled;
 
   // Stage 1. Shadow Path
   BOOL const layerHasShadow = layer.shadowOpacity > 0 && CGColorGetAlpha(layer.shadowColor) > 0;
@@ -840,8 +991,6 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   } else {
     bool borderBoxDefaultEnabled = ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault();
     ShadowPathMode shadowPathMode = resolveShadowPathMode(_props->shadowPathIOS, borderBoxDefaultEnabled);
-    RCTCornerRadii cornerRadii = RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii);
-    const RCTCornerInsets cornerInsets = RCTGetCornerInsets(cornerRadii, UIEdgeInsetsZero);
 
     switch (shadowPathMode) {
       case ShadowPathMode::BorderBox: {
@@ -866,7 +1015,27 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
         react_native_assert(false);
         break;
     }
+
+    if (shadowPathMode == ShadowPathMode::BorderBox && shadowBackdropEnabled) {
+      shadowBackdrop = _shadowBackdrop;
+
+      if (shadowBackdrop.kind == ShadowBackdropKind::Provider) {
+        UIColor *providerColor = RCTUIColorFromSharedColor(shadowBackdrop.color);
+        if (RCTShadowBackdropColorIsConcreteOpaque(providerColor)) {
+          shadowBackdropColor = [providerColor resolvedColorWithTraitCollection:self.traitCollection];
+        } else {
+          shadowBackdrop = shadowBackdropBarrier(ShadowBackdropReason::DynamicColor);
+          shadowBackdrop.barrierTag = (Tag)self.tag;
+        }
+      }
+    }
   }
+
+  if (shouldLogShadowBackdrop) {
+    [self logShadowBackdrop:shadowBackdrop];
+  }
+
+  [self updateShadowBackdropLayerWithColor:shadowBackdropColor cornerInsets:cornerInsets];
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */
   // Stage 1.5. Cursor / Hover Effects
@@ -919,7 +1088,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   // we want. If we mask self.layer to this path, we would be clipping subviews
   // which we may not want to do. The generalized solution in this case is just
   // create a new layer
-  if (useCoreAnimationBorderRendering) {
+  if (useCoreAnimationBorderRendering && shadowBackdropColor == nil) {
     [_backgroundColorLayer removeFromSuperlayer];
     _backgroundColorLayer = nil;
     layer.backgroundColor = backgroundColor.CGColor;

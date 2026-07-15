@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2943f7c7f969e25c549ee6bfeff650c6>>
+ * @generated SignedSource<<12f3afcae7d63e99fe0bb07abaf8bd72>>
  */
 
 /**
@@ -155,6 +155,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableIOSBorderBoxShadowPathByDefault(): Boolean = accessor.enableIOSBorderBoxShadowPathByDefault()
+
+  /**
+   * Add opaque backplates behind eligible legacy iOS border-box shadows.
+   */
+  @JvmStatic
+  public fun enableIOSBorderBoxShadowBackdrop(): Boolean = accessor.enableIOSBorderBoxShadowBackdrop()
 
   /**
    * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear

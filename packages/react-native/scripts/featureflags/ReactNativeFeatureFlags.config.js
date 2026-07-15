@@ -270,6 +270,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    enableIOSBorderBoxShadowBackdrop: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-07-15',
+        description:
+          'Add opaque backplates behind eligible legacy iOS border-box shadows.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableIOSExperimentalAutoFocusImplementation: {
       defaultValue: false,
       metadata: {

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<eb1637bb4ebe67627d53e2ac6655d775>>
+ * @generated SignedSource<<21afc90d69f573614425f55c40ec5ebc>>
  */
 
 /**
@@ -41,6 +41,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
   private var enableIOSBorderBoxShadowPathByDefaultCache: Boolean? = null
+  private var enableIOSBorderBoxShadowBackdropCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
   private var enableIOSTextBaselineOffsetPerLineCache: Boolean? = null
   private var enableIOSViewClipToPaddingBoxCache: Boolean? = null
@@ -273,6 +274,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.enableIOSBorderBoxShadowPathByDefault()
       enableIOSBorderBoxShadowPathByDefaultCache = cached
+    }
+    return cached
+  }
+
+  override fun enableIOSBorderBoxShadowBackdrop(): Boolean {
+    var cached = enableIOSBorderBoxShadowBackdropCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.enableIOSBorderBoxShadowBackdrop()
+      enableIOSBorderBoxShadowBackdropCache = cached
     }
     return cached
   }

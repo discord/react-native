@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5c4c763d4b19e17b107c87f772decaa8>>
+ * @generated SignedSource<<26a284920b9060963af1bac00838faba>>
  */
 
 /**
@@ -162,6 +162,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableIOSBorderBoxShadowPathByDefault() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSBorderBoxShadowPathByDefault");
+    return method(javaProvider_);
+  }
+
+  bool enableIOSBorderBoxShadowBackdrop() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSBorderBoxShadowBackdrop");
     return method(javaProvider_);
   }
 
@@ -550,6 +556,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowPathByDefault(
   return ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowBackdrop(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
@@ -874,6 +885,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableIOSBorderBoxShadowPathByDefault",
         JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowPathByDefault),
+      makeNativeMethod(
+        "enableIOSBorderBoxShadowBackdrop",
+        JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowBackdrop),
       makeNativeMethod(
         "enableIOSExperimentalAutoFocusImplementation",
         JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation),

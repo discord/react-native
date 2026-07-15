@@ -7,11 +7,15 @@
 
 #pragma once
 
+#include <unordered_map>
+
 #include <react/renderer/core/ShadowNode.h>
 #include <react/renderer/graphics/Point.h>
 #include <react/renderer/mounting/ShadowView.h>
 
 namespace facebook::react {
+
+using ShadowViewEnvironmentMap = std::unordered_map<Tag, ShadowViewEnvironment>;
 
 /*
  * Describes pair of a `ShadowView` and a `ShadowNode`.
@@ -32,6 +36,10 @@ struct ShadowViewNodePair final {
    */
   bool isConcreteView{true};
   Point contextOrigin{0, 0};
+
+  // The top-level differ owns this map. Keeping the pointer on each pair lets
+  // nested slicing reuse the same derived environments without another walk.
+  const ShadowViewEnvironmentMap* environments{nullptr};
 
   size_t mountIndex{0};
 

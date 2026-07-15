@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<402131230f486c9bee0e5d877419280b>>
+ * @generated SignedSource<<cdd953f066b068283491858b6dd1b9c9>>
  */
 
 /**
@@ -45,6 +45,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
   private var enableIOSBorderBoxShadowPathByDefaultCache: Boolean? = null
+  private var enableIOSBorderBoxShadowBackdropCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
   private var enableIOSTextBaselineOffsetPerLineCache: Boolean? = null
   private var enableIOSViewClipToPaddingBoxCache: Boolean? = null
@@ -298,6 +299,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.enableIOSBorderBoxShadowPathByDefault()
       accessedFeatureFlags.add("enableIOSBorderBoxShadowPathByDefault")
       enableIOSBorderBoxShadowPathByDefaultCache = cached
+    }
+    return cached
+  }
+
+  override fun enableIOSBorderBoxShadowBackdrop(): Boolean {
+    var cached = enableIOSBorderBoxShadowBackdropCache
+    if (cached == null) {
+      cached = currentProvider.enableIOSBorderBoxShadowBackdrop()
+      accessedFeatureFlags.add("enableIOSBorderBoxShadowBackdrop")
+      enableIOSBorderBoxShadowBackdropCache = cached
     }
     return cached
   }
