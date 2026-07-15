@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<c3ce57d947ffe2b5b404acd4a8527ae0>>
+ * @generated SignedSource<<5c4c763d4b19e17b107c87f772decaa8>>
  */
 
 /**
@@ -156,6 +156,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableFontScaleChangesUpdatingLayout() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableFontScaleChangesUpdatingLayout");
+    return method(javaProvider_);
+  }
+
+  bool enableIOSBorderBoxShadowPathByDefault() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableIOSBorderBoxShadowPathByDefault");
     return method(javaProvider_);
   }
 
@@ -539,6 +545,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout(
   return ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowPathByDefault(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation();
@@ -860,6 +871,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableFontScaleChangesUpdatingLayout",
         JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout),
+      makeNativeMethod(
+        "enableIOSBorderBoxShadowPathByDefault",
+        JReactNativeFeatureFlagsCxxInterop::enableIOSBorderBoxShadowPathByDefault),
       makeNativeMethod(
         "enableIOSExperimentalAutoFocusImplementation",
         JReactNativeFeatureFlagsCxxInterop::enableIOSExperimentalAutoFocusImplementation),

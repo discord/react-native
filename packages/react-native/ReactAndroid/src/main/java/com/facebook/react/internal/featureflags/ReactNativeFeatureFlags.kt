@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<a03d363d13ff18dd87d15dc223c9c32d>>
+ * @generated SignedSource<<2943f7c7f969e25c549ee6bfeff650c6>>
  */
 
 /**
@@ -149,6 +149,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableFontScaleChangesUpdatingLayout(): Boolean = accessor.enableFontScaleChangesUpdatingLayout()
+
+  /**
+   * Use the border box for legacy iOS shadow paths when shadowPathIOS is omitted.
+   */
+  @JvmStatic
+  public fun enableIOSBorderBoxShadowPathByDefault(): Boolean = accessor.enableIOSBorderBoxShadowPathByDefault()
 
   /**
    * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear

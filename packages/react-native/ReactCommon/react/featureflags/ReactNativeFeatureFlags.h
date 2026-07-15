@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8dc801da5ad5fd085dcedb245f7dee08>>
+ * @generated SignedSource<<f3f12dbbd2d327c6e04ce98b3ddcdc78>>
  */
 
 /**
@@ -138,6 +138,11 @@ class ReactNativeFeatureFlags {
    * Enables font scale changes updating layout for measurable nodes.
    */
   RN_EXPORT static bool enableFontScaleChangesUpdatingLayout();
+
+  /**
+   * Use the border box for legacy iOS shadow paths when shadowPathIOS is omitted.
+   */
+  RN_EXPORT static bool enableIOSBorderBoxShadowPathByDefault();
 
   /**
    * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<2d214619ebe2d8c61230de56ebfd95f6>>
+ * @generated SignedSource<<aafbcfc2ae73c8cf7ae79a606aea39fd>>
  * @flow strict
  * @noformat
  */
@@ -71,6 +71,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   enableFabricRenderer: Getter<boolean>,
   enableFixForParentTagDuringReparenting: Getter<boolean>,
   enableFontScaleChangesUpdatingLayout: Getter<boolean>,
+  enableIOSBorderBoxShadowPathByDefault: Getter<boolean>,
   enableIOSExperimentalAutoFocusImplementation: Getter<boolean>,
   enableIOSTextBaselineOffsetPerLine: Getter<boolean>,
   enableIOSViewClipToPaddingBox: Getter<boolean>,
@@ -283,6 +284,10 @@ export const enableFixForParentTagDuringReparenting: Getter<boolean> = createNat
  * Enables font scale changes updating layout for measurable nodes.
  */
 export const enableFontScaleChangesUpdatingLayout: Getter<boolean> = createNativeFlagGetter('enableFontScaleChangesUpdatingLayout', false);
+/**
+ * Use the border box for legacy iOS shadow paths when shadowPathIOS is omitted.
+ */
+export const enableIOSBorderBoxShadowPathByDefault: Getter<boolean> = createNativeFlagGetter('enableIOSBorderBoxShadowPathByDefault', false);
 /**
  * Fixes #56595 by moving the autoFocus from didMoveToWindow to viewDidAppear
  */

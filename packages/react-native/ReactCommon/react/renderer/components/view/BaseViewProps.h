@@ -63,6 +63,7 @@ class BaseViewProps : public YogaStylableProps, public AccessibilityProps {
   SharedColor shadowColor{};
   Size shadowOffset{0, -3};
   Float shadowOpacity{};
+  ShadowPathMode shadowPathIOS{ShadowPathMode::Default};
   Float shadowRadius{3};
 
   Cursor cursor{};

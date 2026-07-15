@@ -72,6 +72,26 @@ export interface TVViewPropsIOS {
 
 export interface ViewPropsIOS extends TVViewPropsIOS {
   /**
+   * Controls how iOS determines the shape used by the legacy `shadow*`
+   * properties. This does not affect `boxShadow`.
+   *
+   * - `auto`: Uses an optimized border-box path when the view has an opaque
+   *   background. Otherwise derives the shadow from the composited content alpha.
+   * - `border-box`: Always uses the view's bounds and resolved border radii.
+   *   This avoids content-alpha offscreen rendering, but callers must guarantee
+   *   that the intended shadow silhouette matches the view's border box.
+   * - `content-alpha`: Always derives the shadow from the rendered alpha of the
+   *   view and its children. This supports irregular silhouettes but may require
+   *   offscreen rendering.
+   *
+   * When omitted, the default is controlled by a React Native feature flag.
+   * The initial default remains `auto`.
+   *
+   * @platform ios
+   */
+  shadowPathIOS?: 'auto' | 'border-box' | 'content-alpha' | undefined;
+
+  /**
    * Whether this view should be rendered as a bitmap before compositing.
    *
    * On iOS, this is useful for animations and interactions that do not modify this component's dimensions nor its children;

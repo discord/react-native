@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<6f23f8fd399adf79814bb8f2edc29841>>
+ * @generated SignedSource<<402131230f486c9bee0e5d877419280b>>
  */
 
 /**
@@ -44,6 +44,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var enableFabricRendererCache: Boolean? = null
   private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
+  private var enableIOSBorderBoxShadowPathByDefaultCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
   private var enableIOSTextBaselineOffsetPerLineCache: Boolean? = null
   private var enableIOSViewClipToPaddingBoxCache: Boolean? = null
@@ -287,6 +288,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.enableFontScaleChangesUpdatingLayout()
       accessedFeatureFlags.add("enableFontScaleChangesUpdatingLayout")
       enableFontScaleChangesUpdatingLayoutCache = cached
+    }
+    return cached
+  }
+
+  override fun enableIOSBorderBoxShadowPathByDefault(): Boolean {
+    var cached = enableIOSBorderBoxShadowPathByDefaultCache
+    if (cached == null) {
+      cached = currentProvider.enableIOSBorderBoxShadowPathByDefault()
+      accessedFeatureFlags.add("enableIOSBorderBoxShadowPathByDefault")
+      enableIOSBorderBoxShadowPathByDefaultCache = cached
     }
     return cached
   }

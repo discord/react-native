@@ -259,6 +259,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    enableIOSBorderBoxShadowPathByDefault: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-07-14',
+        description:
+          'Use the border box for legacy iOS shadow paths when shadowPathIOS is omitted.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableIOSExperimentalAutoFocusImplementation: {
       defaultValue: false,
       metadata: {

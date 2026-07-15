@@ -180,6 +180,15 @@ BaseViewProps::BaseViewProps(
                     "shadowOpacity",
                     sourceProps.shadowOpacity,
                     {})),
+      shadowPathIOS(
+          ReactNativeFeatureFlags::enableCppPropsIteratorSetter()
+              ? sourceProps.shadowPathIOS
+              : convertRawProp(
+                    context,
+                    rawProps,
+                    "shadowPathIOS",
+                    sourceProps.shadowPathIOS,
+                    ShadowPathMode::Default)),
       shadowRadius(
           ReactNativeFeatureFlags::enableCppPropsIteratorSetter()
               ? sourceProps.shadowRadius
@@ -379,6 +388,7 @@ void BaseViewProps::setProp(
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowColor);
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowOffset);
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowOpacity);
+    RAW_SET_PROP_SWITCH_CASE_BASIC(shadowPathIOS);
     RAW_SET_PROP_SWITCH_CASE_BASIC(shadowRadius);
     RAW_SET_PROP_SWITCH_CASE_BASIC(transform);
     RAW_SET_PROP_SWITCH_CASE_BASIC(backfaceVisibility);

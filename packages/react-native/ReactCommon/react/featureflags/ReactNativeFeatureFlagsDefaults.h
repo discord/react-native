@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5cb395cf45a846c4e93b4eb5ca2d99e3>>
+ * @generated SignedSource<<d87b475d6c907f2026a501fb210b7fc4>>
  */
 
 /**
@@ -104,6 +104,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableFontScaleChangesUpdatingLayout() override {
+    return false;
+  }
+
+  bool enableIOSBorderBoxShadowPathByDefault() override {
     return false;
   }
 
