@@ -51,6 +51,7 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
   _gradientColors = textAttributes->_gradientColors ?: _gradientColors;
   _gradientAngle = !isnan(textAttributes->_gradientAngle) ? textAttributes->_gradientAngle : _gradientAngle;
   _gradientLength = !isnan(textAttributes->_gradientLength) ? textAttributes->_gradientLength : _gradientLength;
+  _gradientWidth = !isnan(textAttributes->_gradientWidth) ? textAttributes->_gradientWidth : _gradientWidth;
   _gradientMode = textAttributes->_gradientMode ?: _gradientMode;
   _opacity =
       !isnan(textAttributes->_opacity) ? (isnan(_opacity) ? 1.0 : _opacity) * textAttributes->_opacity : _opacity;
@@ -330,8 +331,15 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
           }
 
           CAGradientLayer *gradient = [CAGradientLayer layer];
-          // Use gradientLength if specified, otherwise default to 100
-          CGFloat patternWidth = (!isnan(_gradientLength) && _gradientLength > 0) ? _gradientLength : 100;
+          // Prefer gradientLength; fall back to the deprecated gradientWidth; otherwise default to 100.
+          CGFloat patternWidth;
+          if (!isnan(_gradientLength) && _gradientLength > 0) {
+            patternWidth = _gradientLength;
+          } else if (!isnan(_gradientWidth) && _gradientWidth > 0) {
+            patternWidth = _gradientWidth;
+          } else {
+            patternWidth = 100;
+          }
           CGFloat height = _lineHeight * self.effectiveFontSizeMultiplier;
           gradient.frame = CGRectMake(0, 0, patternWidth, height);
           gradient.colors = cgColors;
@@ -430,8 +438,8 @@ static NSString *capitalizeText(NSString *text)
 
   return RCTTextAttributesCompareObjects(_foregroundColor) && RCTTextAttributesCompareObjects(_backgroundColor) &&
       RCTTextAttributesCompareObjects(_gradientColors) && RCTTextAttributesCompareFloats(_gradientAngle) &&
-      RCTTextAttributesCompareFloats(_gradientLength) && RCTTextAttributesCompareFloats(_opacity) &&
-      RCTTextAttributesCompareStrings(_gradientMode) &&
+      RCTTextAttributesCompareFloats(_gradientLength) && RCTTextAttributesCompareFloats(_gradientWidth) &&
+      RCTTextAttributesCompareFloats(_opacity) && RCTTextAttributesCompareStrings(_gradientMode) &&
       // Font
       RCTTextAttributesCompareObjects(_fontFamily) && RCTTextAttributesCompareFloats(_fontSize) &&
       RCTTextAttributesCompareFloats(_fontSizeMultiplier) && RCTTextAttributesCompareFloats(_maxFontSizeMultiplier) &&

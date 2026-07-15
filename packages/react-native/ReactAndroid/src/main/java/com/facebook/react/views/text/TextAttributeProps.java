@@ -69,8 +69,11 @@ public class TextAttributeProps {
   public static final short TA_KEY_TEXT_STROKE_WIDTH = 31;
   public static final short TA_KEY_TEXT_STROKE_COLOR = 32;
   public static final short TA_KEY_GRADIENT_ANGLE = 33;
-  public static final short TA_KEY_GRADIENT_LENGTH = 34;
+  // Deprecated alias for TA_KEY_GRADIENT_LENGTH; gradientLength takes precedence when both are set.
+  // Retains its original key (34) for backwards compatibility.
+  public static final short TA_KEY_GRADIENT_WIDTH = 34;
   public static final short TA_KEY_GRADIENT_MODE = 35;
+  public static final short TA_KEY_GRADIENT_LENGTH = 36;
 
   public static final int UNSET = -1;
 
@@ -162,6 +165,8 @@ public class TextAttributeProps {
   protected @Nullable int[] mGradientColors = null;
   protected float mGradientAngle = Float.NaN;
   protected float mGradientLength = Float.NaN;
+  // Deprecated alias for mGradientLength; gradientLength takes precedence when both are set.
+  protected float mGradientWidth = Float.NaN;
   protected @Nullable String mGradientMode = null;
 
   private TextAttributeProps() {}
@@ -262,6 +267,9 @@ public class TextAttributeProps {
         case TA_KEY_GRADIENT_LENGTH:
           result.setGradientLength((float) entry.getDoubleValue());
           break;
+        case TA_KEY_GRADIENT_WIDTH:
+          result.setGradientWidth((float) entry.getDoubleValue());
+          break;
         case TA_KEY_GRADIENT_MODE:
           result.setGradientMode(entry.getStringValue());
           break;
@@ -314,6 +322,7 @@ public class TextAttributeProps {
     result.setGradientColors(getArrayProp(props, "gradientColors"));
     result.setGradientAngle(getFloatProp(props, "gradientAngle", Float.NaN));
     result.setGradientLength(getFloatProp(props, "gradientLength", Float.NaN));
+    result.setGradientWidth(getFloatProp(props, "gradientWidth", Float.NaN));
     result.setGradientMode(getStringProp(props, "gradientMode"));
     result.setTextStrokeWidth(getFloatProp(props, "textStrokeWidth", Float.NaN));
     if (props.hasKey("textStrokeColor")) {
@@ -842,6 +851,27 @@ public class TextAttributeProps {
 
   private void setGradientLength(float gradientLength) {
     mGradientLength = gradientLength;
+  }
+
+  /**
+   * @deprecated Use {@link #getGradientLength()} instead. Retained as an alias for the deprecated
+   *     {@code gradientWidth} prop; {@code gradientLength} takes precedence when both are set.
+   */
+  @Deprecated
+  public float getGradientWidth() {
+    return mGradientWidth;
+  }
+
+  private void setGradientWidth(float gradientWidth) {
+    mGradientWidth = gradientWidth;
+  }
+
+  /**
+   * Resolves the effective gradient length, preferring {@code gradientLength} and falling back to
+   * the deprecated {@code gradientWidth} when {@code gradientLength} is unset.
+   */
+  public float getEffectiveGradientLength() {
+    return !Float.isNaN(mGradientLength) ? mGradientLength : mGradientWidth;
   }
 
   public @Nullable String getGradientMode() {

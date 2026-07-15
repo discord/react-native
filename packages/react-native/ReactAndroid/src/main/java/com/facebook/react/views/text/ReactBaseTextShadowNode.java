@@ -179,7 +179,8 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
       if (textShadowNode.mGradientColors != null && textShadowNode.mGradientColors.length >= 2) {
           int effectiveFontSize = textAttributes.getEffectiveFontSize();
           float gradientAngle = Float.isNaN(textShadowNode.mGradientAngle) ? 0f : textShadowNode.mGradientAngle;
-          float gradientLength = textShadowNode.mGradientLength;
+          // Prefer gradientLength; fall back to the deprecated gradientWidth when unset.
+          float gradientLength = !Float.isNaN(textShadowNode.mGradientLength) ? textShadowNode.mGradientLength : textShadowNode.mGradientWidth;
           String gradientMode = textShadowNode.mGradientMode;
           ops.add(new SetSpanOperation(start, end, new LinearGradientSpan(start * effectiveFontSize, textShadowNode.mGradientColors, gradientAngle, gradientLength, gradientMode)));
       }
@@ -368,6 +369,8 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
   protected @Nullable int[] mGradientColors = null;
   protected float mGradientAngle = Float.NaN;
   protected float mGradientLength = Float.NaN;
+  // Deprecated alias for mGradientLength; gradientLength takes precedence when both are set.
+  protected float mGradientWidth = Float.NaN;
   protected @Nullable String mGradientMode = null;
 
   protected @Nullable AccessibilityRole mAccessibilityRole = null;
@@ -568,6 +571,16 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
   @ReactProp(name = "gradientLength", defaultFloat = Float.NaN)
   public void setGradientLength(float gradientLength) {
     mGradientLength = gradientLength;
+    markUpdated();
+  }
+
+  /**
+   * @deprecated Use `gradientLength` instead. When both are set, `gradientLength` takes precedence.
+   */
+  @Deprecated
+  @ReactProp(name = "gradientWidth", defaultFloat = Float.NaN)
+  public void setGradientWidth(float gradientWidth) {
+    mGradientWidth = gradientWidth;
     markUpdated();
   }
 
