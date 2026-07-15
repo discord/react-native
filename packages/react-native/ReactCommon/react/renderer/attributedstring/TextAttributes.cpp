@@ -33,9 +33,9 @@ void TextAttributes::apply(TextAttributes textAttributes) {
   gradientAngle = !std::isnan(textAttributes.gradientAngle)
       ? textAttributes.gradientAngle
       : gradientAngle;
-  gradientWidth = !std::isnan(textAttributes.gradientWidth)
-      ? textAttributes.gradientWidth
-      : gradientWidth;
+  gradientLength = !std::isnan(textAttributes.gradientLength)
+      ? textAttributes.gradientLength
+      : gradientLength;
   gradientMode = textAttributes.gradientMode.has_value()
       ? textAttributes.gradientMode
       : gradientMode;
@@ -196,7 +196,7 @@ bool TextAttributes::operator==(const TextAttributes& rhs) const {
       floatEquality(textShadowRadius, rhs.textShadowRadius) &&
       floatEquality(textStrokeWidth, rhs.textStrokeWidth) &&
       floatEquality(gradientAngle, rhs.gradientAngle) &&
-      floatEquality(gradientWidth, rhs.gradientWidth) &&
+      floatEquality(gradientLength, rhs.gradientLength) &&
       gradientColors == rhs.gradientColors &&
       gradientMode == rhs.gradientMode;
 }

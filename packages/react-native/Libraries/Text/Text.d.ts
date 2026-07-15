@@ -230,14 +230,14 @@ export interface TextProps
   gradientAngle?: number | undefined;
 
   /**
-   * Width of the gradient pattern in pixels. Default is 100.
+   * Length of the gradient along its axis, in pixels. Default is 100.
    */
-  gradientWidth?: number | undefined;
+  gradientLength?: number | undefined;
 
   /**
    * Gradient tiling mode. "mirror" (default) tiles the gradient back and forth.
    * "clamp" renders the gradient once from the start to the end of the text.
-   * When using "clamp", set gradientWidth to match your text width.
+   * When using "clamp", set gradientLength to match the extent of the text along the gradient axis.
    */
   gradientMode?: 'mirror' | 'clamp' | undefined;
 

@@ -179,9 +179,9 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
       if (textShadowNode.mGradientColors != null && textShadowNode.mGradientColors.length >= 2) {
           int effectiveFontSize = textAttributes.getEffectiveFontSize();
           float gradientAngle = Float.isNaN(textShadowNode.mGradientAngle) ? 0f : textShadowNode.mGradientAngle;
-          float gradientWidth = textShadowNode.mGradientWidth;
+          float gradientLength = textShadowNode.mGradientLength;
           String gradientMode = textShadowNode.mGradientMode;
-          ops.add(new SetSpanOperation(start, end, new LinearGradientSpan(start * effectiveFontSize, textShadowNode.mGradientColors, gradientAngle, gradientWidth, gradientMode)));
+          ops.add(new SetSpanOperation(start, end, new LinearGradientSpan(start * effectiveFontSize, textShadowNode.mGradientColors, gradientAngle, gradientLength, gradientMode)));
       }
       if (textShadowNode.mIsBackgroundColorSet) {
         ops.add(
@@ -367,7 +367,7 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
 
   protected @Nullable int[] mGradientColors = null;
   protected float mGradientAngle = Float.NaN;
-  protected float mGradientWidth = Float.NaN;
+  protected float mGradientLength = Float.NaN;
   protected @Nullable String mGradientMode = null;
 
   protected @Nullable AccessibilityRole mAccessibilityRole = null;
@@ -565,9 +565,9 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
     markUpdated();
   }
 
-  @ReactProp(name = "gradientWidth", defaultFloat = Float.NaN)
-  public void setGradientWidth(float gradientWidth) {
-    mGradientWidth = gradientWidth;
+  @ReactProp(name = "gradientLength", defaultFloat = Float.NaN)
+  public void setGradientLength(float gradientLength) {
+    mGradientLength = gradientLength;
     markUpdated();
   }
 

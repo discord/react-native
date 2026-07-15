@@ -69,7 +69,7 @@ public class TextAttributeProps {
   public static final short TA_KEY_TEXT_STROKE_WIDTH = 31;
   public static final short TA_KEY_TEXT_STROKE_COLOR = 32;
   public static final short TA_KEY_GRADIENT_ANGLE = 33;
-  public static final short TA_KEY_GRADIENT_WIDTH = 34;
+  public static final short TA_KEY_GRADIENT_LENGTH = 34;
   public static final short TA_KEY_GRADIENT_MODE = 35;
 
   public static final int UNSET = -1;
@@ -161,7 +161,7 @@ public class TextAttributeProps {
 
   protected @Nullable int[] mGradientColors = null;
   protected float mGradientAngle = Float.NaN;
-  protected float mGradientWidth = Float.NaN;
+  protected float mGradientLength = Float.NaN;
   protected @Nullable String mGradientMode = null;
 
   private TextAttributeProps() {}
@@ -259,8 +259,8 @@ public class TextAttributeProps {
         case TA_KEY_GRADIENT_ANGLE:
           result.setGradientAngle((float) entry.getDoubleValue());
           break;
-        case TA_KEY_GRADIENT_WIDTH:
-          result.setGradientWidth((float) entry.getDoubleValue());
+        case TA_KEY_GRADIENT_LENGTH:
+          result.setGradientLength((float) entry.getDoubleValue());
           break;
         case TA_KEY_GRADIENT_MODE:
           result.setGradientMode(entry.getStringValue());
@@ -313,7 +313,7 @@ public class TextAttributeProps {
     result.setRole(getStringProp(props, ViewProps.ROLE));
     result.setGradientColors(getArrayProp(props, "gradientColors"));
     result.setGradientAngle(getFloatProp(props, "gradientAngle", Float.NaN));
-    result.setGradientWidth(getFloatProp(props, "gradientWidth", Float.NaN));
+    result.setGradientLength(getFloatProp(props, "gradientLength", Float.NaN));
     result.setGradientMode(getStringProp(props, "gradientMode"));
     result.setTextStrokeWidth(getFloatProp(props, "textStrokeWidth", Float.NaN));
     if (props.hasKey("textStrokeColor")) {
@@ -836,12 +836,12 @@ public class TextAttributeProps {
     mGradientAngle = gradientAngle;
   }
 
-  public float getGradientWidth() {
-    return mGradientWidth;
+  public float getGradientLength() {
+    return mGradientLength;
   }
 
-  private void setGradientWidth(float gradientWidth) {
-    mGradientWidth = gradientWidth;
+  private void setGradientLength(float gradientLength) {
+    mGradientLength = gradientLength;
   }
 
   public @Nullable String getGradientMode() {
