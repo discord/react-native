@@ -731,8 +731,9 @@ public abstract class ReactBaseTextShadowNode extends LayoutShadowNode {
 
   @ReactProp(name = "textStrokeWidth", defaultFloat = Float.NaN)
   public void setTextStrokeWidth(float textStrokeWidth) {
-    if (textStrokeWidth != mTextStrokeWidth) {
-      mTextStrokeWidth = textStrokeWidth;
+    float textStrokeWidthPx = PixelUtil.toPixelFromDIP(textStrokeWidth);
+    if (textStrokeWidthPx != mTextStrokeWidth) {
+      mTextStrokeWidth = textStrokeWidthPx;
       markUpdated();
     }
   }

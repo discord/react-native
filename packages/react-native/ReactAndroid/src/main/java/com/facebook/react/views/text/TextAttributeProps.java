@@ -930,7 +930,7 @@ public class TextAttributeProps {
   }
 
   private void setTextStrokeWidth(float textStrokeWidth) {
-    mTextStrokeWidth = textStrokeWidth;
+    mTextStrokeWidth = PixelUtil.toPixelFromDIP(textStrokeWidth);
   }
 
   public int getTextStrokeColor() {
