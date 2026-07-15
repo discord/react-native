@@ -845,33 +845,20 @@ public class TextAttributeProps {
     mGradientAngle = gradientAngle;
   }
 
+  /**
+   * Returns the effective gradient length, preferring {@code gradientLength} and falling back to
+   * the deprecated {@code gradientWidth} when {@code gradientLength} is unset.
+   */
   public float getGradientLength() {
-    return mGradientLength;
+    return !Float.isNaN(mGradientLength) ? mGradientLength : mGradientWidth;
   }
 
   private void setGradientLength(float gradientLength) {
     mGradientLength = gradientLength;
   }
 
-  /**
-   * @deprecated Use {@link #getGradientLength()} instead. Retained as an alias for the deprecated
-   *     {@code gradientWidth} prop; {@code gradientLength} takes precedence when both are set.
-   */
-  @Deprecated
-  public float getGradientWidth() {
-    return mGradientWidth;
-  }
-
   private void setGradientWidth(float gradientWidth) {
     mGradientWidth = gradientWidth;
-  }
-
-  /**
-   * Resolves the effective gradient length, preferring {@code gradientLength} and falling back to
-   * the deprecated {@code gradientWidth} when {@code gradientLength} is unset.
-   */
-  public float getEffectiveGradientLength() {
-    return !Float.isNaN(mGradientLength) ? mGradientLength : mGradientWidth;
   }
 
   public @Nullable String getGradientMode() {
