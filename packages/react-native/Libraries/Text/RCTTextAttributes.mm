@@ -340,8 +340,9 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
           } else {
             patternWidth = 100;
           }
-          CGFloat height = _lineHeight * self.effectiveFontSizeMultiplier;
-          gradient.frame = CGRectMake(0, 0, patternWidth, height);
+          // Use a square tile so the gradient's axis length is patternWidth for any angle,
+          // matching Android's gradientLength behavior for vertical gradients.
+          gradient.frame = CGRectMake(0, 0, patternWidth, patternWidth);
           gradient.colors = cgColors;
 
           CGFloat angle = !isnan(_gradientAngle) ? _gradientAngle : 0.0;
