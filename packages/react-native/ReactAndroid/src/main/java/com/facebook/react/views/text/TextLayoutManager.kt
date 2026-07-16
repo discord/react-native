@@ -305,7 +305,7 @@ internal object TextLayoutManager {
           val effectiveFontSize = textAttributes.fontSize
           val gradientAngle =
               if (textAttributes.gradientAngle.isNaN()) 0f else textAttributes.gradientAngle
-          val gradientWidth = textAttributes.gradientWidth
+          val gradientLength = textAttributes.gradientLength
           val gradientMode = textAttributes.gradientMode
           ops.add(
               SetSpanOperation(
@@ -315,7 +315,7 @@ internal object TextLayoutManager {
                       start * effectiveFontSize.toFloat(),
                       gradientColors,
                       gradientAngle,
-                      gradientWidth,
+                      gradientLength,
                       gradientMode,
                   ),
               )
@@ -569,14 +569,14 @@ internal object TextLayoutManager {
           val effectiveFontSize = fragment.props.fontSize
           val gradientAngle =
               if (fragment.props.gradientAngle.isNaN()) 0f else fragment.props.gradientAngle
-          val gradientWidth = fragment.props.gradientWidth
+          val gradientLength = fragment.props.gradientLength
           val gradientMode = fragment.props.gradientMode
           spannable.setSpan(
               LinearGradientSpan(
                   start * effectiveFontSize.toFloat(),
                   gradientColors,
                   gradientAngle,
-                  gradientWidth,
+                  gradientLength,
                   gradientMode,
               ),
               start,
