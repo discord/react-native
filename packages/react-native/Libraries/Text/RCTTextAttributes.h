@@ -28,7 +28,8 @@ extern NSString *const RCTTextAttributesTagAttributeName;
 @property (nonatomic, strong, nullable) UIColor *backgroundColor;
 @property (nonatomic, copy, nullable) NSArray *gradientColors;
 @property (nonatomic, assign) CGFloat gradientAngle;
-@property (nonatomic, assign) CGFloat gradientWidth; // Width of gradient pattern in pixels; NAN = use default (100px)
+@property (nonatomic, assign) CGFloat gradientLength; // Length of gradient along its axis in pixels; NAN = use default (100px)
+@property (nonatomic, assign) CGFloat gradientWidth; // Deprecated alias for gradientLength; gradientLength takes precedence when both are set
 @property (nonatomic, copy, nullable) NSString *gradientMode; // "mirror" (default) or "clamp"
 @property (nonatomic, assign) CGFloat opacity;
 // Font
