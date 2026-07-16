@@ -53,6 +53,8 @@ class TextAttributes : public DebugStringConvertible {
   Float opacity{std::numeric_limits<Float>::quiet_NaN()};
   std::optional<std::vector<SharedColor>> gradientColors{};
   Float gradientAngle{std::numeric_limits<Float>::quiet_NaN()};
+  Float gradientLength{std::numeric_limits<Float>::quiet_NaN()};
+  // Deprecated alias for gradientLength; gradientLength takes precedence when both are set.
   Float gradientWidth{std::numeric_limits<Float>::quiet_NaN()};
   std::optional<std::string> gradientMode{}; // "mirror" or "clamp"
 
@@ -163,6 +165,7 @@ struct hash<facebook::react::TextAttributes> {
         textAttributes.textStrokeColor,
         textAttributes.gradientColors,
         textAttributes.gradientAngle,
+        textAttributes.gradientLength,
         textAttributes.gradientWidth,
         textEffectsHash);
     facebook::react::hash_combine_optionals(

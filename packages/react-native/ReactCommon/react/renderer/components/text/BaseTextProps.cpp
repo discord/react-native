@@ -41,6 +41,12 @@ static TextAttributes convertRawProp(
       "gradientAngle",
       sourceTextAttributes.gradientAngle,
       defaultTextAttributes.gradientAngle);
+  textAttributes.gradientLength = convertRawProp(
+      context,
+      rawProps,
+      "gradientLength",
+      sourceTextAttributes.gradientLength,
+      defaultTextAttributes.gradientLength);
   textAttributes.gradientWidth = convertRawProp(
       context,
       rawProps,
@@ -293,6 +299,8 @@ void BaseTextProps::setProp(
         defaults, value, textAttributes, gradientColors, "gradientColors");
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, gradientAngle, "gradientAngle");
+    REBUILD_FIELD_SWITCH_CASE(
+        defaults, value, textAttributes, gradientLength, "gradientLength");
     REBUILD_FIELD_SWITCH_CASE(
         defaults, value, textAttributes, gradientWidth, "gradientWidth");
     REBUILD_FIELD_SWITCH_CASE(
