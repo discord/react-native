@@ -1132,8 +1132,11 @@ constexpr static MapBuffer::Key TA_KEY_GRADIENT_COLORS = 30;
 constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_WIDTH = 31;
 constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_COLOR = 32;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_ANGLE = 33;
+// Deprecated alias for TA_KEY_GRADIENT_LENGTH; gradientLength takes precedence when both are set.
+// Retains its original key (34) for backwards compatibility.
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_WIDTH = 34;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_MODE = 35;
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_LENGTH = 36;
 
 // constants for ParagraphAttributes serialization
 constexpr static MapBuffer::Key PA_KEY_MAX_NUMBER_OF_LINES = 0;
@@ -1266,6 +1269,9 @@ inline MapBuffer toMapBuffer(const TextAttributes &textAttributes)
   }
   if (!std::isnan(textAttributes.gradientAngle)) {
     builder.putDouble(TA_KEY_GRADIENT_ANGLE, textAttributes.gradientAngle);
+  }
+  if (!std::isnan(textAttributes.gradientLength)) {
+    builder.putDouble(TA_KEY_GRADIENT_LENGTH, textAttributes.gradientLength);
   }
   if (!std::isnan(textAttributes.gradientWidth)) {
     builder.putDouble(TA_KEY_GRADIENT_WIDTH, textAttributes.gradientWidth);

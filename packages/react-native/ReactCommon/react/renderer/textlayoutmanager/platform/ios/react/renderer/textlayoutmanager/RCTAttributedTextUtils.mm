@@ -162,13 +162,18 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(const TextA
       }
 
       CAGradientLayer *gradient = [CAGradientLayer layer];
-      CGFloat patternWidth =
-          (!isnan(textAttributes.gradientWidth) && textAttributes.gradientWidth > 0) ? textAttributes.gradientWidth : 100;
-      CGFloat lineHeight = !isnan(textAttributes.lineHeight)
-          ? textAttributes.lineHeight
-          : (!isnan(textAttributes.fontSize) ? textAttributes.fontSize : 14);
-      CGFloat height = lineHeight * RCTEffectiveFontSizeMultiplierFromTextAttributes(textAttributes);
-      gradient.frame = CGRectMake(0, 0, patternWidth, height);
+      // Prefer gradientLength; fall back to the deprecated gradientWidth; otherwise default to 100.
+      CGFloat patternWidth;
+      if (!isnan(textAttributes.gradientLength) && textAttributes.gradientLength > 0) {
+        patternWidth = textAttributes.gradientLength;
+      } else if (!isnan(textAttributes.gradientWidth) && textAttributes.gradientWidth > 0) {
+        patternWidth = textAttributes.gradientWidth;
+      } else {
+        patternWidth = 100;
+      }
+      // Use a square tile so the gradient's axis length is patternWidth for any angle,
+      // matching Android's gradientLength behavior for vertical gradients.
+      gradient.frame = CGRectMake(0, 0, patternWidth, patternWidth);
       gradient.colors = cgColors;
 
       CGFloat angle = !isnan(textAttributes.gradientAngle) ? textAttributes.gradientAngle : 0.0;

@@ -12,15 +12,17 @@ import com.facebook.react.uimanager.PixelUtil.dpToPx
  *
  * @param start The x-offset for the gradient start position
  * @param colors Array of gradient colors
- * @param angle Gradient angle in degrees (0 = horizontal)
- * @param gradientWidth Width of the gradient pattern in DP. Default is 100px.
+ * @param angle Gradient angle in degrees (0 = horizontal, 90 = vertical)
+ * @param gradientLength Length of the gradient along its axis, in DP. This is the distance over which
+ *   the color stops transition (text width for a horizontal gradient, text/line height for a vertical
+ *   one). Default is 100px.
  * @param gradientMode "mirror" (default) or "clamp" - controls tiling behavior
  */
 public class LinearGradientSpan(
     private val start: Float,
     private val colors: IntArray,
     private val angle: Float = 0f,
-    private val gradientWidth: Float = Float.NaN,
+    private val gradientLength: Float = Float.NaN,
     private val gradientMode: String? = "mirror",
 ) : CharacterStyle(), ReactSpan,
     UpdateAppearance {
@@ -32,21 +34,20 @@ public class LinearGradientSpan(
         tp.setColor(colors[0])
 
         val radians = Math.toRadians(angle.toDouble())
-        val width = if (gradientWidth.isNaN()) 100f else gradientWidth.dpToPx()
-        val height = tp.textSize
+        val axisLength = if (gradientLength.isNaN()) 100f else gradientLength.dpToPx()
+        val half = axisLength / 2f
+        val cos = Math.cos(radians).toFloat()
+        val sin = Math.sin(radians).toFloat()
 
-        var centerX = start + width / 2
-        if (tileMode == Shader.TileMode.CLAMP) {
-          // Ignore the start param in clamp mode.
-          centerX = width / 2
-        }
-        val centerY = height / 2
-        val length = Math.sqrt((width * width + height * height).toDouble()).toFloat() / 2
+        // Anchor the gradient so it spans [0, axisLength] along its axis. Keep the start offset on the
+        // (horizontal) tiling axis for mirror mode; clamp mode ignores it.
+        val centerX = if (tileMode == Shader.TileMode.MIRROR) start + half else half
+        val centerY = half
 
-        val startX = centerX - length * Math.cos(radians).toFloat()
-        val startY = centerY - length * Math.sin(radians).toFloat()
-        val endX = centerX + length * Math.cos(radians).toFloat()
-        val endY = centerY + length * Math.sin(radians).toFloat()
+        val startX = centerX - half * cos
+        val startY = centerY - half * sin
+        val endX = centerX + half * cos
+        val endY = centerY + half * sin
 
         var adjustedColors = colors
         if (tileMode == Shader.TileMode.MIRROR) {
