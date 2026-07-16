@@ -262,6 +262,96 @@ static std::vector<ProcessedColorStop> processColorTransitionHints(const std::ve
   return colorStops;
 }
 
+// Samples the gradient at an arbitrary position using Shader.TileMode.CLAMP semantics:
+// the terminal color is held before the first stop / after the last stop, otherwise the
+// color is linearly interpolated between the two bracketing stops. Interpolation uses the
+// same straight-sRGB path (RCTInterpolateColorInRange) as the transition-hint code above,
+// which matches android.graphics.LinearGradient's default interpolation.
+static SharedColor interpolatedColorAtPosition(const std::vector<ProcessedColorStop> &stops, Float position)
+{
+  if (position <= stops.front().position.value()) {
+    return stops.front().color;
+  }
+  if (position >= stops.back().position.value()) {
+    return stops.back().color;
+  }
+
+  for (size_t i = 0; i + 1 < stops.size(); ++i) {
+    Float left = stops[i].position.value();
+    Float right = stops[i + 1].position.value();
+    if (position >= left && position <= right) {
+      if (floatEquality(left, right)) {
+        // Hard stop: take the color of the stop on the right.
+        return stops[i + 1].color;
+      }
+      UIColor *leftColor = RCTUIColorFromSharedColor(stops[i].color);
+      UIColor *rightColor = RCTUIColorFromSharedColor(stops[i + 1].color);
+      uint32_t interpolated =
+          RCTInterpolateColorInRange(position, @[ @(left), @(right) ], @[ leftColor, rightColor ]);
+      auto alpha = (interpolated >> 24) & 0xFF;
+      auto red = (interpolated >> 16) & 0xFF;
+      auto green = (interpolated >> 8) & 0xFF;
+      auto blue = interpolated & 0xFF;
+      return colorFromRGBA(red, green, blue, alpha);
+    }
+  }
+
+  return stops.back().color;
+}
+
+// Emulates Android's Shader.TileMode.CLAMP by resampling color stops whose positions fall
+// outside the [0, 1] gradient box back into that range. Android passes raw positions to the
+// platform shader and lets CLAMP hold the terminal colors, but CAGradientLayer requires
+// locations within [0, 1] (it clamps out-of-range values internally, which distorts the
+// gradient), so we clip explicitly: the color before the first stop / after the last stop is
+// held, and a gradient whose stops extend past the box shows only its visible slice.
+static std::vector<ProcessedColorStop> clampColorStopsToBox(const std::vector<ProcessedColorStop> &stops)
+{
+  if (stops.empty()) {
+    return stops;
+  }
+
+  Float first = stops.front().position.value();
+  Float last = stops.back().position.value();
+
+  // Common case: everything is already within the box, nothing to clip.
+  if (first >= 0.0 && last <= 1.0) {
+    return stops;
+  }
+
+  // The whole box lies past the last stop -> hold the last color as a solid fill.
+  if (last <= 0.0) {
+    return {
+        ProcessedColorStop{.color = stops.back().color, .position = 0.0},
+        ProcessedColorStop{.color = stops.back().color, .position = 1.0}};
+  }
+
+  // The whole box lies before the first stop -> hold the first color as a solid fill.
+  if (first >= 1.0) {
+    return {
+        ProcessedColorStop{.color = stops.front().color, .position = 0.0},
+        ProcessedColorStop{.color = stops.front().color, .position = 1.0}};
+  }
+
+  std::vector<ProcessedColorStop> clipped;
+  clipped.reserve(stops.size() + 2);
+
+  if (first < 0.0) {
+    clipped.push_back(ProcessedColorStop{.color = interpolatedColorAtPosition(stops, 0.0), .position = 0.0});
+  }
+  for (const auto &stop : stops) {
+    Float position = stop.position.value();
+    if (position >= 0.0 && position <= 1.0) {
+      clipped.push_back(stop);
+    }
+  }
+  if (last > 1.0) {
+    clipped.push_back(ProcessedColorStop{.color = interpolatedColorAtPosition(stops, 1.0), .position = 1.0});
+  }
+
+  return clipped;
+}
+
 @implementation RCTGradientUtils
 // https://drafts.csswg.org/css-images-4/#color-stop-fixup
 + (std::vector<ProcessedColorStop>)getFixedColorStops:(const std::vector<ColorStop> &)colorStops
@@ -382,6 +472,10 @@ static std::vector<ProcessedColorStop> processColorTransitionHints(const std::ve
       andLocations:(NSMutableArray<NSNumber *> *)locations
     fromColorStops:(const std::vector<facebook::react::ProcessedColorStop> &)colorStops
 {
+  // Clip stops whose positions fall outside [0, 1] so CAGradientLayer holds the terminal
+  // colors like Android's Shader.TileMode.CLAMP. In-range stops pass through unchanged.
+  const auto clippedStops = clampColorStopsToBox(colorStops);
+
   // iOS's CAGradientLayer interpolates colors in a way that can cause unexpected results.
   // For example, a gradient from a color to `transparent` (which is transparent black) will
   // fade the color's RGB components to black, creating a "muddy" or dark appearance.
@@ -389,7 +483,7 @@ static std::vector<ProcessedColorStop> processColorTransitionHints(const std::ve
   // a transparent version of the *previous* color stop. This creates a smooth fade-out effect
   // by only interpolating the alpha channel, matching web and Android behavior.
   UIColor *lastColor = nil;
-  for (const auto &colorStop : colorStops) {
+  for (const auto &colorStop : clippedStops) {
     UIColor *currentColor = RCTUIColorFromSharedColor(colorStop.color);
 
     CGFloat red = 0.0;
