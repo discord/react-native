@@ -32,15 +32,12 @@ TEST(ConversionsTest, shadow_path_modes) {
 
 TEST(ConversionsTest, resolves_default_shadow_path_mode) {
   EXPECT_EQ(
-      resolveShadowPathMode(ShadowPathMode::Default, false),
+      resolveShadowPathMode(ShadowPathMode::Default),
       ShadowPathMode::Auto);
   EXPECT_EQ(
-      resolveShadowPathMode(ShadowPathMode::Default, true),
-      ShadowPathMode::BorderBox);
+      resolveShadowPathMode(ShadowPathMode::Auto), ShadowPathMode::Auto);
   EXPECT_EQ(
-      resolveShadowPathMode(ShadowPathMode::Auto, true), ShadowPathMode::Auto);
-  EXPECT_EQ(
-      resolveShadowPathMode(ShadowPathMode::ContentAlpha, true),
+      resolveShadowPathMode(ShadowPathMode::ContentAlpha),
       ShadowPathMode::ContentAlpha);
 }
 

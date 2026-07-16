@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<0fb2c41e81fff95999861a345052d99f>>
+ * @generated SignedSource<<bd604e84ed03731ac48b2c0f41b36089>>
  */
 
 /**
@@ -104,10 +104,6 @@ bool ReactNativeFeatureFlags::enableFixForParentTagDuringReparenting() {
 
 bool ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout() {
   return getAccessor().enableFontScaleChangesUpdatingLayout();
-}
-
-bool ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault() {
-  return getAccessor().enableIOSBorderBoxShadowPathByDefault();
 }
 
 bool ReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation() {

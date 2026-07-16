@@ -101,18 +101,12 @@ enum class ShadowPathMode : uint8_t {
   ContentAlpha,
 };
 
-inline ShadowPathMode resolveShadowPathMode(
-    ShadowPathMode propMode,
-    bool borderBoxDefaultEnabled) {
-  if (propMode != ShadowPathMode::Default) {
-    return propMode;
+inline ShadowPathMode resolveShadowPathMode(ShadowPathMode propMode) {
+  if (propMode == ShadowPathMode::Default) {
+    return ShadowPathMode::Auto;
   }
 
-  if (borderBoxDefaultEnabled) {
-    return ShadowPathMode::BorderBox;
-  }
-
-  return ShadowPathMode::Auto;
+  return propMode;
 }
 
 struct CornerRadii {

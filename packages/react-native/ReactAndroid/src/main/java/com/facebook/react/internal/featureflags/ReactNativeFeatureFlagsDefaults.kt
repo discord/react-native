@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<84c5a4338deb791e07275d340c3cd419>>
+ * @generated SignedSource<<3255db6cb7c71d866991568dc632321f>>
  */
 
 /**
@@ -62,8 +62,6 @@ public open class ReactNativeFeatureFlagsDefaults : ReactNativeFeatureFlagsProvi
   override fun enableFixForParentTagDuringReparenting(): Boolean = false
 
   override fun enableFontScaleChangesUpdatingLayout(): Boolean = false
-
-  override fun enableIOSBorderBoxShadowPathByDefault(): Boolean = false
 
   override fun enableIOSExperimentalAutoFocusImplementation(): Boolean = false
 

@@ -20,7 +20,6 @@ import {
   Text,
   View,
 } from 'react-native';
-import {enableIOSBorderBoxShadowPathByDefault} from 'react-native/src/private/featureflags/ReactNativeFeatureFlags';
 
 type ShadowPathMode = 'auto' | 'border-box' | 'content-alpha';
 type ShadowPathSelection = 'default' | ShadowPathMode;
@@ -81,8 +80,6 @@ function ShadowPathPlayground(): React.Node {
   const animatedStyle = {transform: [{scale}]};
   const shadowPathProps: {shadowPathIOS?: ShadowPathMode} =
     selectedMode === 'default' ? {} : {shadowPathIOS: selectedMode};
-  const flagEnabled = enableIOSBorderBoxShadowPathByDefault();
-  const flagDefault = flagEnabled ? 'Border Box' : 'Auto';
   const activeMode = SHADOW_PATH_OPTIONS.find(
     option => option.value === selectedMode,
   );
@@ -124,7 +121,7 @@ function ShadowPathPlayground(): React.Node {
       </View>
 
       <Text style={styles.status}>Active mode: {activeMode.label}</Text>
-      <Text style={styles.status}>Feature-flag default: {flagDefault}</Text>
+      <Text style={styles.status}>Omitted default: Auto</Text>
 
       <Text style={styles.heading}>Translucent button hierarchy</Text>
       <View style={styles.sampleStage}>

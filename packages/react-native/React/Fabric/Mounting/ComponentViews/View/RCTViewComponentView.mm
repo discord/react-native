@@ -838,8 +838,7 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
   if (!layerHasShadow) {
     layer.shadowPath = nil;
   } else {
-    bool borderBoxDefaultEnabled = ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault();
-    ShadowPathMode shadowPathMode = resolveShadowPathMode(_props->shadowPathIOS, borderBoxDefaultEnabled);
+    ShadowPathMode shadowPathMode = resolveShadowPathMode(_props->shadowPathIOS);
     RCTCornerRadii cornerRadii = RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii);
     const RCTCornerInsets cornerInsets = RCTGetCornerInsets(cornerRadii, UIEdgeInsetsZero);
 

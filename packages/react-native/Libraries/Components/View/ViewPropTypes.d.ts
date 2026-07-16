@@ -84,8 +84,7 @@ export interface ViewPropsIOS extends TVViewPropsIOS {
    *   view and its children. This supports irregular silhouettes but may require
    *   offscreen rendering.
    *
-   * When omitted, the default is controlled by a React Native feature flag.
-   * The initial default remains `auto`.
+   * When omitted, `auto` is used.
    *
    * @platform ios
    */

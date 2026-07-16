@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bd0115bdefce496d08445eaed9bdf2ac>>
+ * @generated SignedSource<<a9c9ed57862c214592fe0d1ffaad8014>>
  */
 
 /**
@@ -45,7 +45,6 @@ class ReactNativeFeatureFlagsProvider {
   virtual bool enableFabricRenderer() = 0;
   virtual bool enableFixForParentTagDuringReparenting() = 0;
   virtual bool enableFontScaleChangesUpdatingLayout() = 0;
-  virtual bool enableIOSBorderBoxShadowPathByDefault() = 0;
   virtual bool enableIOSExperimentalAutoFocusImplementation() = 0;
   virtual bool enableIOSTextBaselineOffsetPerLine() = 0;
   virtual bool enableIOSViewClipToPaddingBox() = 0;
