@@ -724,11 +724,7 @@ static BOOL RCTLayerTransformCollapsesAxis(CALayer *layer)
   _isJSResponder = NO;
   _removeClippedSubviews = NO;
   _reactSubviews = [NSMutableArray new];
-  // Must use EmptyLayoutMetrics (frame -1x-1), not `{}` (frame 0x0 / Flex).
-  // updateLayoutMetrics only force-updates `hidden` when old == EmptyLayoutMetrics,
-  // so a recycled display:none view otherwise keeps self.hidden=YES when reused.
   _layoutMetrics = EmptyLayoutMetrics;
-  self.hidden = NO;
 }
 
 - (void)setPropKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN:(NSSet<NSString *> *_Nullable)props
