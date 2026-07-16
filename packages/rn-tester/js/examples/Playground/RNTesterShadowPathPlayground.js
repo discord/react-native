@@ -15,26 +15,15 @@ import {useEffect, useRef, useState} from 'react';
 import {
   Animated,
   Pressable,
-  ScrollView,
   StyleSheet,
+  Switch,
   Text,
   View,
 } from 'react-native';
-import {
-  enableIOSBorderBoxShadowBackdrop,
-  enableIOSBorderBoxShadowPathByDefault,
-} from 'react-native/src/private/featureflags/ReactNativeFeatureFlags';
+import {enableIOSBorderBoxShadowPathByDefault} from 'react-native/src/private/featureflags/ReactNativeFeatureFlags';
 
 type ShadowPathMode = 'auto' | 'border-box' | 'content-alpha';
-type ShadowPathSelection = 'default' | 'box-shadow' | ShadowPathMode;
-type AnimationMode = 'off' | 'scale' | 'bounds' | 'content';
-type BackdropScenario =
-  | 'eligible'
-  | 'translucent-ancestor'
-  | 'earlier-sibling'
-  | 'unknown-ancestor'
-  | 'rounded-visible'
-  | 'rounded-clipped';
+type ShadowPathSelection = 'default' | ShadowPathMode;
 
 const SHADOW_PATH_OPTIONS: $ReadOnlyArray<{
   label: string,
@@ -44,78 +33,34 @@ const SHADOW_PATH_OPTIONS: $ReadOnlyArray<{
   {label: 'Auto', value: 'auto'},
   {label: 'Border Box', value: 'border-box'},
   {label: 'Content Alpha', value: 'content-alpha'},
-  {label: 'Box Shadow', value: 'box-shadow'},
-];
-
-const ANIMATION_OPTIONS: $ReadOnlyArray<{
-  label: string,
-  value: AnimationMode,
-}> = [
-  {label: 'Off', value: 'off'},
-  {label: 'Scale', value: 'scale'},
-  {label: 'Bounds', value: 'bounds'},
-  {label: 'Content', value: 'content'},
-];
-
-const BACKDROP_SCENARIOS: $ReadOnlyArray<{
-  label: string,
-  value: BackdropScenario,
-}> = [
-  {label: 'Eligible', value: 'eligible'},
-  {label: 'Translucent', value: 'translucent-ancestor'},
-  {label: 'Sibling', value: 'earlier-sibling'},
-  {label: 'Unknown', value: 'unknown-ancestor'},
-  {label: 'Rounded', value: 'rounded-visible'},
-  {label: 'Clipped', value: 'rounded-clipped'},
 ];
 
 function ShadowPathPlayground(): React.Node {
   const [selectedMode, setSelectedMode] =
-    useState<ShadowPathSelection>('box-shadow');
-  const [animationMode, setAnimationMode] = useState<AnimationMode>('off');
-  const [backdropScenario, setBackdropScenario] =
-    useState<BackdropScenario>('eligible');
-  // Keep layout and native-driven animations on separate values. Animated
-  // values cannot safely switch between the JS and native drivers.
-  const nativeAnimationProgressRef = useRef<?Animated.Value>(null);
-  if (nativeAnimationProgressRef.current == null) {
-    nativeAnimationProgressRef.current = new Animated.Value(0);
+    useState<ShadowPathSelection>('default');
+  const [animationEnabled, setAnimationEnabled] = useState(false);
+  const animationProgressRef = useRef<?Animated.Value>(null);
+  if (animationProgressRef.current == null) {
+    animationProgressRef.current = new Animated.Value(0);
   }
-  const nativeAnimationProgress = nativeAnimationProgressRef.current;
-  const boundsAnimationProgressRef = useRef<?Animated.Value>(null);
-  if (boundsAnimationProgressRef.current == null) {
-    boundsAnimationProgressRef.current = new Animated.Value(0);
-  }
-  const boundsAnimationProgress = boundsAnimationProgressRef.current;
+  const animationProgress = animationProgressRef.current;
 
   useEffect(() => {
-    nativeAnimationProgress.stopAnimation();
-    nativeAnimationProgress.setValue(0);
-    boundsAnimationProgress.stopAnimation();
-    boundsAnimationProgress.setValue(0);
-
-    if (animationMode === 'off') {
+    if (!animationEnabled) {
+      animationProgress.stopAnimation();
+      animationProgress.setValue(0);
       return;
-    }
-
-    // Bounds cannot use the native driver because it intentionally runs
-    // layout on every frame to invalidate the shadow host's silhouette.
-    let animationProgress = nativeAnimationProgress;
-    let useNativeDriver = true;
-    if (animationMode === 'bounds') {
-      animationProgress = boundsAnimationProgress;
-      useNativeDriver = false;
     }
 
     const growAnimation = Animated.timing(animationProgress, {
       duration: 700,
       toValue: 1,
-      useNativeDriver,
+      useNativeDriver: true,
     });
     const shrinkAnimation = Animated.timing(animationProgress, {
       duration: 700,
       toValue: 0,
-      useNativeDriver,
+      useNativeDriver: true,
     });
     const animationSequence = Animated.sequence([
       growAnimation,
@@ -127,64 +72,24 @@ function ShadowPathPlayground(): React.Node {
     return () => {
       animation.stop();
     };
-  }, [animationMode, boundsAnimationProgress, nativeAnimationProgress]);
+  }, [animationEnabled, animationProgress]);
 
-  const scale = nativeAnimationProgress.interpolate({
+  const scale = animationProgress.interpolate({
     inputRange: [0, 1],
     outputRange: [1, 1.12],
   });
-  const animatedWidth = boundsAnimationProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [160, 220],
-  });
-  const contentTranslation = nativeAnimationProgress.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, 24],
-  });
-  // Keep the two shadow APIs mutually exclusive so profiling the Box Shadow
-  // mode cannot also measure legacy shadow work.
-  const usesBoxShadow = selectedMode === 'box-shadow';
-  let shadowPathProps: {shadowPathIOS?: ShadowPathMode} = {};
-  if (selectedMode !== 'default' && selectedMode !== 'box-shadow') {
-    shadowPathProps = {shadowPathIOS: selectedMode};
-  }
+  const animatedStyle = {transform: [{scale}]};
+  const shadowPathProps: {shadowPathIOS?: ShadowPathMode} =
+    selectedMode === 'default' ? {} : {shadowPathIOS: selectedMode};
   const flagEnabled = enableIOSBorderBoxShadowPathByDefault();
   const flagDefault = flagEnabled ? 'Border Box' : 'Auto';
-  const backdropEnabled = enableIOSBorderBoxShadowBackdrop();
   const activeMode = SHADOW_PATH_OPTIONS.find(
     option => option.value === selectedMode,
-  );
-  const activeAnimation = ANIMATION_OPTIONS.find(
-    option => option.value === animationMode,
-  );
-  const activeBackdropScenario = BACKDROP_SCENARIOS.find(
-    option => option.value === backdropScenario,
   );
 
   if (activeMode == null) {
     throw new Error('Selected shadow path mode must have a label.');
   }
-  if (activeAnimation == null) {
-    throw new Error('Selected animation mode must have a label.');
-  }
-  if (activeBackdropScenario == null) {
-    throw new Error('Selected backdrop scenario must have a label.');
-  }
-
-  const renderButtonShadowHost = (): React.Node => (
-    <Animated.View
-      {...shadowPathProps}
-      style={[
-        styles.buttonShadowHost,
-        usesBoxShadow ? styles.buttonBoxShadow : styles.buttonLegacyShadow,
-        animationMode === 'scale' ? {transform: [{scale}]} : null,
-        animationMode === 'bounds' ? {width: animatedWidth} : null,
-      ]}>
-      <View style={styles.translucentButton}>
-        <Text style={styles.buttonLabel}>Translucent button</Text>
-      </View>
-    </Animated.View>
-  );
 
   return (
     <View style={styles.container}>
@@ -213,113 +118,23 @@ function ShadowPathPlayground(): React.Node {
         })}
       </View>
 
-      <Text style={styles.label}>Animation workload</Text>
-      <View accessibilityRole="radiogroup" style={styles.segmentedControl}>
-        {ANIMATION_OPTIONS.map(option => {
-          const selected = option.value === animationMode;
-          return (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityState={{checked: selected}}
-              key={option.value}
-              onPress={() => setAnimationMode(option.value)}
-              style={[
-                styles.segment,
-                selected ? styles.selectedSegment : null,
-              ]}>
-              <Text
-                style={[
-                  styles.segmentLabel,
-                  selected ? styles.selectedSegmentLabel : null,
-                ]}>
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
+      <View style={styles.animationRow}>
+        <Text style={styles.label}>Scale animation</Text>
+        <Switch onValueChange={setAnimationEnabled} value={animationEnabled} />
       </View>
 
       <Text style={styles.status}>Active mode: {activeMode.label}</Text>
       <Text style={styles.status}>Feature-flag default: {flagDefault}</Text>
-      <Text style={styles.status}>Animation: {activeAnimation.label}</Text>
-      <Text style={styles.status}>
-        Backplate: {backdropEnabled ? 'Enabled' : 'Disabled'}
-      </Text>
-      <Text style={styles.explanation}>
-        In Instruments, inspect the ShadowBackdrop::propagate trace for
-        visited-node and eligibility counts.
-      </Text>
-      <Text style={styles.explanation}>
-        Scale exercises cached compositing. Bounds repeatedly changes the
-        button's silhouette. Content moves a child within the irregular shadow
-        host.
-      </Text>
 
-      <Text style={styles.heading}>Backdrop proof scenario</Text>
-      <View accessibilityRole="radiogroup" style={styles.segmentedControl}>
-        {BACKDROP_SCENARIOS.map(option => {
-          const selected = option.value === backdropScenario;
-          return (
-            <Pressable
-              accessibilityRole="radio"
-              accessibilityState={{checked: selected}}
-              key={option.value}
-              onPress={() => setBackdropScenario(option.value)}
-              style={[
-                styles.segment,
-                selected ? styles.selectedSegment : null,
-              ]}>
-              <Text
-                style={[
-                  styles.segmentLabel,
-                  selected ? styles.selectedSegmentLabel : null,
-                ]}>
-                {option.label}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <Text style={styles.status}>
-        Scenario: {activeBackdropScenario.label}
-      </Text>
+      <Text style={styles.heading}>Translucent button hierarchy</Text>
       <View style={styles.sampleStage}>
-        {backdropScenario === 'eligible' ? (
-          <View style={styles.opaqueBackdropProvider}>
-            {renderButtonShadowHost()}
+        <Animated.View
+          {...shadowPathProps}
+          style={[styles.buttonShadowHost, animatedStyle]}>
+          <View style={styles.translucentButton}>
+            <Text style={styles.buttonLabel}>Translucent button</Text>
           </View>
-        ) : null}
-        {backdropScenario === 'translucent-ancestor' ? (
-          <View style={styles.opaqueBackdropProvider}>
-            <View style={styles.translucentAncestorBarrier}>
-              {renderButtonShadowHost()}
-            </View>
-          </View>
-        ) : null}
-        {backdropScenario === 'earlier-sibling' ? (
-          <View style={styles.opaqueBackdropProvider}>
-            <View style={styles.earlierSiblingBarrier} />
-            {renderButtonShadowHost()}
-          </View>
-        ) : null}
-        {backdropScenario === 'unknown-ancestor' ? (
-          <ScrollView
-            contentContainerStyle={styles.unknownAncestorContent}
-            scrollEnabled={false}
-            style={styles.unknownAncestorBarrier}>
-            {renderButtonShadowHost()}
-          </ScrollView>
-        ) : null}
-        {backdropScenario === 'rounded-visible' ? (
-          <View style={styles.roundedVisibleBarrier}>
-            {renderButtonShadowHost()}
-          </View>
-        ) : null}
-        {backdropScenario === 'rounded-clipped' ? (
-          <View style={styles.roundedClippedProvider}>
-            {renderButtonShadowHost()}
-          </View>
-        ) : null}
+        </Animated.View>
       </View>
 
       <Text style={styles.heading}>Irregular composited content</Text>
@@ -330,68 +145,11 @@ function ShadowPathPlayground(): React.Node {
       <View style={styles.sampleStage}>
         <Animated.View
           {...shadowPathProps}
-          style={[
-            styles.irregularShadowHost,
-            usesBoxShadow
-              ? styles.irregularBoxShadow
-              : styles.irregularLegacyShadow,
-            animationMode === 'scale' ? {transform: [{scale}]} : null,
-          ]}>
+          style={[styles.irregularShadowHost, animatedStyle]}>
           <View style={[styles.circle, styles.leftCircle]} />
           <View style={[styles.circle, styles.centerCircle]} />
-          <Animated.View
-            style={[
-              styles.circle,
-              styles.rightCircle,
-              animationMode === 'content'
-                ? {transform: [{translateX: contentTranslation}]}
-                : null,
-            ]}
-          />
+          <View style={[styles.circle, styles.rightCircle]} />
         </Animated.View>
-      </View>
-
-      <Text style={styles.heading}>Structural stress cases</Text>
-      <Text style={styles.explanation}>
-        The left column has deep transparent wrappers. The right column has a
-        dense list where every item is a shadow host.
-      </Text>
-      <View style={styles.stressStage}>
-        <View style={styles.deepWrapperOne}>
-          <View style={styles.deepWrapperTwo}>
-            <View style={styles.deepWrapperThree}>
-              <View
-                {...shadowPathProps}
-                style={[
-                  styles.stressShadowHost,
-                  usesBoxShadow
-                    ? styles.stressBoxShadow
-                    : styles.stressLegacyShadow,
-                ]}>
-                <View style={styles.stressTranslucentContent}>
-                  <Text style={styles.stressLabel}>Deep wrapper</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-        </View>
-        <View style={styles.denseList}>
-          {[0, 1, 2, 3].map(index => (
-            <View
-              {...shadowPathProps}
-              key={index}
-              style={[
-                styles.stressShadowHost,
-                usesBoxShadow
-                  ? styles.stressBoxShadow
-                  : styles.stressLegacyShadow,
-              ]}>
-              <View style={styles.stressTranslucentContent}>
-                <Text style={styles.stressLabel}>List item {index + 1}</Text>
-              </View>
-            </View>
-          ))}
-        </View>
       </View>
     </View>
   );
@@ -407,6 +165,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: StyleSheet.hairlineWidth,
     flexDirection: 'row',
+    overflow: 'hidden',
   },
   segment: {
     alignItems: 'center',
@@ -428,6 +187,11 @@ const styles = StyleSheet.create({
   selectedSegmentLabel: {
     color: 'white',
     fontWeight: '600',
+  },
+  animationRow: {
+    alignItems: 'center',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
   },
   label: {
     fontSize: 16,
@@ -452,65 +216,12 @@ const styles = StyleSheet.create({
     minHeight: 140,
     overflow: 'visible',
   },
-  opaqueBackdropProvider: {
-    alignItems: 'center',
-    backgroundColor: '#6750a4',
-    justifyContent: 'center',
-    minHeight: 100,
-    minWidth: 260,
-  },
-  translucentAncestorBarrier: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    justifyContent: 'center',
-    minHeight: 100,
-    minWidth: 260,
-  },
-  earlierSiblingBarrier: {
-    backgroundColor: '#ff453a',
-    height: 64,
-    position: 'absolute',
-    width: 190,
-  },
-  unknownAncestorBarrier: {
-    backgroundColor: '#6750a4',
-    maxHeight: 100,
-    minWidth: 260,
-  },
-  unknownAncestorContent: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    minHeight: 100,
-  },
-  roundedVisibleBarrier: {
-    alignItems: 'center',
-    backgroundColor: '#6750a4',
-    borderRadius: 24,
-    justifyContent: 'center',
-    minHeight: 100,
-    minWidth: 260,
-  },
-  roundedClippedProvider: {
-    alignItems: 'center',
-    backgroundColor: '#6750a4',
-    borderRadius: 24,
-    justifyContent: 'center',
-    minHeight: 100,
-    minWidth: 260,
-    overflow: 'hidden',
-  },
   buttonShadowHost: {
     borderRadius: 8,
-    width: 160,
-  },
-  buttonLegacyShadow: {
     shadowColor: 'black',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.14,
     shadowRadius: 4,
-  },
-  buttonBoxShadow: {
-    boxShadow: '0px 1px 8px rgba(0, 0, 0, 0.14)',
   },
   translucentButton: {
     alignItems: 'center',
@@ -520,7 +231,6 @@ const styles = StyleSheet.create({
     minHeight: 40,
     minWidth: 160,
     overflow: 'hidden',
-    width: '100%',
   },
   buttonLabel: {
     color: '#1c1c1e',
@@ -529,16 +239,11 @@ const styles = StyleSheet.create({
   irregularShadowHost: {
     height: 72,
     position: 'relative',
-    width: 160,
-  },
-  irregularLegacyShadow: {
     shadowColor: 'black',
     shadowOffset: {width: 0, height: 1},
     shadowOpacity: 0.25,
     shadowRadius: 4,
-  },
-  irregularBoxShadow: {
-    boxShadow: '0px 1px 8px rgba(0, 0, 0, 0.25)',
+    width: 160,
   },
   circle: {
     backgroundColor: '#ff9f0a',
@@ -558,47 +263,6 @@ const styles = StyleSheet.create({
   rightCircle: {
     backgroundColor: '#bf5af2',
     left: 96,
-  },
-  stressStage: {
-    backgroundColor: '#6750a4',
-    gap: 12,
-    padding: 16,
-  },
-  deepWrapperOne: {
-    padding: 2,
-  },
-  deepWrapperTwo: {
-    padding: 2,
-  },
-  deepWrapperThree: {
-    padding: 2,
-  },
-  denseList: {
-    gap: 8,
-  },
-  stressShadowHost: {
-    borderRadius: 8,
-    width: 160,
-  },
-  stressLegacyShadow: {
-    shadowColor: 'black',
-    shadowOffset: {width: 0, height: 1},
-    shadowOpacity: 0.14,
-    shadowRadius: 4,
-  },
-  stressBoxShadow: {
-    boxShadow: '0px 1px 8px rgba(0, 0, 0, 0.14)',
-  },
-  stressTranslucentContent: {
-    alignItems: 'center',
-    backgroundColor: 'rgba(255, 255, 255, 0.12)',
-    borderRadius: 8,
-    justifyContent: 'center',
-    minHeight: 32,
-  },
-  stressLabel: {
-    color: '#1c1c1e',
-    fontSize: 12,
   },
 });
 

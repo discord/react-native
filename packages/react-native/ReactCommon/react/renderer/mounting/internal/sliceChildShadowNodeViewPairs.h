@@ -10,9 +10,10 @@
 #include <deque>
 
 #include "CullingContext.h"
-#include "ShadowViewNodePair.h"
 
 namespace facebook::react {
+
+struct ShadowViewNodePair;
 
 /**
  * During differ, we need to keep some `ShadowViewNodePair`s in memory.
@@ -36,13 +37,6 @@ namespace facebook::react {
  * possible are close in memory, but does not guarantee adjacency.
  */
 using ViewNodePairScope = std::deque<ShadowViewNodePair>;
-
-/*
- * Computes the mounting environments for a complete, laid-out Shadow Tree.
- * The Differentiator owns the result for the duration of one old/new diff.
- */
-ShadowViewEnvironmentMap collectShadowViewEnvironments(
-    const ShadowNode& rootShadowNode);
 
 /**
  * Generates a list of `ShadowViewNodePair`s that represents a layer of a

@@ -16,7 +16,6 @@
 #import <react/renderer/core/EventEmitter.h>
 #import <react/renderer/core/LayoutMetrics.h>
 #import <react/renderer/core/Props.h>
-#import <react/renderer/mounting/ShadowView.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -75,8 +74,6 @@ NS_ASSUME_NONNULL_BEGIN
            oldLayoutMetrics:(const facebook::react::LayoutMetrics &)oldLayoutMetrics NS_REQUIRES_SUPER;
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask NS_REQUIRES_SUPER;
 - (void)prepareForRecycle NS_REQUIRES_SUPER;
-- (void)updateEnvironment:(const facebook::react::ShadowViewEnvironment &)environment
-           oldEnvironment:(const facebook::react::ShadowViewEnvironment &)oldEnvironment;
 - (UIView *)betterHitTest:(CGPoint)point withEvent:(UIEvent *)event;
 
 /*

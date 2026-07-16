@@ -6,187 +6,12 @@
  */
 
 #include "sliceChildShadowNodeViewPairs.h"
-#include <cxxreact/TraceSection.h>
 #include <react/featureflags/ReactNativeFeatureFlags.h>
-#include <react/renderer/components/root/RootShadowNode.h>
-#include <react/renderer/components/view/ViewShadowNode.h>
 #include <react/renderer/core/LayoutableShadowNode.h>
 
 #include "ShadowViewNodePair.h"
 
 namespace facebook::react {
-
-#ifndef NDEBUG
-struct ShadowBackdropPropagationStats {
-  size_t nodesVisited{};
-  size_t environmentsComputed{};
-  size_t providers{};
-  size_t barriers{};
-
-  void didVisitNode() {
-    nodesVisited++;
-  }
-
-  void didComputeEnvironment(const ShadowBackdrop& shadowBackdrop) {
-    environmentsComputed++;
-    if (shadowBackdrop.kind == ShadowBackdropKind::Provider) {
-      providers++;
-    } else if (shadowBackdrop.kind == ShadowBackdropKind::Barrier) {
-      barriers++;
-    }
-  }
-};
-#else
-struct ShadowBackdropPropagationStats {
-  void didVisitNode() {}
-  void didComputeEnvironment(const ShadowBackdrop&) {}
-};
-#endif
-
-static ShadowBackdropHostKind shadowBackdropHostKind(
-    const ShadowNode& shadowNode) {
-  const auto componentName = shadowNode.getComponentName();
-  if (componentName == RootComponentName) {
-    return ShadowBackdropHostKind::Root;
-  }
-
-  if (componentName == ViewComponentName) {
-    return ShadowBackdropHostKind::View;
-  }
-
-  return ShadowBackdropHostKind::Unknown;
-}
-
-static const ViewProps& shadowBackdropViewProps(
-    const ShadowNode& shadowNode,
-    ShadowBackdropHostKind hostKind) {
-  static const ViewProps emptyViewProps{};
-  if (hostKind == ShadowBackdropHostKind::Unknown) {
-    return emptyViewProps;
-  }
-
-  const auto& props = *shadowNode.getProps();
-  return static_cast<const ViewProps&>(props);
-}
-
-static bool shadowBackdropSiblingHasUnboundedEffect(
-    const ShadowNode& shadowNode) {
-  const auto hostKind = shadowBackdropHostKind(shadowNode);
-  if (hostKind == ShadowBackdropHostKind::Unknown) {
-    return true;
-  }
-
-  const auto& props = shadowBackdropViewProps(shadowNode, hostKind);
-  const Transform identityTransform{};
-  return shadowBackdropHasVisualEffect(props) || props.transform != identityTransform;
-}
-
-static bool shadowBackdropRectsIntersect(const Rect& first, const Rect& second) {
-  const auto intersection = Rect::intersect(first, second);
-  return intersection.size.width > 0 && intersection.size.height > 0;
-}
-
-static void collectShadowBackdropsForChildren(
-    const ShadowNode& parentShadowNode,
-    const ShadowBackdrop& inheritedBackdrop,
-    ShadowViewEnvironmentMap& environments,
-    ShadowBackdropPropagationStats& stats) {
-  const auto parentHostKind = shadowBackdropHostKind(parentShadowNode);
-  const auto& parentProps =
-      shadowBackdropViewProps(parentShadowNode, parentHostKind);
-  const auto parentShadowView = ShadowView(parentShadowNode);
-  const auto parentLayoutMetrics = parentShadowView.layoutMetrics;
-
-  std::vector<const ShadowNode*> childShadowNodes;
-  for (const auto& childShadowNode : parentShadowNode.getChildren()) {
-    const auto childShadowNodePointer = childShadowNode.get();
-    childShadowNodes.push_back(childShadowNodePointer);
-  }
-
-  std::stable_sort(
-      childShadowNodes.begin(),
-      childShadowNodes.end(),
-      [](const ShadowNode* first, const ShadowNode* second) {
-        return first->getOrderIndex() < second->getOrderIndex();
-      });
-
-  Rect earlierSiblingBounds{};
-  bool hasEarlierSiblingBounds = false;
-  bool hasEarlierSiblingUnboundedEffect = false;
-
-  for (const auto* childShadowNode : childShadowNodes) {
-    stats.didVisitNode();
-    const auto childShadowView = ShadowView(*childShadowNode);
-    const auto childLayoutMetrics = childShadowView.layoutMetrics;
-    const auto childBounds = childLayoutMetrics.getOverflowInsetFrame();
-    bool hasEarlierSiblingBarrier = hasEarlierSiblingUnboundedEffect;
-    if (hasEarlierSiblingBounds &&
-        shadowBackdropRectsIntersect(earlierSiblingBounds, childBounds)) {
-      hasEarlierSiblingBarrier = true;
-    }
-
-    auto childBackdrop = resolveShadowBackdropForChild(
-        inheritedBackdrop,
-        parentHostKind,
-        parentProps,
-        parentLayoutMetrics,
-        childLayoutMetrics,
-        hasEarlierSiblingBarrier);
-    if (childBackdrop.kind == ShadowBackdropKind::Provider &&
-        childBackdrop.providerTag == -1) {
-      childBackdrop.providerTag = parentShadowNode.getTag();
-    }
-    if (childBackdrop.kind == ShadowBackdropKind::Barrier &&
-        childBackdrop.barrierTag == -1) {
-      childBackdrop.barrierTag = parentShadowNode.getTag();
-    }
-    const auto childTag = childShadowNode->getTag();
-    ShadowViewEnvironment childEnvironment{};
-    childEnvironment.shadowBackdrop = childBackdrop;
-    const auto insertion = environments.emplace(childTag, childEnvironment);
-    react_native_assert(insertion.second);
-    stats.didComputeEnvironment(childBackdrop);
-
-    collectShadowBackdropsForChildren(
-        *childShadowNode, childBackdrop, environments, stats);
-
-    if (childLayoutMetrics != EmptyLayoutMetrics) {
-      if (hasEarlierSiblingBounds) {
-        earlierSiblingBounds.unionInPlace(childBounds);
-      } else {
-        earlierSiblingBounds = childBounds;
-        hasEarlierSiblingBounds = true;
-      }
-    }
-
-    if (shadowBackdropSiblingHasUnboundedEffect(*childShadowNode)) {
-      hasEarlierSiblingUnboundedEffect = true;
-    }
-  }
-}
-
-ShadowViewEnvironmentMap collectShadowViewEnvironments(
-    const ShadowNode& rootShadowNode) {
-  ShadowViewEnvironmentMap environments{};
-  ShadowBackdropPropagationStats stats{};
-#ifndef NDEBUG
-  TraceSection propagationSection("ShadowBackdrop::propagate");
-#endif
-  collectShadowBackdropsForChildren(rootShadowNode, {}, environments, stats);
-#ifndef NDEBUG
-  TraceSection statsSection(
-      "ShadowBackdrop::propagateStats",
-      "nodes",
-      stats.nodesVisited,
-      "environments",
-      stats.environmentsComputed,
-      "providers",
-      stats.providers,
-      "barriers",
-      stats.barriers);
-#endif
-  return environments;
-}
 
 /*
  * Sorting comparator for `reorderInPlaceIfNeeded`.
@@ -228,8 +53,7 @@ static void sliceChildShadowNodeViewPairsRecursively(
     ViewNodePairScope& scope,
     Point layoutOffset,
     const ShadowNode& shadowNode,
-    const CullingContext& cullingContext,
-    const ShadowViewEnvironmentMap* environments) {
+    const CullingContext& cullingContext) {
   for (const auto& sharedChildShadowNode : shadowNode.getChildren()) {
     auto& childShadowNode = *sharedChildShadowNode;
 #ifndef ANDROID
@@ -244,12 +68,6 @@ static void sliceChildShadowNodeViewPairsRecursively(
     }
 #endif
     auto shadowView = ShadowView(childShadowNode);
-    if (environments) {
-      const auto childTag = childShadowNode.getTag();
-      const auto environment = environments->find(childTag);
-      react_native_assert(environment != environments->end());
-      shadowView.environment = environment->second;
-    }
 
     if (ReactNativeFeatureFlags::enableViewCulling()) {
       auto isViewCullable =
@@ -309,8 +127,7 @@ static void sliceChildShadowNodeViewPairsRecursively(
          &childShadowNode,
          areChildrenFlattened,
          isConcreteView,
-         storedOrigin,
-         environments});
+         storedOrigin});
 
     if (shadowView.layoutMetrics.positionType == PositionType::Static) {
       auto it = pairList.begin();
@@ -324,8 +141,7 @@ static void sliceChildShadowNodeViewPairsRecursively(
             scope,
             origin,
             childShadowNode,
-            cullingContextCopy,
-            environments);
+            cullingContextCopy);
       }
     } else {
       pairList.push_back(&scope.back());
@@ -337,8 +153,7 @@ static void sliceChildShadowNodeViewPairsRecursively(
             scope,
             origin,
             childShadowNode,
-            cullingContextCopy,
-            environments);
+            cullingContextCopy);
       }
     }
   }
@@ -366,8 +181,7 @@ std::vector<ShadowViewNodePair*> sliceChildShadowNodeViewPairs(
       scope,
       layoutOffset,
       shadowNode,
-      cullingContext,
-      shadowNodePair.environments);
+      cullingContext);
 
   // Sorting pairs based on `orderIndex` if needed.
   reorderInPlaceIfNeeded(pairList);

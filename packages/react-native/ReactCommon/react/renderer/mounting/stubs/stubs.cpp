@@ -7,7 +7,6 @@
 
 #include "stubs.h"
 
-#include <react/featureflags/ReactNativeFeatureFlags.h>
 #include <react/renderer/core/LayoutableShadowNode.h>
 #include <react/renderer/core/ShadowNodeFragment.h>
 #include <react/renderer/mounting/Differentiator.h>
@@ -75,20 +74,8 @@ StubViewTree buildStubViewTreeWithoutUsingDifferentiator(
   auto mutations = ShadowViewMutation::List{};
   mutations.reserve(256);
 
-  ShadowViewEnvironmentMap environments{};
-  const ShadowViewEnvironmentMap* environmentsPointer = nullptr;
-  const bool shadowBackdropEnabled =
-      ReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop();
-  if (shadowBackdropEnabled) {
-    environments = collectShadowViewEnvironments(rootShadowNode);
-    environmentsPointer = &environments;
-  }
-
   ViewNodePairScope scope;
-  ShadowViewNodePair rootShadowNodePair{
-      .shadowNode = &rootShadowNode,
-      .environments = environmentsPointer,
-  };
+  ShadowViewNodePair rootShadowNodePair{.shadowNode = &rootShadowNode};
   calculateShadowViewMutationsForNewTree(
       mutations,
       scope,

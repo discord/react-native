@@ -39,8 +39,7 @@ bool ShadowView::operator==(const ShadowView& rhs) const {
              this->props,
              this->eventEmitter,
              this->layoutMetrics,
-             this->state,
-             this->environment) ==
+             this->state) ==
       std::tie(
              rhs.surfaceId,
              rhs.tag,
@@ -48,8 +47,7 @@ bool ShadowView::operator==(const ShadowView& rhs) const {
              rhs.props,
              rhs.eventEmitter,
              rhs.layoutMetrics,
-             rhs.state,
-             rhs.environment);
+             rhs.state);
 }
 
 bool ShadowView::operator!=(const ShadowView& rhs) const {

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<35759e0c6596d969ed6cfbf393ff4908>>
+ * @generated SignedSource<<defa11415b9c9c44905c34529ef3aed8>>
  */
 
 /**
@@ -147,11 +147,6 @@ bool NativeReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout(
 bool NativeReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault(
     jsi::Runtime& /*runtime*/) {
   return ReactNativeFeatureFlags::enableIOSBorderBoxShadowPathByDefault();
-}
-
-bool NativeReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop(
-    jsi::Runtime& /*runtime*/) {
-  return ReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop();
 }
 
 bool NativeReactNativeFeatureFlags::enableIOSExperimentalAutoFocusImplementation(

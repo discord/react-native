@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8018fdfb715556c9af4c5a696e62cca4>>
+ * @generated SignedSource<<8a75aa937ab50bb2ea4e920c046e2d1e>>
  */
 
 /**
@@ -232,15 +232,6 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::enableIOSBorderBoxShadowPathByDefault();
-  }
-
-  bool enableIOSBorderBoxShadowBackdrop() override {
-    auto value = values_["enableIOSBorderBoxShadowBackdrop"];
-    if (!value.isNull()) {
-      return value.getBool();
-    }
-
-    return ReactNativeFeatureFlagsDefaults::enableIOSBorderBoxShadowBackdrop();
   }
 
   bool enableIOSExperimentalAutoFocusImplementation() override {

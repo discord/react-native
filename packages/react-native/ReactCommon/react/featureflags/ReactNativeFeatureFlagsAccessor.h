@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8b2400f41b0cf3d64e89a97ef1c08f9c>>
+ * @generated SignedSource<<a3740d1767807d834ae3d3f7beb7f7a0>>
  */
 
 /**
@@ -53,7 +53,6 @@ class ReactNativeFeatureFlagsAccessor {
   bool enableFixForParentTagDuringReparenting();
   bool enableFontScaleChangesUpdatingLayout();
   bool enableIOSBorderBoxShadowPathByDefault();
-  bool enableIOSBorderBoxShadowBackdrop();
   bool enableIOSExperimentalAutoFocusImplementation();
   bool enableIOSTextBaselineOffsetPerLine();
   bool enableIOSViewClipToPaddingBox();
@@ -111,7 +110,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 68> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 67> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> animatedShouldSignalBatch_;
@@ -134,7 +133,6 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> enableFixForParentTagDuringReparenting_;
   std::atomic<std::optional<bool>> enableFontScaleChangesUpdatingLayout_;
   std::atomic<std::optional<bool>> enableIOSBorderBoxShadowPathByDefault_;
-  std::atomic<std::optional<bool>> enableIOSBorderBoxShadowBackdrop_;
   std::atomic<std::optional<bool>> enableIOSExperimentalAutoFocusImplementation_;
   std::atomic<std::optional<bool>> enableIOSTextBaselineOffsetPerLine_;
   std::atomic<std::optional<bool>> enableIOSViewClipToPaddingBox_;

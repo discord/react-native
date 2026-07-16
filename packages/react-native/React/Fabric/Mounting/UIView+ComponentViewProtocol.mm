@@ -119,12 +119,6 @@ using namespace facebook::react;
   }
 }
 
-- (void)updateEnvironment:(const ShadowViewEnvironment &)environment
-           oldEnvironment:(const ShadowViewEnvironment &)oldEnvironment
-{
-  // Default implementation does nothing.
-}
-
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask
 {
   // Default implementation does nothing.

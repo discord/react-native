@@ -1384,38 +1384,19 @@ ShadowViewMutation::List calculateShadowViewMutations(
   auto oldRootShadowView = ShadowView(oldRootShadowNode);
   auto newRootShadowView = ShadowView(newRootShadowNode);
 
-  ShadowViewEnvironmentMap oldEnvironments{};
-  ShadowViewEnvironmentMap newEnvironments{};
-  const ShadowViewEnvironmentMap* oldEnvironmentsPointer = nullptr;
-  const ShadowViewEnvironmentMap* newEnvironmentsPointer = nullptr;
-  const bool shadowBackdropEnabled =
-      ReactNativeFeatureFlags::enableIOSBorderBoxShadowBackdrop();
-  if (shadowBackdropEnabled) {
-    oldEnvironments = collectShadowViewEnvironments(oldRootShadowNode);
-    newEnvironments = collectShadowViewEnvironments(newRootShadowNode);
-    oldEnvironmentsPointer = &oldEnvironments;
-    newEnvironmentsPointer = &newEnvironments;
-  }
-
   if (oldRootShadowView != newRootShadowView) {
     mutations.push_back(ShadowViewMutation::UpdateMutation(
         oldRootShadowView, newRootShadowView, {}));
   }
 
   auto sliceOne = sliceChildShadowNodeViewPairs(
-      ShadowViewNodePair{
-          .shadowView = oldRootShadowView,
-          .shadowNode = &oldRootShadowNode,
-          .environments = oldEnvironmentsPointer},
+      ShadowViewNodePair{.shadowNode = &oldRootShadowNode},
       viewNodePairScope,
       false /* allowFlattened */,
       {} /* layoutOffset */,
       {} /* cullingContext */);
   auto sliceTwo = sliceChildShadowNodeViewPairs(
-      ShadowViewNodePair{
-          .shadowView = newRootShadowView,
-          .shadowNode = &newRootShadowNode,
-          .environments = newEnvironmentsPointer},
+      ShadowViewNodePair{.shadowNode = &newRootShadowNode},
       viewNodePairScope,
       false /* allowFlattened */,
       {} /* layoutOffset */,

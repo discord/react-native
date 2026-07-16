@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<40b102e535b74e9e42fb22d82bbb2b02>>
+ * @generated SignedSource<<42800c900774644d53216aa2c7dd624c>>
  */
 
 /**
@@ -69,8 +69,6 @@ public object ReactNativeFeatureFlagsCxxInterop {
   @DoNotStrip @JvmStatic public external fun enableFontScaleChangesUpdatingLayout(): Boolean
 
   @DoNotStrip @JvmStatic public external fun enableIOSBorderBoxShadowPathByDefault(): Boolean
-
-  @DoNotStrip @JvmStatic public external fun enableIOSBorderBoxShadowBackdrop(): Boolean
 
   @DoNotStrip @JvmStatic public external fun enableIOSExperimentalAutoFocusImplementation(): Boolean
 

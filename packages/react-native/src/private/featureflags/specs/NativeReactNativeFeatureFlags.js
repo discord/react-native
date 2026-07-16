@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<1a88c0eb715d767b15fe668e6e60129c>>
+ * @generated SignedSource<<ed393c52359937db1205a90e6559f613>>
  * @flow strict
  * @noformat
  */
@@ -46,7 +46,6 @@ export interface Spec extends TurboModule {
   +enableFixForParentTagDuringReparenting?: () => boolean;
   +enableFontScaleChangesUpdatingLayout?: () => boolean;
   +enableIOSBorderBoxShadowPathByDefault?: () => boolean;
-  +enableIOSBorderBoxShadowBackdrop?: () => boolean;
   +enableIOSExperimentalAutoFocusImplementation?: () => boolean;
   +enableIOSTextBaselineOffsetPerLine?: () => boolean;
   +enableIOSViewClipToPaddingBox?: () => boolean;

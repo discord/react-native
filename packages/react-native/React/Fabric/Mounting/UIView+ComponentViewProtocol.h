@@ -33,9 +33,6 @@ NS_ASSUME_NONNULL_BEGIN
 - (void)updateLayoutMetrics:(const facebook::react::LayoutMetrics &)layoutMetrics
            oldLayoutMetrics:(const facebook::react::LayoutMetrics &)oldLayoutMetrics;
 
-- (void)updateEnvironment:(const facebook::react::ShadowViewEnvironment &)environment
-           oldEnvironment:(const facebook::react::ShadowViewEnvironment &)oldEnvironment;
-
 - (void)finalizeUpdates:(RNComponentViewUpdateMask)updateMask;
 
 - (void)prepareForRecycle;
