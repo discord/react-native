@@ -356,7 +356,9 @@ public class TextAttributeProps private constructor() {
     }
 
   public var textStrokeWidth: Float = Float.NaN
-    private set
+    private set(value) {
+      field = toPixelFromDIP(value)
+    }
 
   public var isTextStrokeColorSet: Boolean = false
     private set
