@@ -166,18 +166,50 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(const TextA
       } else {
         patternWidth = 100;
       }
-      // Use a square tile so the gradient's axis length is patternWidth for any angle,
-      // matching Android's gradientLength behavior for vertical gradients.
-      gradient.frame = CGRectMake(0, 0, patternWidth, patternWidth);
       gradient.colors = cgColors;
 
       CGFloat angle = !isnan(textAttributes.gradientAngle) ? textAttributes.gradientAngle : 0.0;
       CGFloat radians = angle * M_PI / 180.0;
+      CGFloat cosA = cos(radians);
+      CGFloat sinA = sin(radians);
 
-      CGFloat startX = 0.5 - 0.5 * cos(radians);
-      CGFloat startY = 0.5 - 0.5 * sin(radians);
-      CGFloat endX = 0.5 + 0.5 * cos(radians);
-      CGFloat endY = 0.5 + 0.5 * sin(radians);
+      // Default: a square tile whose axis length is patternWidth, so the gradient repeats
+      // every patternWidth points (mirror mode) for any angle.
+      CGFloat tileWidth = patternWidth;
+      CGFloat tileHeight = patternWidth;
+
+      // In clamp mode we want the gradient to span patternWidth and then hold the last color for
+      // the remaining space (like Android's Shader.TileMode.CLAMP) instead of repeating. Because a
+      // pattern image tiles along the screen axes, we can achieve this cheaply for horizontal and
+      // vertical gradients by making the tile far longer than the text along the gradient axis (and
+      // 1pt across): CAGradientLayer holds the end color past the endPoint, and the repeat falls
+      // off the end of any realistic text. Diagonal gradients keep the square (repeating) tile.
+      const CGFloat kClampTileExtent = 16384; // points; larger than any realistic text extent
+      const CGFloat kAxisEpsilon = 1e-6;
+      BOOL isHorizontal = fabs(sinA) < kAxisEpsilon;
+      BOOL isVertical = fabs(cosA) < kAxisEpsilon;
+      if (isClampMode && (isHorizontal || isVertical)) {
+        if (isHorizontal) {
+          tileWidth = kClampTileExtent;
+          tileHeight = 1;
+        } else {
+          tileWidth = 1;
+          tileHeight = kClampTileExtent;
+        }
+      }
+
+      gradient.frame = CGRectMake(0, 0, tileWidth, tileHeight);
+
+      // Anchor the gradient at the leading edge and let it span patternWidth along the axis.
+      // Fractions are relative to the tile, so the gradient occupies patternWidth points; in clamp
+      // mode the last color then fills the rest of the (much larger) tile.
+      CGFloat fx = tileWidth > 0 ? patternWidth / tileWidth : 1.0;
+      CGFloat fy = tileHeight > 0 ? patternWidth / tileHeight : 1.0;
+
+      CGFloat startX = 0.5 - 0.5 * cosA;
+      CGFloat startY = 0.5 - 0.5 * sinA;
+      CGFloat endX = startX + fx * cosA;
+      CGFloat endY = startY + fy * sinA;
 
       gradient.startPoint = CGPointMake(startX, startY);
       gradient.endPoint = CGPointMake(endX, endY);
