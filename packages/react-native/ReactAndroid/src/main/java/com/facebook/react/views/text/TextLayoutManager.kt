@@ -513,12 +513,24 @@ internal object TextLayoutManager {
     return spannable
   }
 
-  private fun addLeadingMarginForTextEffects(spannable: Spannable) {
-    val strokeSpan = StrokeStyleSpan.getStrokeSpan(spannable)
-    val shadowSpan = ShadowStyleSpan.getShadowSpan(spannable)
+  /**
+   * The leading margin (in px) reserved by [addLeadingMarginForTextEffects] so the left stroke or
+   * shadow halo isn't clipped at x=0. This margin is applied to every line, so it must also be added
+   * to the layout width in [createLayout] - [Layout.getDesiredWidth] measures only glyph advances
+   * and ignores [LeadingMarginSpan], so without this the reserved margin eats into the usable line
+   * width and the trailing word wraps to a clipped line (occupying space but not rendering).
+   */
+  @JvmStatic
+  internal fun getLeadingMarginForTextEffects(spanned: Spanned?): Int {
+    val strokeSpan = StrokeStyleSpan.getStrokeSpan(spanned)
+    val shadowSpan = ShadowStyleSpan.getShadowSpan(spanned)
     val strokeOffset = strokeSpan?.getLeftOffset() ?: 0f
     val shadowOffset = shadowSpan?.getLeftOffset() ?: 0f
-    val leadingMargin = max(strokeOffset, shadowOffset).toInt()
+    return max(strokeOffset, shadowOffset).toInt()
+  }
+
+  private fun addLeadingMarginForTextEffects(spannable: Spannable) {
+    val leadingMargin = getLeadingMarginForTextEffects(spannable)
     if (leadingMargin > 0) {
       spannable.setSpan(
           LeadingMarginSpan.Standard(leadingMargin),
@@ -609,7 +621,12 @@ internal object TextLayoutManager {
           text, paint, layoutWidth, alignment, 1f, 0f, boring, includeFontPadding)
     }
 
-    val desiredWidth = ceil(Layout.getDesiredWidth(text, paint)).toInt()
+    // [Layout.getDesiredWidth] measures glyph advances only and ignores the [LeadingMarginSpan]
+    // added by [addLeadingMarginForTextEffects] for stroke/shadow halos. Add that margin back so the
+    // StaticLayout is wide enough to hold both the reserved halo and the full text - otherwise the
+    // margin eats into the usable line width and the trailing word wraps to a clipped line.
+    val desiredWidth =
+        ceil(Layout.getDesiredWidth(text, paint)).toInt() + getLeadingMarginForTextEffects(text)
 
     val layoutWidth =
         when (widthYogaMeasureMode) {
