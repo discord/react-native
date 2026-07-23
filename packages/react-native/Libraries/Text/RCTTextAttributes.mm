@@ -55,7 +55,6 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
   _gradientColors = textAttributes->_gradientColors ?: _gradientColors;
   _gradientAngle = !isnan(textAttributes->_gradientAngle) ? textAttributes->_gradientAngle : _gradientAngle;
   _gradientLength = !isnan(textAttributes->_gradientLength) ? textAttributes->_gradientLength : _gradientLength;
-  _gradientWidth = !isnan(textAttributes->_gradientWidth) ? textAttributes->_gradientWidth : _gradientWidth;
   _gradientMode = textAttributes->_gradientMode ?: _gradientMode;
   _opacity =
       !isnan(textAttributes->_opacity) ? (isnan(_opacity) ? 1.0 : _opacity) * textAttributes->_opacity : _opacity;
@@ -334,12 +333,10 @@ NSString *const RCTTextAttributesTagAttributeName = @"RCTTextAttributesTagAttrib
       }
 
       CAGradientLayer *gradient = [CAGradientLayer layer];
-      // Prefer gradientLength; fall back to the deprecated gradientWidth; otherwise default to 100.
+      // Use gradientLength; otherwise default to 100.
       CGFloat patternWidth;
       if (!isnan(_gradientLength) && _gradientLength > 0) {
         patternWidth = _gradientLength;
-      } else if (!isnan(_gradientWidth) && _gradientWidth > 0) {
-        patternWidth = _gradientWidth;
       } else {
         patternWidth = 100;
       }
@@ -442,7 +439,7 @@ static NSString *capitalizeText(NSString *text)
 
   return RCTTextAttributesCompareObjects(_foregroundColor) && RCTTextAttributesCompareObjects(_backgroundColor) &&
       RCTTextAttributesCompareObjects(_gradientColors) && RCTTextAttributesCompareFloats(_gradientAngle) &&
-      RCTTextAttributesCompareFloats(_gradientLength) && RCTTextAttributesCompareFloats(_gradientWidth) &&
+      RCTTextAttributesCompareFloats(_gradientLength) &&
       RCTTextAttributesCompareFloats(_opacity) && RCTTextAttributesCompareStrings(_gradientMode) &&
       // Font
       RCTTextAttributesCompareObjects(_fontFamily) && RCTTextAttributesCompareFloats(_fontSize) &&
