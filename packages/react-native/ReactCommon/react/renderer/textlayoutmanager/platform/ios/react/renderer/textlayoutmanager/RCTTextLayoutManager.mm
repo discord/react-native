@@ -11,6 +11,7 @@
 #import <CoreText/CoreText.h>
 
 #import <React/NSTextStorage+FontScaling.h>
+#import <React/RCTTextStroke.h>
 #import <React/RCTUtils.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
 #import <react/utils/ManagedObjectWrapper.h>
@@ -54,87 +55,6 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
                               }
                             }];
   return strokeWidth;
-}
-
-// Core Text (used for the two-pass stroke rendering below) performs its own word wrapping and
-// ignores the NSTextContainer's `maximumNumberOfLines` and truncating line break mode. If we hand
-// it the full attributed string, an overflowing last word gets wrapped to a line that does not fit
-// the (clamped) frame and disappears entirely - with no ellipsis. The non-stroke path avoids this
-// because it draws the glyphs NSLayoutManager already laid out and truncated. This helper
-// reconstructs that same visible, truncated text (visible characters + an ellipsis) so the stroke
-// passes render identically to the non-stroke path.
-static NSAttributedString *RCTTruncatedAttributedStringForStroke(
-    NSTextStorage *textStorage,
-    NSLayoutManager *layoutManager,
-    NSTextContainer *textContainer)
-{
-  // No line limit means nothing is truncated and the frame was measured to fit every wrapped line,
-  // so Core Text can safely lay out the full string.
-  if (textContainer.maximumNumberOfLines == 0) {
-    return textStorage;
-  }
-
-  [layoutManager ensureLayoutForTextContainer:textContainer];
-  NSRange fullGlyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
-  if (fullGlyphRange.length == 0) {
-    return textStorage;
-  }
-
-  NSMutableAttributedString *truncated = [NSMutableAttributedString new];
-  [layoutManager
-      enumerateLineFragmentsForGlyphRange:fullGlyphRange
-                               usingBlock:^(
-                                   CGRect rect,
-                                   CGRect usedRect,
-                                   NSTextContainer *_Nonnull _,
-                                   NSRange lineGlyphRange,
-                                   BOOL *_Nonnull stop) {
-                                 NSRange lineCharRange =
-                                     [layoutManager characterRangeForGlyphRange:lineGlyphRange
-                                                               actualGlyphRange:NULL];
-                                 NSRange truncatedGlyphRange = [layoutManager
-                                     truncatedGlyphRangeInLineFragmentForGlyphAtIndex:lineGlyphRange.location];
-
-                                 if (truncatedGlyphRange.location != NSNotFound) {
-                                   // This line is truncated. Keep the characters before the
-                                   // truncation point and append an ellipsis carrying the attributes
-                                   // of the last visible character (matching what TextKit renders).
-                                   NSRange truncatedCharRange =
-                                       [layoutManager characterRangeForGlyphRange:truncatedGlyphRange
-                                                                 actualGlyphRange:NULL];
-                                   NSInteger visibleLength = truncatedCharRange.location - lineCharRange.location;
-                                   if (visibleLength > 0) {
-                                     NSRange visibleRange = NSMakeRange(lineCharRange.location, visibleLength);
-                                     [truncated
-                                         appendAttributedString:[textStorage attributedSubstringFromRange:visibleRange]];
-                                     NSDictionary<NSAttributedStringKey, id> *ellipsisAttributes =
-                                         [textStorage attributesAtIndex:NSMaxRange(visibleRange) - 1 effectiveRange:NULL];
-                                     [truncated appendAttributedString:[[NSAttributedString alloc]
-                                                                           initWithString:@"\u2026"
-                                                                               attributes:ellipsisAttributes]];
-                                   }
-                                   *stop = YES;
-                                   return;
-                                 }
-
-                                 // Fully visible line. Append it verbatim; if it was soft-wrapped
-                                 // (does not already end in a newline) insert one so Core Text
-                                 // reproduces the same line break.
-                                 NSAttributedString *lineString =
-                                     [textStorage attributedSubstringFromRange:lineCharRange];
-                                 [truncated appendAttributedString:lineString];
-                                 NSString *lineText = lineString.string;
-                                 if (lineText.length > 0 && [lineText characterAtIndex:lineText.length - 1] != '\n' &&
-                                     NSMaxRange(lineCharRange) < textStorage.length) {
-                                   NSDictionary<NSAttributedStringKey, id> *newlineAttributes =
-                                       [textStorage attributesAtIndex:NSMaxRange(lineCharRange) - 1 effectiveRange:NULL];
-                                   [truncated appendAttributedString:[[NSAttributedString alloc]
-                                                                         initWithString:@"\n"
-                                                                             attributes:newlineAttributes]];
-                                 }
-                               }];
-
-  return truncated.length > 0 ? truncated : textStorage;
 }
 
 - (TextMeasurement)measureNSAttributedString:(NSAttributedString *)attributedString
