@@ -1132,7 +1132,7 @@ constexpr static MapBuffer::Key TA_KEY_GRADIENT_COLORS = 30;
 constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_WIDTH = 31;
 constexpr static MapBuffer::Key TA_KEY_TEXT_STROKE_COLOR = 32;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_ANGLE = 33;
-// Key 34 is retired (formerly TA_KEY_GRADIENT_WIDTH) and intentionally left unused.
+constexpr static MapBuffer::Key TA_KEY_GRADIENT_WIDTH = 34; // Unused
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_MODE = 35;
 constexpr static MapBuffer::Key TA_KEY_GRADIENT_LENGTH = 36;
 

@@ -162,7 +162,6 @@ inline static UIColor *RCTEffectiveForegroundColorFromTextAttributes(const TextA
       }
 
       CAGradientLayer *gradient = [CAGradientLayer layer];
-      // Use gradientLength; otherwise default to 100.
       CGFloat patternWidth;
       if (!isnan(textAttributes.gradientLength) && textAttributes.gradientLength > 0) {
         patternWidth = textAttributes.gradientLength;

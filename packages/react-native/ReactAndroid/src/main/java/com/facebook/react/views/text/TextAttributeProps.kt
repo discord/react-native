@@ -437,7 +437,7 @@ public class TextAttributeProps private constructor() {
     public const val TA_KEY_TEXT_STROKE_WIDTH: Int = 31
     public const val TA_KEY_TEXT_STROKE_COLOR: Int = 32
     public const val TA_KEY_GRADIENT_ANGLE: Int = 33
-    // Key 34 is retired (formerly TA_KEY_GRADIENT_WIDTH) and intentionally left unused.
+    public const val TA_KEY_GRADIENT_WIDTH: Int = 34 // Unused
     public const val TA_KEY_GRADIENT_MODE: Int = 35
     public const val TA_KEY_GRADIENT_LENGTH: Int = 36
 
