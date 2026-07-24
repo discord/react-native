@@ -10,7 +10,6 @@
 #import <CoreText/CoreText.h>
 #import <MobileCoreServices/UTCoreTypes.h>
 
-#import <React/RCTTextStroke.h>
 #import <React/RCTUtils.h>
 #import <React/UIView+React.h>
 
@@ -157,20 +156,14 @@
 
     CGFloat strokeInset = strokeWidth / 2;
 
-    // Core Text ignores the container's line limit / truncation, so feed it the same visible,
-    // truncated text NSLayoutManager laid out; otherwise an overflowing last word would vanish.
-    NSAttributedString *visibleText =
-        RCTTruncatedAttributedStringForStroke(_textStorage, layoutManager, textContainer);
-    NSRange visibleRange = NSMakeRange(0, visibleText.length);
-
     // PASS 1: Draw stroke outline
     CGContextSaveGState(context);
     CGContextSetTextDrawingMode(context, kCGTextStroke);
 
-    NSMutableAttributedString *strokeText = [visibleText mutableCopy];
+    NSMutableAttributedString *strokeText = [_textStorage mutableCopy];
     [strokeText addAttribute:NSForegroundColorAttributeName
                        value:strokeColor
-                       range:visibleRange];
+                       range:characterRange];
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(context, _contentFrame.origin.x + strokeInset, self.bounds.size.height - _contentFrame.origin.y + strokeInset);
@@ -194,7 +187,7 @@
     CGContextTranslateCTM(context, _contentFrame.origin.x + strokeInset, self.bounds.size.height - _contentFrame.origin.y + strokeInset);
     CGContextScaleCTM(context, 1.0, -1.0);
 
-    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)visibleText);
+    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)_textStorage);
     path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, CGRectMake(0, 0, _contentFrame.size.width, _contentFrame.size.height));
     frame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
