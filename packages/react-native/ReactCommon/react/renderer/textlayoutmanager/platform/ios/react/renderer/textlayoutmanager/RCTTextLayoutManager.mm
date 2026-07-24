@@ -11,7 +11,6 @@
 #import <CoreText/CoreText.h>
 
 #import <React/NSTextStorage+FontScaling.h>
-#import <React/RCTTextStroke.h>
 #import <React/RCTUtils.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
 #import <react/utils/ManagedObjectWrapper.h>
@@ -55,6 +54,75 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
                               }
                             }];
   return strokeWidth;
+}
+
+/**
+ * Core Text (used for the two-pass stroke rendering below) performs its own word wrapping and
+ * ignores the NSTextContainer's `maximumNumberOfLines` and truncating line break mode. If we hand it
+ * the full attributed string, an overflowing last word gets wrapped to a line that does not fit the
+ * (clamped) frame and disappears entirely - with no ellipsis. The non-stroke path avoids this because
+ * it draws the glyphs NSLayoutManager already laid out and truncated. This returns that same visible,
+ * truncated text (the visible prefix + an ellipsis) so the stroke passes match the non-stroke path.
+ *
+ * The string is only rebuilt when TextKit actually truncated something. Text that fits its line limit
+ * - including multi-line text that soft-wraps within the limit - is returned unchanged, so Core Text
+ * keeps doing its own wrapping exactly as it did before this workaround existed.
+ *
+ * NOTE: Written for TAIL truncation (`NSLineBreakByTruncatingTail`), the only mode used by stroke
+ * effects. Tail truncation always lands on the last laid-out line, which is why the visible text is a
+ * contiguous prefix. `truncatedGlyphRangeInLineFragmentForGlyphAtIndex:` only reports a range for
+ * truncating line break modes, so non-truncating modes (e.g. clipping) return the full string. Head
+ * and middle truncation would report a range but place the ellipsis at the start/middle, so they
+ * would need mode-specific handling before they could be used with a stroke effect.
+ */
+static NSAttributedString *getTruncatedAttributedStringForStroke(
+    NSTextStorage *textStorage,
+    NSLayoutManager *layoutManager,
+    NSTextContainer *textContainer)
+{
+  // No line limit means nothing is truncated and the frame was measured to fit every wrapped line,
+  // so Core Text can safely lay out the full string.
+  if (textContainer.maximumNumberOfLines == 0) {
+    return textStorage;
+  }
+
+  [layoutManager ensureLayoutForTextContainer:textContainer];
+  NSRange fullGlyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+  if (fullGlyphRange.length == 0) {
+    return textStorage;
+  }
+
+  // Tail truncation always lands on the last laid-out line, so the truncated fragment can be found
+  // from the final glyph instead of walking every fragment. `truncatedGlyphRangeInLineFragment...`
+  // is documented in terms of a fragment rather than an arbitrary glyph, so resolve the fragment's
+  // own glyph range first and query with its first glyph.
+  NSRange lastLineGlyphRange;
+  [layoutManager lineFragmentRectForGlyphAtIndex:NSMaxRange(fullGlyphRange) - 1 effectiveRange:&lastLineGlyphRange];
+  NSRange truncatedGlyphRange =
+      [layoutManager truncatedGlyphRangeInLineFragmentForGlyphAtIndex:lastLineGlyphRange.location];
+
+  // Nothing was truncated, so every wrapped line fits the frame and Core Text can lay out the full
+  // string itself. This is the path multi-line text that fits its line limit takes.
+  if (truncatedGlyphRange.location == NSNotFound) {
+    return textStorage;
+  }
+
+  NSRange truncatedCharRange = [layoutManager characterRangeForGlyphRange:truncatedGlyphRange actualGlyphRange:NULL];
+  if (truncatedCharRange.location == 0 || truncatedCharRange.location > textStorage.length) {
+    return textStorage;
+  }
+
+  // Everything before the truncation point is visible, and TextKit sized that prefix to leave room
+  // for the ellipsis it draws over the truncated range - so prefix + ellipsis is exactly what the
+  // non-stroke path renders, and it re-wraps to the same lines under the same container width.
+  NSMutableAttributedString *truncated =
+      [[textStorage attributedSubstringFromRange:NSMakeRange(0, truncatedCharRange.location)] mutableCopy];
+  NSDictionary<NSAttributedStringKey, id> *ellipsisAttributes =
+      [textStorage attributesAtIndex:truncated.length - 1 effectiveRange:NULL];
+  [truncated appendAttributedString:[[NSAttributedString alloc] initWithString:@"\u2026"
+                                                                   attributes:ellipsisAttributes]];
+
+  return truncated;
 }
 
 - (TextMeasurement)measureNSAttributedString:(NSAttributedString *)attributedString
@@ -147,7 +215,7 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
     // Core Text ignores the container's line limit / truncation, so feed it the same visible,
     // truncated text NSLayoutManager laid out; otherwise an overflowing last word would vanish.
     NSAttributedString *visibleText =
-        RCTTruncatedAttributedStringForStroke(textStorage, layoutManager, textContainer);
+        getTruncatedAttributedStringForStroke(textStorage, layoutManager, textContainer);
     NSRange visibleRange = NSMakeRange(0, visibleText.length);
 
     // PASS 1: Draw stroke outline
