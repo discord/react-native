@@ -68,21 +68,20 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
  * - including multi-line text that soft-wraps within the limit - is returned unchanged, so Core Text
  * keeps doing its own wrapping exactly as it did before this workaround existed.
  *
- * NOTE: Written for TAIL truncation (`NSLineBreakByTruncatingTail`), the only mode used by stroke
- * effects. Tail truncation always lands on the last laid-out line, which is why the visible text is a
- * contiguous prefix. `truncatedGlyphRangeInLineFragmentForGlyphAtIndex:` only reports a range for
- * truncating line break modes, so non-truncating modes (e.g. clipping) return the full string. Head
- * and middle truncation would report a range but place the ellipsis at the start/middle, so they
- * would need mode-specific handling before they could be used with a stroke effect.
+ * Only TAIL truncation (`NSLineBreakByTruncatingTail`) is handled, and the check below enforces that.
+ * Tail truncation always lands on the last laid-out line, which is why the visible text is a
+ * contiguous prefix. Head and middle truncation also report a truncated range, but they keep the tail
+ * on screen, so treating their visible text as a prefix would drop text that is still visible.
  */
 static NSAttributedString *getTruncatedAttributedStringForStroke(
     NSTextStorage *textStorage,
     NSLayoutManager *layoutManager,
     NSTextContainer *textContainer)
 {
-  // No line limit means nothing is truncated and the frame was measured to fit every wrapped line,
-  // so Core Text can safely lay out the full string.
-  if (textContainer.maximumNumberOfLines == 0) {
+  // A non-tail mode is either not truncating at all (no line limit means clipping, and the frame was
+  // measured to fit every wrapped line) or is a mode this function cannot express as a prefix. Either
+  // way, Core Text lays out the full string as it did before this workaround existed.
+  if (textContainer.lineBreakMode != NSLineBreakByTruncatingTail) {
     return textStorage;
   }
 
@@ -115,8 +114,22 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
   // Everything before the truncation point is visible, and TextKit sized that prefix to leave room
   // for the ellipsis it draws over the truncated range - so prefix + ellipsis is exactly what the
   // non-stroke path renders, and it re-wraps to the same lines under the same container width.
+  //
+  // Trailing whitespace is dropped first. TextKit lets it hang past the container edge for free, but
+  // with an ellipsis after it, it counts toward the line width and can push the ellipsis onto a line
+  // the frame cannot hold - reintroducing the very bug this function exists to fix. A trailing
+  // newline would do so unconditionally.
+  NSUInteger visibleLength = truncatedCharRange.location;
+  NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+  while (visibleLength > 0 && [whitespace characterIsMember:[textStorage.string characterAtIndex:visibleLength - 1]]) {
+    visibleLength--;
+  }
+  if (visibleLength == 0) {
+    return textStorage;
+  }
+
   NSMutableAttributedString *truncated =
-      [[textStorage attributedSubstringFromRange:NSMakeRange(0, truncatedCharRange.location)] mutableCopy];
+      [[textStorage attributedSubstringFromRange:NSMakeRange(0, visibleLength)] mutableCopy];
   NSDictionary<NSAttributedStringKey, id> *ellipsisAttributes =
       [textStorage attributesAtIndex:truncated.length - 1 effectiveRange:NULL];
   [truncated appendAttributedString:[[NSAttributedString alloc] initWithString:@"\u2026"
