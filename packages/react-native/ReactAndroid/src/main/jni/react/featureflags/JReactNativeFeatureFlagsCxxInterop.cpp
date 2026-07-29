@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<22e430660a18eb259806cad2c5644b48>>
+ * @generated SignedSource<<1ed3e873775b0d0207ad4f73d4e6086d>>
  */
 
 /**
@@ -276,6 +276,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableModuleArgumentNSNullConversionIOS() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableModuleArgumentNSNullConversionIOS");
+    return method(javaProvider_);
+  }
+
+  bool enableMountingCoordinatorPullModelAndroid() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableMountingCoordinatorPullModelAndroid");
     return method(javaProvider_);
   }
 
@@ -831,6 +837,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableModuleArgumentNSNullConversionIOS
   return ReactNativeFeatureFlags::enableModuleArgumentNSNullConversionIOS();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableMountingCoordinatorPullModelAndroid(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableMountingCoordinatorPullModelAndroid();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableMutationObserverByDefault(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableMutationObserverByDefault();
@@ -1272,6 +1283,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableModuleArgumentNSNullConversionIOS",
         JReactNativeFeatureFlagsCxxInterop::enableModuleArgumentNSNullConversionIOS),
+      makeNativeMethod(
+        "enableMountingCoordinatorPullModelAndroid",
+        JReactNativeFeatureFlagsCxxInterop::enableMountingCoordinatorPullModelAndroid),
       makeNativeMethod(
         "enableMutationObserverByDefault",
         JReactNativeFeatureFlagsCxxInterop::enableMutationObserverByDefault),
