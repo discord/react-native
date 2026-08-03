@@ -69,6 +69,7 @@ void ViewShadowNode::initialize() noexcept {
       isColorMeaningful(viewProps.backgroundColor) || hasBorder() ||
       !viewProps.testId.empty() || !viewProps.boxShadow.empty() ||
       !viewProps.backgroundImage.empty() ||
+      viewProps.shadowPathIOS != ShadowPathMode::Default ||
       HostPlatformViewTraitsInitializer::formsView(viewProps) ||
       viewProps.outlineWidth > 0;
 

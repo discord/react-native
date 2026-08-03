@@ -94,6 +94,21 @@ enum class BorderStyle : uint8_t { Solid, Dotted, Dashed };
 
 enum class OutlineStyle : uint8_t { Solid, Dotted, Dashed };
 
+enum class ShadowPathMode : uint8_t {
+  Default,
+  Auto,
+  BorderBox,
+  ContentAlpha,
+};
+
+inline ShadowPathMode resolveShadowPathMode(ShadowPathMode propMode) {
+  if (propMode == ShadowPathMode::Default) {
+    return ShadowPathMode::Auto;
+  }
+
+  return propMode;
+}
+
 struct CornerRadii {
   float vertical{0.0f};
   float horizontal{0.0f};

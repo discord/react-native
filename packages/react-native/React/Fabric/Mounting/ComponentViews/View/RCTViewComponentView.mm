@@ -22,6 +22,7 @@
 #import <React/RCTLinearGradient.h>
 #import <React/RCTLocalizedString.h>
 #import <React/RCTRadialGradient.h>
+#import <react/debug/react_native_assert.h>
 #import <react/featureflags/ReactNativeFeatureFlags.h>
 #import <react/renderer/components/view/ViewComponentDescriptor.h>
 #import <react/renderer/components/view/ViewEventEmitter.h>
@@ -269,6 +270,11 @@ const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
   // `shadowOpacity`
   if (oldViewProps.shadowOpacity != newViewProps.shadowOpacity) {
     self.layer.shadowOpacity = (float)newViewProps.shadowOpacity;
+    needsInvalidateLayer = YES;
+  }
+
+  // `shadowPathIOS`
+  if (oldViewProps.shadowPathIOS != newViewProps.shadowPathIOS) {
     needsInvalidateLayer = YES;
   }
 
@@ -829,20 +835,36 @@ static RCTBorderStyle RCTBorderStyleFromOutlineStyle(OutlineStyle outlineStyle)
 
   // Stage 1. Shadow Path
   BOOL const layerHasShadow = layer.shadowOpacity > 0 && CGColorGetAlpha(layer.shadowColor) > 0;
-  if (layerHasShadow) {
-    if (CGColorGetAlpha(_backgroundColor.CGColor) > 0.999) {
-      // If view has a solid background color, calculate shadow path from border.
-      const RCTCornerInsets cornerInsets =
-          RCTGetCornerInsets(RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii), UIEdgeInsetsZero);
-      CGPathRef shadowPath = RCTPathCreateWithRoundedRect(self.bounds, cornerInsets, nil, NO);
-      layer.shadowPath = shadowPath;
-      CGPathRelease(shadowPath);
-    } else {
-      // Can't accurately calculate box shadow, so fall back to pixel-based shadow.
-      layer.shadowPath = nil;
-    }
-  } else {
+  if (!layerHasShadow) {
     layer.shadowPath = nil;
+  } else {
+    ShadowPathMode shadowPathMode = resolveShadowPathMode(_props->shadowPathIOS);
+    RCTCornerRadii cornerRadii = RCTCornerRadiiFromBorderRadii(borderMetrics.borderRadii);
+    const RCTCornerInsets cornerInsets = RCTGetCornerInsets(cornerRadii, UIEdgeInsetsZero);
+
+    switch (shadowPathMode) {
+      case ShadowPathMode::BorderBox: {
+        CGPathRef shadowPath = RCTPathCreateWithRoundedRect(self.bounds, cornerInsets, nil, NO);
+        layer.shadowPath = shadowPath;
+        CGPathRelease(shadowPath);
+        break;
+      }
+      case ShadowPathMode::ContentAlpha:
+        layer.shadowPath = nil;
+        break;
+      case ShadowPathMode::Auto:
+        if (CGColorGetAlpha(_backgroundColor.CGColor) > 0.999) {
+          CGPathRef shadowPath = RCTPathCreateWithRoundedRect(self.bounds, cornerInsets, nil, NO);
+          layer.shadowPath = shadowPath;
+          CGPathRelease(shadowPath);
+        } else {
+          layer.shadowPath = nil;
+        }
+        break;
+      case ShadowPathMode::Default:
+        react_native_assert(false);
+        break;
+    }
   }
 
 #if defined(__IPHONE_OS_VERSION_MAX_ALLOWED) && __IPHONE_OS_VERSION_MAX_ALLOWED >= 170000 /* __IPHONE_17_0 */

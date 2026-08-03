@@ -964,6 +964,34 @@ inline void fromRawValue(
 inline void fromRawValue(
     const PropsParserContext& context,
     const RawValue& value,
+    ShadowPathMode& result) {
+  result = ShadowPathMode::Default;
+  react_native_expect(value.hasType<std::string>());
+  if (!value.hasType<std::string>()) {
+    return;
+  }
+
+  auto stringValue = (std::string)value;
+  if (stringValue == "auto") {
+    result = ShadowPathMode::Auto;
+    return;
+  }
+  if (stringValue == "border-box") {
+    result = ShadowPathMode::BorderBox;
+    return;
+  }
+  if (stringValue == "content-alpha") {
+    result = ShadowPathMode::ContentAlpha;
+    return;
+  }
+
+  LOG(ERROR) << "Could not parse ShadowPathMode:" << stringValue;
+  react_native_expect(false);
+}
+
+inline void fromRawValue(
+    const PropsParserContext& context,
+    const RawValue& value,
     Cursor& result) {
   result = Cursor::Auto;
   react_native_expect(value.hasType<std::string>());

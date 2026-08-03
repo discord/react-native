@@ -206,6 +206,7 @@ const validAttributesForNonEventProps = {
   shadowColor: {process: require('../StyleSheet/processColor').default},
   shadowOffset: {diff: require('../Utilities/differ/sizesDiffer').default},
   shadowOpacity: true,
+  shadowPathIOS: true,
   shadowRadius: true,
   needsOffscreenAlphaCompositing: true,
   overflow: true,

@@ -9,8 +9,37 @@
 
 #include <react/renderer/components/view/BoxShadowPropsConversions.h>
 #include <react/renderer/components/view/FilterPropsConversions.h>
+#include <react/renderer/components/view/conversions.h>
 
 namespace facebook::react {
+
+TEST(ConversionsTest, shadow_path_modes) {
+  PropsParserContext context{-1, ContextContainer{}};
+  ShadowPathMode result = ShadowPathMode::Default;
+  RawValue autoValue{folly::dynamic("auto")};
+  RawValue borderBoxValue{folly::dynamic("border-box")};
+  RawValue contentAlphaValue{folly::dynamic("content-alpha")};
+
+  fromRawValue(context, autoValue, result);
+  EXPECT_EQ(result, ShadowPathMode::Auto);
+
+  fromRawValue(context, borderBoxValue, result);
+  EXPECT_EQ(result, ShadowPathMode::BorderBox);
+
+  fromRawValue(context, contentAlphaValue, result);
+  EXPECT_EQ(result, ShadowPathMode::ContentAlpha);
+}
+
+TEST(ConversionsTest, resolves_default_shadow_path_mode) {
+  EXPECT_EQ(
+      resolveShadowPathMode(ShadowPathMode::Default),
+      ShadowPathMode::Auto);
+  EXPECT_EQ(
+      resolveShadowPathMode(ShadowPathMode::Auto), ShadowPathMode::Auto);
+  EXPECT_EQ(
+      resolveShadowPathMode(ShadowPathMode::ContentAlpha),
+      ShadowPathMode::ContentAlpha);
+}
 
 TEST(ConversionsTest, unprocessed_box_shadow_string) {
   RawValue value{
