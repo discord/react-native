@@ -40,13 +40,16 @@ void ComponentDescriptorRegistry::addMultipleAsync(
   auto parametersCopy = parameters_;
   auto contextContainerCopy = contextContainer_;
 
-  // Start thread immediately
-  std::thread([this, providers = std::move(providers), parametersCopy, contextContainerCopy]() {
+  // Keep the registry alive until the detached registration thread finishes.
+  auto self = shared_from_this();
+
+  std::thread([self, providers = std::move(providers), parametersCopy, contextContainerCopy]() {
     // Ensure this C++ thread is attached to the JVM before touching JNI
     #ifdef __ANDROID__
       facebook::jni::Environment::ensureCurrentThreadIsAttached();
     #endif
-      std::unique_lock lock(mutex_);
+
+    std::unique_lock lock(self->mutex_);
 
     for (const auto& provider : providers) {
       auto componentDescriptor = provider.constructor(
@@ -60,8 +63,8 @@ void ComponentDescriptorRegistry::addMultipleAsync(
       auto sharedComponentDescriptor =
           std::shared_ptr<const ComponentDescriptor>(std::move(componentDescriptor));
 
-      _registryByHandle[provider.handle] = sharedComponentDescriptor;
-      _registryByName[provider.name] = sharedComponentDescriptor;
+      self->_registryByHandle[provider.handle] = sharedComponentDescriptor;
+      self->_registryByName[provider.name] = sharedComponentDescriptor;
     }
   }).detach();
 }
@@ -123,12 +126,15 @@ const ComponentDescriptor& ComponentDescriptorRegistry::at(
 
   if (it == _registryByName.end()) {
     if (ReactNativeFeatureFlags::useFabricInterop()) {
+      lock.unlock();
       // When interop is enabled, if the component is not found we rely on
       // UnstableLegacyViewManagerAutomaticComponentDescriptor to support legacy
       // components in new architecture.
       auto componentDescriptor = std::make_shared<
           const UnstableLegacyViewManagerAutomaticComponentDescriptor>(
           parameters_, unifiedComponentName);
+
+      std::unique_lock writeLock(mutex_);
       registerComponentDescriptor(componentDescriptor);
       return *_registryByName.find(unifiedComponentName)->second;
     } else {
@@ -181,6 +187,7 @@ bool ComponentDescriptorRegistry::hasComponentDescriptorAt(
 
 void ComponentDescriptorRegistry::setFallbackComponentDescriptor(
     const SharedComponentDescriptor& descriptor) {
+  std::unique_lock lock(mutex_);
   _fallbackComponentDescriptor = descriptor;
   registerComponentDescriptor(descriptor);
 }
