@@ -223,18 +223,8 @@ public class TextAttributeProps private constructor() {
   public var gradientAngle: Float = Float.NaN
     private set
 
-  // Deprecated alias for gradientLength; gradientLength takes precedence when both are set.
-  public var gradientWidth: Float = Float.NaN
+  public var gradientLength: Float = Float.NaN
     private set
-
-  private var gradientLengthRaw: Float = Float.NaN
-
-  /**
-   * Effective gradient length, preferring [gradientLengthRaw] and falling back to the deprecated
-   * [gradientWidth] when [gradientLengthRaw] is unset.
-   */
-  public val gradientLength: Float
-    get() = if (!gradientLengthRaw.isNaN()) gradientLengthRaw else gradientWidth
 
   public var gradientMode: String? = null
     private set
@@ -478,9 +468,7 @@ public class TextAttributeProps private constructor() {
     public const val TA_KEY_TEXT_STROKE_WIDTH: Int = 101
     public const val TA_KEY_TEXT_STROKE_COLOR: Int = 102
     public const val TA_KEY_GRADIENT_ANGLE: Int = 103
-    // Deprecated alias for TA_KEY_GRADIENT_LENGTH; gradientLength takes precedence when both are set.
-    // Retains its original key for backwards compatibility.
-    public const val TA_KEY_GRADIENT_WIDTH: Int = 104
+    public const val TA_KEY_GRADIENT_WIDTH: Int = 104 // Unused
     public const val TA_KEY_GRADIENT_MODE: Int = 105
     public const val TA_KEY_GRADIENT_LENGTH: Int = 106
 
@@ -560,8 +548,7 @@ public class TextAttributeProps private constructor() {
           }
           TA_KEY_GRADIENT_COLORS -> result.setGradientColors(entry.mapBufferValue)
           TA_KEY_GRADIENT_ANGLE -> result.gradientAngle = entry.doubleValue.toFloat()
-          TA_KEY_GRADIENT_WIDTH -> result.gradientWidth = entry.doubleValue.toFloat()
-          TA_KEY_GRADIENT_LENGTH -> result.gradientLengthRaw = entry.doubleValue.toFloat()
+          TA_KEY_GRADIENT_LENGTH -> result.gradientLength = entry.doubleValue.toFloat()
           TA_KEY_GRADIENT_MODE -> result.gradientMode = entry.stringValue
         }
       }
@@ -613,8 +600,7 @@ public class TextAttributeProps private constructor() {
       result.setRole(getStringProp(props, ViewProps.ROLE))
       result.setGradientColors(getArrayProp(props, "gradientColors"))
       result.gradientAngle = getFloatProp(props, "gradientAngle", Float.NaN)
-      result.gradientLengthRaw = getFloatProp(props, "gradientLength", Float.NaN)
-      result.gradientWidth = getFloatProp(props, "gradientWidth", Float.NaN)
+      result.gradientLength = getFloatProp(props, "gradientLength", Float.NaN)
       result.gradientMode = getStringProp(props, "gradientMode")
       result.textStrokeWidth = getFloatProp(props, "textStrokeWidth", Float.NaN)
       if (props.hasKey("textStrokeColor")) {
