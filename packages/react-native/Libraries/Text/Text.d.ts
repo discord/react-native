@@ -235,14 +235,6 @@ export interface TextProps
   gradientLength?: number | undefined;
 
   /**
-   * @deprecated Use `gradientLength` instead. When both are provided,
-   * `gradientLength` takes precedence. Historically this was the width of the
-   * gradient pattern in pixels; it now maps to the gradient length along its
-   * axis. Default is 100.
-   */
-  gradientWidth?: number | undefined;
-
-  /**
    * Gradient tiling mode. "mirror" (default) tiles the gradient back and forth.
    * "clamp" renders the gradient once from the start to the end of the text.
    * When using "clamp", set gradientLength to match the extent of the text along the gradient axis.
