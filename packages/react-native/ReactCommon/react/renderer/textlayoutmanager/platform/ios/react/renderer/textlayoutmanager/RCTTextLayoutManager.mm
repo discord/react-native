@@ -56,6 +56,88 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
   return strokeWidth;
 }
 
+/**
+ * Core Text (used for the two-pass stroke rendering below) performs its own word wrapping and
+ * ignores the NSTextContainer's `maximumNumberOfLines` and truncating line break mode. If we hand it
+ * the full attributed string, an overflowing last word gets wrapped to a line that does not fit the
+ * (clamped) frame and disappears entirely - with no ellipsis. The non-stroke path avoids this because
+ * it draws the glyphs NSLayoutManager already laid out and truncated. This returns that same visible,
+ * truncated text (the visible prefix + an ellipsis) so the stroke passes match the non-stroke path.
+ *
+ * The string is only rebuilt when TextKit actually truncated something. Text that fits its line limit
+ * - including multi-line text that soft-wraps within the limit - is returned unchanged, so Core Text
+ * keeps doing its own wrapping exactly as it did before this workaround existed.
+ *
+ * Only TAIL truncation (`NSLineBreakByTruncatingTail`) is handled, and the check below enforces that.
+ * Tail truncation always lands on the last laid-out line, which is why the visible text is a
+ * contiguous prefix. Head and middle truncation also report a truncated range, but they keep the tail
+ * on screen, so treating their visible text as a prefix would drop text that is still visible.
+ */
+static NSAttributedString *getTruncatedAttributedStringForStroke(
+    NSTextStorage *textStorage,
+    NSLayoutManager *layoutManager,
+    NSTextContainer *textContainer)
+{
+  // A non-tail mode is either not truncating at all (no line limit means clipping, and the frame was
+  // measured to fit every wrapped line) or is a mode this function cannot express as a prefix. Either
+  // way, Core Text lays out the full string as it did before this workaround existed.
+  if (textContainer.lineBreakMode != NSLineBreakByTruncatingTail) {
+    return textStorage;
+  }
+
+  [layoutManager ensureLayoutForTextContainer:textContainer];
+  NSRange fullGlyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
+  if (fullGlyphRange.length == 0) {
+    return textStorage;
+  }
+
+  // Tail truncation always lands on the last laid-out line, so the truncated fragment can be found
+  // from the final glyph instead of walking every fragment. `truncatedGlyphRangeInLineFragment...`
+  // is documented in terms of a fragment rather than an arbitrary glyph, so resolve the fragment's
+  // own glyph range first and query with its first glyph.
+  NSRange lastLineGlyphRange;
+  [layoutManager lineFragmentRectForGlyphAtIndex:NSMaxRange(fullGlyphRange) - 1 effectiveRange:&lastLineGlyphRange];
+  NSRange truncatedGlyphRange =
+      [layoutManager truncatedGlyphRangeInLineFragmentForGlyphAtIndex:lastLineGlyphRange.location];
+
+  // Nothing was truncated, so every wrapped line fits the frame and Core Text can lay out the full
+  // string itself. This is the path multi-line text that fits its line limit takes.
+  if (truncatedGlyphRange.location == NSNotFound) {
+    return textStorage;
+  }
+
+  NSRange truncatedCharRange = [layoutManager characterRangeForGlyphRange:truncatedGlyphRange actualGlyphRange:NULL];
+  if (truncatedCharRange.location == 0 || truncatedCharRange.location > textStorage.length) {
+    return textStorage;
+  }
+
+  // Everything before the truncation point is visible, and TextKit sized that prefix to leave room
+  // for the ellipsis it draws over the truncated range - so prefix + ellipsis is exactly what the
+  // non-stroke path renders, and it re-wraps to the same lines under the same container width.
+  //
+  // Trailing whitespace is dropped first. TextKit lets it hang past the container edge for free, but
+  // with an ellipsis after it, it counts toward the line width and can push the ellipsis onto a line
+  // the frame cannot hold - reintroducing the very bug this function exists to fix. A trailing
+  // newline would do so unconditionally.
+  NSUInteger visibleLength = truncatedCharRange.location;
+  NSCharacterSet *whitespace = [NSCharacterSet whitespaceAndNewlineCharacterSet];
+  while (visibleLength > 0 && [whitespace characterIsMember:[textStorage.string characterAtIndex:visibleLength - 1]]) {
+    visibleLength--;
+  }
+  if (visibleLength == 0) {
+    return textStorage;
+  }
+
+  NSMutableAttributedString *truncated =
+      [[textStorage attributedSubstringFromRange:NSMakeRange(0, visibleLength)] mutableCopy];
+  NSDictionary<NSAttributedStringKey, id> *ellipsisAttributes =
+      [textStorage attributesAtIndex:truncated.length - 1 effectiveRange:NULL];
+  [truncated appendAttributedString:[[NSAttributedString alloc] initWithString:@"\u2026"
+                                                                   attributes:ellipsisAttributes]];
+
+  return truncated;
+}
+
 - (TextMeasurement)measureNSAttributedString:(NSAttributedString *)attributedString
                          paragraphAttributes:(ParagraphAttributes)paragraphAttributes
                                layoutContext:(TextLayoutContext)layoutContext
@@ -143,12 +225,18 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
     CGFloat strokeShiftY =
         (slackY <= 0) ? 0 : (slackY >= strokeWidth ? strokeWidth / 2.0 : slackY / 2.0);
 
+    // Core Text ignores the container's line limit / truncation, so feed it the same visible,
+    // truncated text NSLayoutManager laid out; otherwise an overflowing last word would vanish.
+    NSAttributedString *visibleText =
+        getTruncatedAttributedStringForStroke(textStorage, layoutManager, textContainer);
+    NSRange visibleRange = NSMakeRange(0, visibleText.length);
+
     // PASS 1: Draw stroke outline
     CGContextSaveGState(context);
     CGContextSetTextDrawingMode(context, kCGTextStroke);
 
-    NSMutableAttributedString *strokeText = [textStorage mutableCopy];
-    [strokeText addAttribute:NSForegroundColorAttributeName value:strokeColor range:characterRange];
+    NSMutableAttributedString *strokeText = [visibleText mutableCopy];
+    [strokeText addAttribute:NSForegroundColorAttributeName value:strokeColor range:visibleRange];
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(
@@ -174,7 +262,7 @@ static CGFloat getStrokeWidth(NSAttributedString *attributedString)
         context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
     CGContextScaleCTM(context, 1.0, -1.0);
 
-    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)textStorage);
+    framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)visibleText);
     path = CGPathCreateMutable();
     CGPathAddRect(path, NULL, CGRectMake(0, 0, frame.size.width, frame.size.height));
     ctFrame = CTFramesetterCreateFrame(framesetter, CFRangeMake(0, 0), path, NULL);
