@@ -210,7 +210,6 @@ class ReactTextInputPropertyTest {
     assertThat(view.ellipsize).isEqualTo(TextUtils.TruncateAt.END)
 
     manager.updateProperties(view, buildStyles("multiline", true))
-    // commitStagedInputType is normally called during view updates; apply it for the unit test.
     view.commitStagedInputType()
     assertThat(view.ellipsize).isNull()
 

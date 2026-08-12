@@ -591,8 +591,6 @@ public open class ReactEditText public constructor(context: Context) : AppCompat
     }
     wasMultiline = isMultiline
 
-    // Keep placeholder ellipsize in sync when multiline flips. Single-line inputs should
-    // trail with "…" (matching iOS); multiline placeholders should still wrap.
     updatePlaceholderEllipsize()
 
     // We override the KeyListener so that all keys on the soft input keyboard as well as hardware
@@ -613,12 +611,6 @@ public open class ReactEditText public constructor(context: Context) : AppCompat
     updatePlaceholderEllipsize()
   }
 
-  /**
-   * On Android, long hints are clipped without an ellipsis unless [ellipsize] is set. Align with
-   * iOS by ellipsizing trailing placeholders on single-line inputs only.
-   *
-   * See https://github.com/facebook/react-native/issues/29663
-   */
   private fun updatePlaceholderEllipsize() {
     ellipsize =
         if (!isMultiline) {
