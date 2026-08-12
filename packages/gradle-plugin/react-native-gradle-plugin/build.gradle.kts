@@ -60,7 +60,7 @@ dependencies {
 // nice message showing that JDK 11 (or 17) is required first
 java { targetCompatibility = JavaVersion.VERSION_11 }
 
-kotlin { jvmToolchain(17) }
+kotlin { jvmToolchain(21) }
 
 tasks.withType<KotlinCompile>().configureEach {
   compilerOptions {

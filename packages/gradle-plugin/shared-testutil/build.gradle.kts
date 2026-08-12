@@ -23,7 +23,7 @@ dependencies { implementation(libs.junit) }
 
 java { targetCompatibility = JavaVersion.VERSION_11 }
 
-kotlin { jvmToolchain(17) }
+kotlin { jvmToolchain(21) }
 
 tasks.withType<KotlinCompile>().configureEach {
   compilerOptions {
