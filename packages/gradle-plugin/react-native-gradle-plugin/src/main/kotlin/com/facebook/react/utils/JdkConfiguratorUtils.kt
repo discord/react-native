@@ -20,7 +20,7 @@ internal object JdkConfiguratorUtils {
   /**
    * Function that takes care of configuring the JDK toolchain for all the projects projects. As we
    * do decide the JDK version based on the AGP version that RNGP brings over, here we can safely
-   * configure the toolchain to 17.
+   * configure the toolchain to 21.
    */
   fun configureJavaToolChains(input: Project) {
     // Check at the app level if react.internal.disableJavaVersionAlignment is set.
@@ -38,8 +38,8 @@ internal object JdkConfiguratorUtils {
             project.extensions
                 .getByType(ApplicationAndroidComponentsExtension::class.java)
                 .finalizeDsl { ext ->
-                  ext.compileOptions.sourceCompatibility = JavaVersion.VERSION_17
-                  ext.compileOptions.targetCompatibility = JavaVersion.VERSION_17
+                  ext.compileOptions.sourceCompatibility = JavaVersion.VERSION_21
+                  ext.compileOptions.targetCompatibility = JavaVersion.VERSION_21
                 }
           }
       val libraryAction =
@@ -47,17 +47,17 @@ internal object JdkConfiguratorUtils {
             project.extensions
                 .getByType(LibraryAndroidComponentsExtension::class.java)
                 .finalizeDsl { ext ->
-                  ext.compileOptions.sourceCompatibility = JavaVersion.VERSION_17
-                  ext.compileOptions.targetCompatibility = JavaVersion.VERSION_17
+                  ext.compileOptions.sourceCompatibility = JavaVersion.VERSION_21
+                  ext.compileOptions.targetCompatibility = JavaVersion.VERSION_21
                 }
           }
       project.pluginManager.withPlugin("com.android.application", applicationAction)
       project.pluginManager.withPlugin("com.android.library", libraryAction)
       project.pluginManager.withPlugin("org.jetbrains.kotlin.android") {
-        project.kotlinExtension.jvmToolchain(17)
+        project.kotlinExtension.jvmToolchain(21)
       }
       project.pluginManager.withPlugin("org.jetbrains.kotlin.jvm") {
-        project.kotlinExtension.jvmToolchain(17)
+        project.kotlinExtension.jvmToolchain(21)
       }
     }
   }
