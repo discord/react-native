@@ -305,6 +305,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'experimental',
     },
+    enableFixForParentTagDuringReparenting: {
+      defaultValue: true,
+      metadata: {
+        dateAdded: '2025-04-22',
+        description:
+          'This feature flag enables a fix for reparenting fix in differentiator',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableFontScaleChangesUpdatingLayout: {
       defaultValue: true,
       metadata: {

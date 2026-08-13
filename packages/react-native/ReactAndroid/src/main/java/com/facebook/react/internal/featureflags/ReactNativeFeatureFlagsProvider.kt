@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<881bb134ecd96a2e2ac013042984c18f>>
+ * @generated SignedSource<<7e47bf6874aa4cf8bf7fe4a100f4f72a>>
  */
 
 /**
@@ -70,6 +70,8 @@ public interface ReactNativeFeatureFlagsProvider {
   @DoNotStrip public fun enableFabricLogs(): Boolean
 
   @DoNotStrip public fun enableFlexboxAutoMinSizeInStrictMode(): Boolean
+
+  @DoNotStrip public fun enableFixForParentTagDuringReparenting(): Boolean
 
   @DoNotStrip public fun enableFontScaleChangesUpdatingLayout(): Boolean
 

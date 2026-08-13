@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8c61c71db4fb0145a75731e8fba6252a>>
+ * @generated SignedSource<<9a53c7c3abb92c7f8b722b5c88a1630a>>
  */
 
 /**
@@ -48,6 +48,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var enableFabricCommitBranchingCache: Boolean? = null
   private var enableFabricLogsCache: Boolean? = null
   private var enableFlexboxAutoMinSizeInStrictModeCache: Boolean? = null
+  private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
   private var enableIOSCompressedTextFrameAdjustmentCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
@@ -353,6 +354,16 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
       cached = currentProvider.enableFlexboxAutoMinSizeInStrictMode()
       accessedFeatureFlags.add("enableFlexboxAutoMinSizeInStrictMode")
       enableFlexboxAutoMinSizeInStrictModeCache = cached
+    }
+    return cached
+  }
+
+  override fun enableFixForParentTagDuringReparenting(): Boolean {
+    var cached = enableFixForParentTagDuringReparentingCache
+    if (cached == null) {
+      cached = currentProvider.enableFixForParentTagDuringReparenting()
+      accessedFeatureFlags.add("enableFixForParentTagDuringReparenting")
+      enableFixForParentTagDuringReparentingCache = cached
     }
     return cached
   }

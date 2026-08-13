@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bbe56d31722c1e2fbb8cc6be6c830a62>>
+ * @generated SignedSource<<d05de6ee55e8a640abaf750dac2ffce2>>
  */
 
 /**
@@ -173,6 +173,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableFlexboxAutoMinSizeInStrictMode(): Boolean = accessor.enableFlexboxAutoMinSizeInStrictMode()
+
+  /**
+   * This feature flag enables a fix for reparenting fix in differentiator
+   */
+  @JvmStatic
+  public fun enableFixForParentTagDuringReparenting(): Boolean = accessor.enableFixForParentTagDuringReparenting()
 
   /**
    * Enables font scale changes updating layout for measurable nodes.
