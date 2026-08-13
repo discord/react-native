@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<216202417d5ca69e77d92e1a3dd69e00>>
+ * @generated SignedSource<<b0ea97fd868d93eb76e7e38dbd413234>>
  */
 
 /**
@@ -44,6 +44,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var enableFabricCommitBranchingCache: Boolean? = null
   private var enableFabricLogsCache: Boolean? = null
   private var enableFlexboxAutoMinSizeInStrictModeCache: Boolean? = null
+  private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
   private var enableIOSCompressedTextFrameAdjustmentCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
@@ -325,6 +326,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.enableFlexboxAutoMinSizeInStrictMode()
       enableFlexboxAutoMinSizeInStrictModeCache = cached
+    }
+    return cached
+  }
+
+  override fun enableFixForParentTagDuringReparenting(): Boolean {
+    var cached = enableFixForParentTagDuringReparentingCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.enableFixForParentTagDuringReparenting()
+      enableFixForParentTagDuringReparentingCache = cached
     }
     return cached
   }

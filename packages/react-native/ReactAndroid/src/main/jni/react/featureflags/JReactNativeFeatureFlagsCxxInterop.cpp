@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<43da2c8476d0c7ce13b8a6c333c685e8>>
+ * @generated SignedSource<<d5adb7f10050a830a6332fb596dc0591>>
  */
 
 /**
@@ -180,6 +180,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool enableFlexboxAutoMinSizeInStrictMode() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableFlexboxAutoMinSizeInStrictMode");
+    return method(javaProvider_);
+  }
+
+  bool enableFixForParentTagDuringReparenting() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("enableFixForParentTagDuringReparenting");
     return method(javaProvider_);
   }
 
@@ -715,6 +721,11 @@ bool JReactNativeFeatureFlagsCxxInterop::enableFlexboxAutoMinSizeInStrictMode(
   return ReactNativeFeatureFlags::enableFlexboxAutoMinSizeInStrictMode();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::enableFixForParentTagDuringReparenting(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::enableFixForParentTagDuringReparenting();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout();
@@ -1158,6 +1169,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "enableFlexboxAutoMinSizeInStrictMode",
         JReactNativeFeatureFlagsCxxInterop::enableFlexboxAutoMinSizeInStrictMode),
+      makeNativeMethod(
+        "enableFixForParentTagDuringReparenting",
+        JReactNativeFeatureFlagsCxxInterop::enableFixForParentTagDuringReparenting),
       makeNativeMethod(
         "enableFontScaleChangesUpdatingLayout",
         JReactNativeFeatureFlagsCxxInterop::enableFontScaleChangesUpdatingLayout),

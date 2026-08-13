@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<3fa05ef3d0a8a3a2d726665146595054>>
+ * @generated SignedSource<<991a2ba465c05750d97d8e1fb359f6e1>>
  */
 
 /**
@@ -58,6 +58,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool enableFabricCommitBranching();
   bool enableFabricLogs();
   bool enableFlexboxAutoMinSizeInStrictMode();
+  bool enableFixForParentTagDuringReparenting();
   bool enableFontScaleChangesUpdatingLayout();
   bool enableIOSCompressedTextFrameAdjustment();
   bool enableIOSExperimentalAutoFocusImplementation();
@@ -137,7 +138,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 92> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 93> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -163,6 +164,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> enableFabricCommitBranching_;
   std::atomic<std::optional<bool>> enableFabricLogs_;
   std::atomic<std::optional<bool>> enableFlexboxAutoMinSizeInStrictMode_;
+  std::atomic<std::optional<bool>> enableFixForParentTagDuringReparenting_;
   std::atomic<std::optional<bool>> enableFontScaleChangesUpdatingLayout_;
   std::atomic<std::optional<bool>> enableIOSCompressedTextFrameAdjustment_;
   std::atomic<std::optional<bool>> enableIOSExperimentalAutoFocusImplementation_;

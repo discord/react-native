@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9e69f751f6713e5cdb3ad14e55491d4e>>
+ * @generated SignedSource<<8667f222a9dcdc23dc7146dbcab4ad72>>
  */
 
 /**
@@ -160,6 +160,11 @@ class ReactNativeFeatureFlags {
    * Enables CSS Flexbox §4.5 automatic minimum sizing under strict layout conformance. When enabled, a flex item with an undefined main-axis `min-width`/`min-height` under strict conformance receives a content-derived minimum size (per spec) instead of an undefined (0) minimum. Defaults off so the behaviour can be ramped independently of strict conformance.
    */
   RN_EXPORT static bool enableFlexboxAutoMinSizeInStrictMode();
+
+  /**
+   * This feature flag enables a fix for reparenting fix in differentiator
+   */
+  RN_EXPORT static bool enableFixForParentTagDuringReparenting();
 
   /**
    * Enables font scale changes updating layout for measurable nodes.

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<a2d25e3b6b042bf60151ef5a6d7af669>>
+ * @generated SignedSource<<c1944f7f663c5b7f89ed6a2ef9ebf223>>
  * @flow strict
  * @noformat
  */
@@ -73,6 +73,7 @@ export type ReactNativeFeatureFlags = Readonly<{
   enableFabricCommitBranching: Getter<boolean>,
   enableFabricLogs: Getter<boolean>,
   enableFlexboxAutoMinSizeInStrictMode: Getter<boolean>,
+  enableFixForParentTagDuringReparenting: Getter<boolean>,
   enableFontScaleChangesUpdatingLayout: Getter<boolean>,
   enableIOSCompressedTextFrameAdjustment: Getter<boolean>,
   enableIOSExperimentalAutoFocusImplementation: Getter<boolean>,
@@ -313,6 +314,10 @@ export const enableFabricLogs: Getter<boolean> = createNativeFlagGetter('enableF
  * Enables CSS Flexbox §4.5 automatic minimum sizing under strict layout conformance. When enabled, a flex item with an undefined main-axis `min-width`/`min-height` under strict conformance receives a content-derived minimum size (per spec) instead of an undefined (0) minimum. Defaults off so the behaviour can be ramped independently of strict conformance.
  */
 export const enableFlexboxAutoMinSizeInStrictMode: Getter<boolean> = createNativeFlagGetter('enableFlexboxAutoMinSizeInStrictMode', false);
+/**
+ * This feature flag enables a fix for reparenting fix in differentiator
+ */
+export const enableFixForParentTagDuringReparenting: Getter<boolean> = createNativeFlagGetter('enableFixForParentTagDuringReparenting', true);
 /**
  * Enables font scale changes updating layout for measurable nodes.
  */
