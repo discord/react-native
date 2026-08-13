@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<146ced7dc6e6e9bdd6dcf1920fbf5b87>>
+ * @generated SignedSource<<85428eb50bc67ecf13b7a1adb13fcffa>>
  */
 
 /**
@@ -179,6 +179,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun enableFabricRenderer(): Boolean = accessor.enableFabricRenderer()
+
+  /**
+   * This feature flag enables a fix for reparenting fix in differentiator
+   */
+  @JvmStatic
+  public fun enableFixForParentTagDuringReparenting(): Boolean = accessor.enableFixForParentTagDuringReparenting()
 
   /**
    * Enables font scale changes updating layout for measurable nodes.

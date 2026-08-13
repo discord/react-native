@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fea875a7c52892712f77d2d387f89136>>
+ * @generated SignedSource<<7183652511b3f309064e93573cccc532>>
  */
 
 /**
@@ -57,6 +57,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool enableFabricCommitBranching();
   bool enableFabricLogs();
   bool enableFabricRenderer();
+  bool enableFixForParentTagDuringReparenting();
   bool enableFontScaleChangesUpdatingLayout();
   bool enableIOSExperimentalAutoFocusImplementation();
   bool enableIOSTextBaselineOffsetPerLine();
@@ -140,7 +141,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 97> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 98> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -167,6 +168,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> enableFabricCommitBranching_;
   std::atomic<std::optional<bool>> enableFabricLogs_;
   std::atomic<std::optional<bool>> enableFabricRenderer_;
+  std::atomic<std::optional<bool>> enableFixForParentTagDuringReparenting_;
   std::atomic<std::optional<bool>> enableFontScaleChangesUpdatingLayout_;
   std::atomic<std::optional<bool>> enableIOSExperimentalAutoFocusImplementation_;
   std::atomic<std::optional<bool>> enableIOSTextBaselineOffsetPerLine_;

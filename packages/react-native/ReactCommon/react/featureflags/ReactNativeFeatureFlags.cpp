@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4dc3bd17cee66aced2f1537e0abef5c6>>
+ * @generated SignedSource<<c98877ce40ac50807276ef5b43195404>>
  */
 
 /**
@@ -124,6 +124,10 @@ bool ReactNativeFeatureFlags::enableFabricLogs() {
 
 bool ReactNativeFeatureFlags::enableFabricRenderer() {
   return getAccessor().enableFabricRenderer();
+}
+
+bool ReactNativeFeatureFlags::enableFixForParentTagDuringReparenting() {
+  return getAccessor().enableFixForParentTagDuringReparenting();
 }
 
 bool ReactNativeFeatureFlags::enableFontScaleChangesUpdatingLayout() {

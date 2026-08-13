@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<da6107ec1897530c001faec97cd0263a>>
+ * @generated SignedSource<<10a3f63713923875f959dd801a999da9>>
  * @flow strict
  * @noformat
  */
@@ -72,6 +72,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   enableFabricCommitBranching: Getter<boolean>,
   enableFabricLogs: Getter<boolean>,
   enableFabricRenderer: Getter<boolean>,
+  enableFixForParentTagDuringReparenting: Getter<boolean>,
   enableFontScaleChangesUpdatingLayout: Getter<boolean>,
   enableIOSExperimentalAutoFocusImplementation: Getter<boolean>,
   enableIOSTextBaselineOffsetPerLine: Getter<boolean>,
@@ -310,6 +311,10 @@ export const enableFabricLogs: Getter<boolean> = createNativeFlagGetter('enableF
  * Enables the use of the Fabric renderer in the whole app.
  */
 export const enableFabricRenderer: Getter<boolean> = createNativeFlagGetter('enableFabricRenderer', false);
+/**
+ * This feature flag enables a fix for reparenting fix in differentiator
+ */
+export const enableFixForParentTagDuringReparenting: Getter<boolean> = createNativeFlagGetter('enableFixForParentTagDuringReparenting', true);
 /**
  * Enables font scale changes updating layout for measurable nodes.
  */

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<7339a8925c7322470ddec22f044f33fa>>
+ * @generated SignedSource<<d67dac495790f02ac60be066c65af49f>>
  */
 
 /**
@@ -45,6 +45,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var enableFabricCommitBranchingCache: Boolean? = null
   private var enableFabricLogsCache: Boolean? = null
   private var enableFabricRendererCache: Boolean? = null
+  private var enableFixForParentTagDuringReparentingCache: Boolean? = null
   private var enableFontScaleChangesUpdatingLayoutCache: Boolean? = null
   private var enableIOSExperimentalAutoFocusImplementationCache: Boolean? = null
   private var enableIOSTextBaselineOffsetPerLineCache: Boolean? = null
@@ -339,6 +340,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.enableFabricRenderer()
       enableFabricRendererCache = cached
+    }
+    return cached
+  }
+
+  override fun enableFixForParentTagDuringReparenting(): Boolean {
+    var cached = enableFixForParentTagDuringReparentingCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.enableFixForParentTagDuringReparenting()
+      enableFixForParentTagDuringReparentingCache = cached
     }
     return cached
   }

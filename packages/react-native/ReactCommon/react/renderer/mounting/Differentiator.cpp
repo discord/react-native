@@ -721,7 +721,11 @@ static void calculateShadowViewMutationsFlattener(
           if (childReparentMode == ReparentMode::Flatten) {
             // Unflatten parent, flatten child
             react_native_assert(reparentMode == ReparentMode::Unflatten);
-            auto fixedParentTagForUpdate = newTreeNodePair.shadowView.tag;
+            auto fixedParentTagForUpdate =
+                ReactNativeFeatureFlags::
+                    enableFixForParentTagDuringReparenting()
+                ? newTreeNodePair.shadowView.tag
+                : parentTag;
             // Flatten old tree into new list
             // At the end of this loop we still want to know which of these
             // children are visited, so we reuse the `newRemainingPairs` map.
@@ -741,7 +745,11 @@ static void calculateShadowViewMutationsFlattener(
             // Flatten parent, unflatten child
             react_native_assert(reparentMode == ReparentMode::Flatten);
             // Unflatten old list into new tree
-            auto fixedParentTagForUpdate = parentTagForUpdate;
+            auto fixedParentTagForUpdate =
+                ReactNativeFeatureFlags::
+                    enableFixForParentTagDuringReparenting()
+                ? parentTagForUpdate
+                : oldTreeNodePair.shadowView.tag;
             calculateShadowViewMutationsFlattener(
                 scope,
                 /* reparentMode */ ReparentMode::Unflatten,
