@@ -9,6 +9,7 @@
 #import <XCTest/XCTest.h>
 #import <react/renderer/components/view/ViewProps.h>
 #import <react/renderer/components/view/ViewShadowNode.h>
+#import <react/renderer/graphics/Transform.h>
 
 using namespace facebook::react;
 
@@ -181,6 +182,54 @@ static Props::Shared makeViewProps(bool removeClippedSubviews)
 
   view.layer.transform = CATransform3DMakeScale(1, 0, 1);
   XCTAssertNil([view hitTest:CGPointMake(50, 50) withEvent:nil]);
+}
+
+#pragma mark - recycle-pool leak detection
+
+- (void)testRecycleTransformLeakWhenLayerIsNonIdentityAndPropsAreIdentity
+{
+  XCTAssertTrue(RCTViewComponentViewHasRecycleTransformLeak(
+      CATransform3DMakeTranslation(0, -302, 0), Transform::Identity()));
+}
+
+- (void)testRecycleTransformLeakWhenLayerAndPropsAreIdentity
+{
+  XCTAssertFalse(RCTViewComponentViewHasRecycleTransformLeak(CATransform3DIdentity, Transform::Identity()));
+}
+
+- (void)testRecycleTransformLeakWhenPropsAreNonIdentity
+{
+  // Leftover layer vs non-identity props is not the remount-skip case this guard covers.
+  XCTAssertFalse(RCTViewComponentViewHasRecycleTransformLeak(
+      CATransform3DMakeTranslation(0, -302, 0), Transform::VerticalInversion()));
+}
+
+- (void)testRecycleOpacityLeakWhenLayerIsTransparentAndPropsAreOpaque
+{
+  XCTAssertTrue(RCTViewComponentViewHasRecycleOpacityLeak(0.0f, 1.0));
+}
+
+- (void)testRecycleOpacityLeakWhenLayerMatchesOpaqueProps
+{
+  XCTAssertFalse(RCTViewComponentViewHasRecycleOpacityLeak(1.0f, 1.0));
+}
+
+- (void)testRecycleOpacityLeakWhenPropsAreTransparent
+{
+  XCTAssertFalse(RCTViewComponentViewHasRecycleOpacityLeak(0.0f, 0.0));
+}
+
+- (void)testPrepareForRecycleDoesNotSanitizeLeftoverTransformOrOpacity
+{
+  RCTViewComponentView *view = [RCTViewComponentView new];
+  CATransform3D leftover = CATransform3DMakeTranslation(0, -302, 0);
+  view.layer.transform = leftover;
+  view.layer.opacity = 0.0f;
+
+  [view prepareForRecycle];
+
+  XCTAssertTrue(CATransform3DEqualToTransform(view.layer.transform, leftover));
+  XCTAssertEqualWithAccuracy(view.layer.opacity, 0.0f, 0.001f);
 }
 
 @end
