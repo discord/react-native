@@ -11,6 +11,7 @@ import android.content.res.AssetManager
 import android.graphics.Typeface
 import com.facebook.react.bridge.ReadableArray
 import com.facebook.react.common.ReactConstants
+import com.facebook.react.common.assets.ReactFontManager
 
 public object ReactTypefaceUtils {
 

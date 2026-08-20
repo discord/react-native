@@ -1613,6 +1613,16 @@ public final class com/facebook/react/common/SystemClock {
 	public static final fun uptimeMillis ()J
 }
 
+public final class com/facebook/react/common/assets/CreateTypefaceObject {
+	public fun <init> (Ljava/lang/String;ILandroid/content/res/AssetManager;)V
+	public final fun getAssetManager ()Landroid/content/res/AssetManager;
+	public final fun getFontFamilyName ()Ljava/lang/String;
+	public final fun getStyle ()I
+	public final fun setAssetManager (Landroid/content/res/AssetManager;)V
+	public final fun setFontFamilyName (Ljava/lang/String;)V
+	public final fun setStyle (I)V
+}
+
 public final class com/facebook/react/common/assets/ReactFontManager {
 	public static final field Companion Lcom/facebook/react/common/assets/ReactFontManager$Companion;
 	public fun <init> ()V
@@ -1628,7 +1638,9 @@ public final class com/facebook/react/common/assets/ReactFontManager {
 }
 
 public final class com/facebook/react/common/assets/ReactFontManager$Companion {
+	public final fun getCreateAssetTypefaceOverride ()Landroidx/arch/core/util/Function;
 	public final fun getInstance ()Lcom/facebook/react/common/assets/ReactFontManager;
+	public final fun setCreateAssetTypefaceOverride (Landroidx/arch/core/util/Function;)V
 }
 
 public final class com/facebook/react/common/assets/ReactFontManager$TypefaceStyle {
