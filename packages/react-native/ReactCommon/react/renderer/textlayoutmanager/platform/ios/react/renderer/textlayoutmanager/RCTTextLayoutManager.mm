@@ -36,6 +36,41 @@ static NSLineBreakMode RCTNSLineBreakModeFromEllipsizeMode(EllipsizeMode ellipsi
   }
 }
 
+// Block-axis offset to apply to the line-box stack when painting / hit-testing.
+// Mirrors the CSS Box Alignment Level 3 `align-content` algorithm on a block
+// container (https://drafts.csswg.org/css-align-3/#align-content-property):
+// start/center/end positioning of the content within the box, with "safe"
+// overflow handling (when content exceeds the box, fall back to start).
+// Matches Android's `TextLayoutManager.getVerticalOffset` exactly so Paragraph
+// renders identically across platforms.
+static CGFloat RCTVerticalOffsetForTextAlignment(
+    NSLayoutManager *layoutManager,
+    NSTextContainer *textContainer,
+    const ParagraphAttributes &paragraphAttributes,
+    CGFloat boxHeight)
+{
+  if (!paragraphAttributes.textAlignVertical.has_value()) {
+    return 0;
+  }
+  TextAlignmentVertical align = *paragraphAttributes.textAlignVertical;
+  if (align == TextAlignmentVertical::Auto || align == TextAlignmentVertical::Top) {
+    return 0;
+  }
+  CGFloat textHeight = [layoutManager usedRectForTextContainer:textContainer].size.height;
+  if (textHeight >= boxHeight) {
+    return 0;
+  }
+  switch (align) {
+    case TextAlignmentVertical::Center:
+      return (boxHeight - textHeight) / 2;
+    case TextAlignmentVertical::Bottom:
+      return boxHeight - textHeight;
+    case TextAlignmentVertical::Auto:
+    case TextAlignmentVertical::Top:
+      return 0;
+  }
+}
+
 static CGFloat getStrokeWidth(NSAttributedString *attributedString)
 {
   if (attributedString.length == 0) {
@@ -192,7 +227,11 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
 
   [self processTruncatedAttributedText:textStorage textContainer:textContainer layoutManager:layoutManager];
 
-  [layoutManager drawBackgroundForGlyphRange:glyphRange atPoint:frame.origin];
+  CGFloat verticalOffset =
+      RCTVerticalOffsetForTextAlignment(layoutManager, textContainer, paragraphAttributes, frame.size.height);
+  CGPoint origin = CGPointMake(frame.origin.x, frame.origin.y + verticalOffset);
+
+  [layoutManager drawBackgroundForGlyphRange:glyphRange atPoint:origin];
   NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
 
   CGFloat strokeWidth = getStrokeWidth(textStorage);
@@ -240,7 +279,7 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(
-        context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
+        context, frame.origin.x + strokeShiftX, viewBounds.size.height - origin.y + strokeShiftY);
     CGContextScaleCTM(context, 1.0, -1.0);
 
     CTFramesetterRef framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)strokeText);
@@ -259,7 +298,7 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
 
     CGContextSetTextMatrix(context, CGAffineTransformIdentity);
     CGContextTranslateCTM(
-        context, frame.origin.x + strokeShiftX, viewBounds.size.height - frame.origin.y + strokeShiftY);
+        context, frame.origin.x + strokeShiftX, viewBounds.size.height - origin.y + strokeShiftY);
     CGContextScaleCTM(context, 1.0, -1.0);
 
     framesetter = CTFramesetterCreateWithAttributedString((CFAttributedStringRef)visibleText);
@@ -272,7 +311,7 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
     CFRelease(framesetter);
     CGContextRestoreGState(context);
   } else {
-    [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:frame.origin];
+    [layoutManager drawGlyphsForGlyphRange:glyphRange atPoint:origin];
   }
 #if TARGET_OS_MACCATALYST
   CGContextRestoreGState(macCatalystContext);
@@ -293,8 +332,9 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
                                   withinSelectedGlyphRange:range
                                            inTextContainer:textContainer
                                                 usingBlock:^(CGRect enclosingRect, __unused BOOL *anotherStop) {
+                                                  CGRect shiftedRect = CGRectOffset(enclosingRect, 0, verticalOffset);
                                                   UIBezierPath *path = [UIBezierPath
-                                                      bezierPathWithRoundedRect:CGRectInset(enclosingRect, -2, -2)
+                                                      bezierPathWithRoundedRect:CGRectInset(shiftedRect, -2, -2)
                                                                    cornerRadius:2];
                                                   if (highlightPath != nullptr) {
                                                     [highlightPath appendPath:path];
@@ -444,8 +484,12 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
   NSLayoutManager *layoutManager = textStorage.layoutManagers.firstObject;
   NSTextContainer *textContainer = layoutManager.textContainers.firstObject;
 
+  CGFloat verticalOffset =
+      RCTVerticalOffsetForTextAlignment(layoutManager, textContainer, paragraphAttributes, frame.size.height);
+  CGPoint adjustedPoint = CGPointMake(point.x, point.y - verticalOffset);
+
   CGFloat fraction;
-  NSUInteger characterIndex = [layoutManager characterIndexForPoint:point
+  NSUInteger characterIndex = [layoutManager characterIndexForPoint:adjustedPoint
                                                     inTextContainer:textContainer
                            fractionOfDistanceBetweenInsertionPoints:&fraction];
 
@@ -480,6 +524,9 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
   NSRange glyphRange = [layoutManager glyphRangeForTextContainer:textContainer];
   NSRange characterRange = [layoutManager characterRangeForGlyphRange:glyphRange actualGlyphRange:NULL];
 
+  CGFloat verticalOffset =
+      RCTVerticalOffsetForTextAlignment(layoutManager, textContainer, paragraphAttributes, frame.size.height);
+
   [textStorage enumerateAttribute:enumerateAttribute
                           inRange:characterRange
                           options:0
@@ -494,7 +541,7 @@ static NSAttributedString *getTruncatedAttributedStringForStroke(
                                                   inTextContainer:textContainer
                                                        usingBlock:^(CGRect enclosingRect, BOOL *_Nonnull stop) {
                                                          block(
-                                                             enclosingRect,
+                                                             CGRectOffset(enclosingRect, 0, verticalOffset),
                                                              [textStorage attributedSubstringFromRange:range].string,
                                                              value);
                                                          *stop = YES;
