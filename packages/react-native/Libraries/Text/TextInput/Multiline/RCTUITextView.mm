@@ -292,6 +292,7 @@ static UIColor *defaultPlaceholderColor(void)
   [self _applyVerticalAlignmentInset];
 
   CGRect textFrame = UIEdgeInsetsInsetRect(self.bounds, self.textContainerInset);
+  textFrame.origin.y += self.contentInset.top;
   CGFloat placeholderHeight = [_placeholderView sizeThatFits:textFrame.size].height;
   textFrame.size.height = MIN(placeholderHeight, textFrame.size.height);
   _placeholderView.frame = textFrame;
