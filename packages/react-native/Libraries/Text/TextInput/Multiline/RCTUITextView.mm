@@ -223,6 +223,20 @@ static UIColor *defaultPlaceholderColor(void)
   [super scrollRangeToVisible:range];
 }
 
+// textAlignVertical sets contentInset.top only while the text still fits
+// the field. UIKit still calls this to keep the caret on screen. The caret
+// rect is 1pt above the content origin (y≈-1), so UIKit thinks it is off
+// screen and scrolls 1pt — that is the jump when typing. Skip the scroll;
+// the caret is already visible. When text overflows, inset is 0 and
+// scrolling works as usual.
+- (void)scrollRectToVisible:(CGRect)rect animated:(BOOL)animated
+{
+  if (self.contentInset.top > 0) {
+    return;
+  }
+  [super scrollRectToVisible:rect animated:animated];
+}
+
 - (void)paste:(id)sender
 {
   _textWasPasted = YES;
