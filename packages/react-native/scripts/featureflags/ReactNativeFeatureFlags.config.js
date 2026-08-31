@@ -536,7 +536,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     enableSchedulerDelegateInvalidation: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2026-05-04',
         description:

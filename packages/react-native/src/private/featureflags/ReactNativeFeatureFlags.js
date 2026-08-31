@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<10a3f63713923875f959dd801a999da9>>
+ * @generated SignedSource<<985615d1d3e193ee5eb60177bb7de994>>
  * @flow strict
  * @noformat
  */
@@ -398,7 +398,7 @@ export const enablePropsUpdateReconciliationAndroid: Getter<boolean> = createNat
 /**
  * Gates a defensive guard around Scheduler::uiManagerDidDispatchCommand and uiManagerDidFinishTransaction that prevents queued rendering-update lambdas from dereferencing the SchedulerDelegate after it has been destroyed (use-after-free).
  */
-export const enableSchedulerDelegateInvalidation: Getter<boolean> = createNativeFlagGetter('enableSchedulerDelegateInvalidation', false);
+export const enableSchedulerDelegateInvalidation: Getter<boolean> = createNativeFlagGetter('enableSchedulerDelegateInvalidation', true);
 /**
  * When enabled, it will use SwiftUI for filter effects like blur on iOS.
  */
