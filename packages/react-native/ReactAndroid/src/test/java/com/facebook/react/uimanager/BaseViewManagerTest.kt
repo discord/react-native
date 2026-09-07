@@ -70,6 +70,47 @@ class BaseViewManagerTest {
   }
 
   @Test
+  fun testAccessibilityStateWithoutExpandedDoesNotSetExpandedTag() {
+    val accessibilityState = JavaOnlyMap()
+    accessibilityState.putBoolean("disabled", false)
+    viewManager.setViewState(view, accessibilityState)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isNull()
+  }
+
+  @Test
+  fun testAccessibilityStateExpandedFalseSetsExpandedTag() {
+    val accessibilityState = JavaOnlyMap()
+    accessibilityState.putBoolean("expanded", false)
+    viewManager.setViewState(view, accessibilityState)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isEqualTo(false)
+  }
+
+  @Test
+  fun testAccessibilityStateExpandedNullClearsExpandedTag() {
+    view.setTag(R.id.accessibility_state_expanded, true)
+    val accessibilityState = JavaOnlyMap()
+    accessibilityState.putNull("expanded")
+    viewManager.setViewState(view, accessibilityState)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isNull()
+  }
+
+  @Test
+  fun testAccessibilityStateOmittingExpandedLeavesExistingTag() {
+    view.setTag(R.id.accessibility_state_expanded, true)
+    val accessibilityState = JavaOnlyMap()
+    accessibilityState.putBoolean("disabled", true)
+    viewManager.setViewState(view, accessibilityState)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isEqualTo(true)
+  }
+
+  @Test
+  fun testAccessibilityStateNullClearsExpandedTag() {
+    view.setTag(R.id.accessibility_state_expanded, false)
+    viewManager.setViewState(view, null)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isNull()
+  }
+
+  @Test
   fun testRoleList() {
     viewManager.setRole(view, "list")
     Assertions.assertThat(view.getTag(R.id.role)).isEqualTo(ReactAccessibilityDelegate.Role.LIST)

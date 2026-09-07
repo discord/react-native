@@ -495,6 +495,11 @@ inline static void updateAccessibilityStateProp(
   folly::dynamic resultState = folly::dynamic::object();
 
   if (!newState.has_value() && oldState.has_value()) {
+    // Unset expanded is not collapsed. Emit null so Android can drop
+    // ACTION_EXPAND / ACTION_COLLAPSE instead of leaving a stale tag.
+    if (oldState->expanded.has_value()) {
+      resultState["expanded"] = nullptr;
+    }
     result["accessibilityState"] = resultState;
     return;
   }
@@ -511,9 +516,14 @@ inline static void updateAccessibilityStateProp(
     resultState["busy"] = newState->busy;
   }
 
+  // expanded is optional: omitting it must not serialize as false, or TalkBack
+  // announces every Pressable as "collapsed" via ACTION_EXPAND.
   if (!oldState.has_value() || newState->expanded != oldState->expanded) {
-    resultState["expanded"] =
-        newState->expanded.has_value() && newState->expanded.value();
+    if (newState->expanded.has_value()) {
+      resultState["expanded"] = newState->expanded.value();
+    } else if (oldState.has_value() && oldState->expanded.has_value()) {
+      resultState["expanded"] = nullptr;
+    }
   }
 
   if (!oldState.has_value() || newState->checked != oldState->checked) {

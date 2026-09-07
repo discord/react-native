@@ -363,10 +363,18 @@ public abstract class BaseViewManager<T extends View, C extends LayoutShadowNode
   @ReactProp(name = ViewProps.ACCESSIBILITY_STATE)
   public void setViewState(@NonNull T view, @Nullable ReadableMap accessibilityState) {
     if (accessibilityState == null) {
+      view.setTag(R.id.accessibility_state_expanded, null);
       return;
     }
+    // Fabric diffs omit unchanged keys. Only update the expanded tag when the
+    // key is present: true/false set expand/collapse, null clears it. Missing
+    // key must leave a previously set tag in place.
     if (accessibilityState.hasKey("expanded")) {
-      view.setTag(R.id.accessibility_state_expanded, accessibilityState.getBoolean("expanded"));
+      if (accessibilityState.isNull("expanded")) {
+        view.setTag(R.id.accessibility_state_expanded, null);
+      } else {
+        view.setTag(R.id.accessibility_state_expanded, accessibilityState.getBoolean("expanded"));
+      }
     }
     if (accessibilityState.hasKey("selected")) {
       boolean prevSelected = view.isSelected();
