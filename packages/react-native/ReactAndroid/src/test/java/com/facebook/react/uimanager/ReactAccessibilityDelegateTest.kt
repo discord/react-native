@@ -331,6 +331,16 @@ class ReactAccessibilityDelegateTest {
   }
 
   @Test
+  fun testOnInitializeAccessibilityNodeInfo_expandedTrueAddsActionCollapse() {
+    view.setTag(R.id.accessibility_state_expanded, true)
+    val nodeInfo = AccessibilityNodeInfoCompat.obtain()
+    accessibilityDelegate.onInitializeAccessibilityNodeInfo(view, nodeInfo)
+
+    assertThat(nodeInfo.actionList.map { it.id })
+        .contains(AccessibilityNodeInfoCompat.ACTION_COLLAPSE)
+  }
+
+  @Test
   fun testOnInitializeAccessibilityNodeInfo_unsetExpandedDoesNotAddExpandOrCollapse() {
     val nodeInfo = AccessibilityNodeInfoCompat.obtain()
     accessibilityDelegate.onInitializeAccessibilityNodeInfo(view, nodeInfo)

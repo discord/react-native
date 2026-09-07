@@ -86,6 +86,14 @@ class BaseViewManagerTest {
   }
 
   @Test
+  fun testAccessibilityStateExpandedTrueSetsExpandedTag() {
+    val accessibilityState = JavaOnlyMap()
+    accessibilityState.putBoolean("expanded", true)
+    viewManager.setViewState(view, accessibilityState)
+    Assertions.assertThat(view.getTag(R.id.accessibility_state_expanded)).isEqualTo(true)
+  }
+
+  @Test
   fun testAccessibilityStateExpandedNullClearsExpandedTag() {
     view.setTag(R.id.accessibility_state_expanded, true)
     val accessibilityState = JavaOnlyMap()
