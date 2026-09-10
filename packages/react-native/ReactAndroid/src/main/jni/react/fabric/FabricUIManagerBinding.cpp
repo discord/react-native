@@ -602,6 +602,20 @@ void FabricUIManagerBinding::uninstallFabricUIManager() {
   }
 
   std::unique_lock lock(installMutex_);
+
+  // Invariant: these clears must precede animationDriver_/scheduler_ reset.
+  // getScheduler() vends shared_ptr copies, so the Scheduler can outlive this
+  // call and ~Scheduler() is otherwise the only thing that nulls these.
+  if (scheduler_) {
+    scheduler_->setDelegate(nullptr);
+    if (auto uiManager = scheduler_->getUIManager()) {
+      uiManager->setAnimationDelegate(nullptr);
+    }
+  }
+  if (animationDriver_) {
+    animationDriver_->setLayoutAnimationStatusDelegate(nullptr);
+  }
+
   animationDriver_ = nullptr;
   scheduler_ = nullptr;
   mountingManager_ = nullptr;
