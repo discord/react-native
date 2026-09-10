@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<e6ba7e6de6f50d2729fd1745ac104d9c>>
+ * @generated SignedSource<<bb9af1c3dcadc4964889035c48c87205>>
  */
 
 /**
@@ -188,7 +188,7 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   bool enableMountingCoordinatorPullModelAndroid() override {
-    return false;
+    return true;
   }
 
   bool enableMutationObserverByDefault() override {

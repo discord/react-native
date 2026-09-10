@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fae1371ef78888c6300d434b4a3ce9be>>
+ * @generated SignedSource<<bdcdf9b9fe9945310f0a313ffe7a672a>>
  * @flow strict
  * @noformat
  */
@@ -375,7 +375,7 @@ export const enableModuleArgumentNSNullConversionIOS: Getter<boolean> = createNa
 /**
  * When enabled, Android mounts transactions with the pull model (like iOS): the commit thread no longer pulls and builds the mount batch in schedulerShouldRenderTransactions. Instead the UI thread pulls the transaction itself via a PullTransactionMountItem enqueued in the MountItemDispatcher, builds the IntBufferBatchMountItem, and applies it synchronously. Requires `enableAccumulatedUpdatesInRawPropsAndroid` to be enabled as well, since a single pull may collapse several commits into one diff and therefore needs complete accumulated rawProps; when used together with Props 2.0, also enable `enableExclusivePropsUpdateAndroid` and `enablePropsUpdateReconciliationAndroid`.
  */
-export const enableMountingCoordinatorPullModelAndroid: Getter<boolean> = createNativeFlagGetter('enableMountingCoordinatorPullModelAndroid', false);
+export const enableMountingCoordinatorPullModelAndroid: Getter<boolean> = createNativeFlagGetter('enableMountingCoordinatorPullModelAndroid', true);
 /**
  * Enables the MutationObserver Web API in React Native.
  */
