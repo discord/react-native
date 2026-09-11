@@ -6,7 +6,6 @@ import android.util.Log;
 
 import com.facebook.react.bridge.Arguments;
 import com.facebook.react.bridge.WritableNativeMap;
-import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags;
 import com.tencent.mmkv.MMKV;
 
 import org.json.JSONArray;
@@ -97,8 +96,6 @@ public class UIManagerConstantsCache {
             cacheVersionName = appContext.getPackageManager()
                     .getPackageInfo(appContext.getPackageName(), 0)
                     .versionName;
-            cacheVersionName += "-" + (ReactNativeFeatureFlags.enableFabricRenderer() ?
-                    "Fabric" : "NonFabric");
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Failed to get app version name; continuing without caching!", e);
             return;
