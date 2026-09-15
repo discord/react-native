@@ -10,8 +10,8 @@ package com.facebook.react.bridge
 import android.os.SystemClock
 import androidx.annotation.AnyThread
 import com.facebook.proguard.annotations.DoNotStrip
+import com.facebook.react.internal.QueueCompat
 import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
 import java.util.concurrent.CopyOnWriteArrayList
 
 /**
@@ -20,7 +20,7 @@ import java.util.concurrent.CopyOnWriteArrayList
  */
 @DoNotStrip
 public object ReactMarker {
-  private val nativeReactMarkerQueue: Queue<ReactMarkerRecord> = ConcurrentLinkedQueue()
+  private val nativeReactMarkerQueue: Queue<ReactMarkerRecord> = QueueCompat.create()
 
   // Use a list instead of a set here because we expect the number of listeners
   // to be very small, and we want listeners to be called in a deterministic

@@ -20,19 +20,19 @@ import com.facebook.react.bridge.RetryableMountingLayerException
 import com.facebook.react.fabric.FabricUIManager
 import com.facebook.react.fabric.mounting.mountitems.DispatchCommandMountItem
 import com.facebook.react.fabric.mounting.mountitems.MountItem
+import com.facebook.react.internal.QueueCompat
 import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags
 import com.facebook.react.internal.tracing.PerformanceTracer
 import com.facebook.systrace.Systrace
 import java.util.Queue
-import java.util.concurrent.ConcurrentLinkedQueue
 
 internal class MountItemDispatcher(
     private val mountingManager: MountingManager,
     private val itemDispatchListener: ItemDispatchListener,
 ) {
-  private val viewCommandMountItems: Queue<DispatchCommandMountItem> = ConcurrentLinkedQueue()
-  private val mountItems: Queue<MountItem> = ConcurrentLinkedQueue()
-  private val preMountItems: Queue<MountItem> = ConcurrentLinkedQueue()
+  private val viewCommandMountItems: Queue<DispatchCommandMountItem> = QueueCompat.create()
+  private val mountItems: Queue<MountItem> = QueueCompat.create()
+  private val preMountItems: Queue<MountItem> = QueueCompat.create()
 
   private var inDispatch: Boolean = false
   var batchedExecutionTime: Long = 0L
