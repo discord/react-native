@@ -94,3 +94,19 @@ NS_ASSUME_NONNULL_BEGIN
 @end
 
 NS_ASSUME_NONNULL_END
+
+/**
+ * True when `layerTransform` is non-identity while `propsTransform` is identity.
+ * On recycle, `updateProps` diffs identity vs identity and skips the layer write.
+ */
+__attribute__((visibility("default"))) BOOL RCTViewComponentViewHasRecycleTransformLeak(
+    CATransform3D layerTransform,
+    const facebook::react::Transform &propsTransform);
+
+/**
+ * True when `layerOpacity` differs from a default-ish `propsOpacity` (>= 0.999).
+ * Same recycle skip as transform: leftover opacity is never rewritten.
+ */
+__attribute__((visibility("default"))) BOOL RCTViewComponentViewHasRecycleOpacityLeak(
+    float layerOpacity,
+    facebook::react::Float propsOpacity);
