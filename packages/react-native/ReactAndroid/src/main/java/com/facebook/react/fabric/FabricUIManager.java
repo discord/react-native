@@ -68,6 +68,7 @@ import com.facebook.react.fabric.mounting.mountitems.MountItem;
 import com.facebook.react.fabric.mounting.mountitems.MountItemFactory;
 import com.facebook.react.fabric.mounting.mountitems.PrefetchResourcesMountItem;
 import com.facebook.react.fabric.mounting.mountitems.SynchronousMountItem;
+import com.facebook.react.internal.QueueCompat;
 import com.facebook.react.internal.featureflags.ReactNativeFeatureFlags;
 import com.facebook.react.internal.featureflags.ReactNativeNewArchitectureFeatureFlags;
 import com.facebook.react.internal.interop.InteropEventEmitter;
@@ -103,7 +104,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Queue;
 import java.util.Set;
-import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -202,8 +202,7 @@ public class FabricUIManager
    * Queue of surface IDs that need their React revision merged. Drained during doFrame so that
    * synchronous events dispatched by the merge are processed in the same frame.
    */
-  private final ConcurrentLinkedQueue<Integer> mPendingReactRevisionMerges =
-      new ConcurrentLinkedQueue<>();
+  private final Queue<Integer> mPendingReactRevisionMerges = QueueCompat.create();
 
   /**
    * This is used to keep track of whether or not the FabricUIManager has been destroyed. Once the
