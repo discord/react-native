@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bdcdf9b9fe9945310f0a313ffe7a672a>>
+ * @generated SignedSource<<3f7ec267807c174c705a96077d191e9e>>
  * @flow strict
  * @noformat
  */
@@ -499,7 +499,7 @@ export const preparedTextCacheSize: Getter<number> = createNativeFlagGetter('pre
 /**
  * Enables a new mechanism in ShadowTree to prevent problems caused by multiple threads trying to commit concurrently. If a thread tries to commit a few times unsuccessfully, it will acquire a lock and try again.
  */
-export const preventShadowTreeCommitExhaustion: Getter<boolean> = createNativeFlagGetter('preventShadowTreeCommitExhaustion', false);
+export const preventShadowTreeCommitExhaustion: Getter<boolean> = createNativeFlagGetter('preventShadowTreeCommitExhaustion', true);
 /**
  * Use the redesigned RedBox error overlay on Android, styled to match the LogBox visual language.
  */
