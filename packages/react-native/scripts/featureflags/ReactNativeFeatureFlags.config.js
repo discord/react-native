@@ -796,7 +796,7 @@ const definitions: FeatureFlagDefinitions = {
       ossReleaseStage: 'none',
     },
     preventShadowTreeCommitExhaustion: {
-      defaultValue: false,
+      defaultValue: true,
       metadata: {
         dateAdded: '2025-07-23',
         description:
