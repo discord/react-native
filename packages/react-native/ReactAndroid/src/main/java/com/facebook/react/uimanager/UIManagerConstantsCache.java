@@ -27,8 +27,7 @@ import java.util.concurrent.CountDownLatch;
  * On init(...), a background thread:
  *   1) calls MMKV.initialize(...)
  *   2) reads both keys, parses them into Maps
- *   3) builds a WritableNativeMap from the full constants map via Arguments.makeNativeMap(...)
- *   4) countDown()s loadLatch
+ *   3) countDown()s loadLatch
  *
  * Exposed methods all block until that single background load finishes:
  *   • getCachedConstants() → Map<String,Object> or null
@@ -80,8 +79,7 @@ public class UIManagerConstantsCache {
      * constants are accessed. This kicks off:
      *   1) MMKV.initialize(...)
      *   2) A background thread that reads two MMKV keys, parses them → Maps,
-     *      then builds a WritableNativeMap from the full constants, and finally
-     *      countDown()s loadLatch.
+     *      and countDown()s loadLatch.
      */
     public synchronized void init(Context appContext) {
         if (initCalled) {
@@ -173,15 +171,6 @@ public class UIManagerConstantsCache {
                     }
                     Log.v(TAG, "No bubblingEventTypes found in MMKV.");
                 }
-
-                // 2c) Build WritableNativeMap from full constants (if available)
-                synchronized (this) {
-                    if (cachedConstants != null) {
-                        cachedNativeMap = Arguments.makeNativeMap(cachedConstants);
-                    } else {
-                        cachedNativeMap = null;
-                    }
-                }
             } finally {
                 // Signal load completion
                 loadLatch.countDown();
@@ -224,8 +213,14 @@ public class UIManagerConstantsCache {
     }
 
     /**
-     * Blocks until background-load (and WritableNativeMap build) finishes.
-     * @return pre-built WritableNativeMap or null if no full-constants available.
+     * Blocks until the background load finishes, then returns the full constants as a
+     * WritableNativeMap, building it on the first call.
+     *
+     * The map is built here rather than on the loading thread because constructing a
+     * WritableNativeMap loads React Native's native library, which callers of this method
+     * already require.
+     *
+     * @return WritableNativeMap or null if no full-constants available.
      */
     public WritableNativeMap getUIManagerConstantsAsWritableMap() {
         try {
@@ -236,6 +231,17 @@ public class UIManagerConstantsCache {
             return null;
         }
         synchronized (this) {
+            if (cachedNativeMap == null && cachedConstants != null) {
+                try {
+                    cachedNativeMap = Arguments.makeNativeMap(cachedConstants);
+                } catch (RuntimeException e) {
+                    // The cached shape cannot be converted, so drop it and let the caller
+                    // regenerate. Native load failures propagate: the caller's fallback builds a
+                    // WritableNativeMap too, so it cannot recover from them either.
+                    Log.w(TAG, "Failed to build WritableNativeMap from cached constants.", e);
+                    cachedConstants = null;
+                }
+            }
             return cachedNativeMap;
         }
     }
