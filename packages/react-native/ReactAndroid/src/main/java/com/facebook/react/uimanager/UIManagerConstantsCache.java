@@ -232,15 +232,7 @@ public class UIManagerConstantsCache {
         }
         synchronized (this) {
             if (cachedNativeMap == null && cachedConstants != null) {
-                try {
-                    cachedNativeMap = Arguments.makeNativeMap(cachedConstants);
-                } catch (RuntimeException e) {
-                    // The cached shape cannot be converted, so drop it and let the caller
-                    // regenerate. Native load failures propagate: the caller's fallback builds a
-                    // WritableNativeMap too, so it cannot recover from them either.
-                    Log.w(TAG, "Failed to build WritableNativeMap from cached constants.", e);
-                    cachedConstants = null;
-                }
+                cachedNativeMap = Arguments.makeNativeMap(cachedConstants);
             }
             return cachedNativeMap;
         }
