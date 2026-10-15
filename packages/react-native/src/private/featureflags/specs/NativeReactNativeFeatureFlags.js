@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<91b84098becf179986d14a3b000ceabb>>
+ * @generated SignedSource<<2139cdb583636ccade35b8d688ba0531>>
  * @flow strict
  * @noformat
  */
@@ -35,6 +35,7 @@ export interface Spec extends TurboModule {
   readonly disableSubviewClippingAndroid?: () => boolean;
   readonly disableTextLayoutManagerCacheAndroid?: () => boolean;
   readonly disableViewPreallocationAndroid?: () => boolean;
+  readonly discordUiManagerOptimization?: () => number;
   readonly enableAccessibilityOrder?: () => boolean;
   readonly enableAccumulatedUpdatesInRawPropsAndroid?: () => boolean;
   readonly enableAndroidTextMeasurementOptimizations?: () => boolean;

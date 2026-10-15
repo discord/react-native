@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<b0ea97fd868d93eb76e7e38dbd413234>>
+ * @generated SignedSource<<df3d9ce4abaec95e7417470994ae1d8f>>
  */
 
 /**
@@ -30,6 +30,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var disableSubviewClippingAndroidCache: Boolean? = null
   private var disableTextLayoutManagerCacheAndroidCache: Boolean? = null
   private var disableViewPreallocationAndroidCache: Boolean? = null
+  private var discordUiManagerOptimizationCache: Double? = null
   private var enableAccessibilityOrderCache: Boolean? = null
   private var enableAccumulatedUpdatesInRawPropsAndroidCache: Boolean? = null
   private var enableAndroidTextMeasurementOptimizationsCache: Boolean? = null
@@ -200,6 +201,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.disableViewPreallocationAndroid()
       disableViewPreallocationAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun discordUiManagerOptimization(): Double {
+    var cached = discordUiManagerOptimizationCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.discordUiManagerOptimization()
+      discordUiManagerOptimizationCache = cached
     }
     return cached
   }

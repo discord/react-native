@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<3af334cccb90e86fe86783383c8cb7c4>>
+ * @generated SignedSource<<f7c426eb3323365a4f488d7e82f55292>>
  */
 
 /**
@@ -135,6 +135,15 @@ class ReactNativeFeatureFlagsDynamicProvider : public ReactNativeFeatureFlagsDef
     }
 
     return ReactNativeFeatureFlagsDefaults::disableViewPreallocationAndroid();
+  }
+
+  double discordUiManagerOptimization() override {
+    auto value = values_["discordUiManagerOptimization"];
+    if (!value.isNull()) {
+      return value.getDouble();
+    }
+
+    return ReactNativeFeatureFlagsDefaults::discordUiManagerOptimization();
   }
 
   bool enableAccessibilityOrder() override {
