@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5bfc2dc8877c19d5349ad53d5caf558c>>
+ * @generated SignedSource<<2522a772ed7a49682267ede6c5f9c5b2>>
  */
 
 /**
@@ -47,6 +47,8 @@ public object ReactNativeFeatureFlagsCxxInterop {
   @DoNotStrip @JvmStatic public external fun disableTextLayoutManagerCacheAndroid(): Boolean
 
   @DoNotStrip @JvmStatic public external fun disableViewPreallocationAndroid(): Boolean
+
+  @DoNotStrip @JvmStatic public external fun discordUiManagerOptimization(): Double
 
   @DoNotStrip @JvmStatic public external fun enableAccessibilityOrder(): Boolean
 

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<8667f222a9dcdc23dc7146dbcab4ad72>>
+ * @generated SignedSource<<50303c91da98b32f906e1ed530bda458>>
  */
 
 /**
@@ -90,6 +90,11 @@ class ReactNativeFeatureFlags {
    * Force disable view preallocation triggered from createNode off the main thread on Android
    */
   RN_EXPORT static bool disableViewPreallocationAndroid();
+
+  /**
+   * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
+   */
+  RN_EXPORT static double discordUiManagerOptimization();
 
   /**
    * When enabled, the accessibilityOrder prop will propagate to native platforms and define the accessibility order.

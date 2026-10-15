@@ -78,6 +78,7 @@ declare var global: {
   // Internal-specific
   readonly __DEV__?: boolean,
   readonly RN$Bridgeless?: boolean,
+  readonly RN$discordUiManagerOptimization?: number,
 
   // setupDOM
   readonly DOMRect: typeof DOMRect,

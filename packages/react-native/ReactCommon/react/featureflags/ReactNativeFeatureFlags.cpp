@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<81f676c6c147ed03f3bb6d9336ac0b8b>>
+ * @generated SignedSource<<afd49932205831f377dcb90c21cfcfa0>>
  */
 
 /**
@@ -64,6 +64,10 @@ bool ReactNativeFeatureFlags::disableTextLayoutManagerCacheAndroid() {
 
 bool ReactNativeFeatureFlags::disableViewPreallocationAndroid() {
   return getAccessor().disableViewPreallocationAndroid();
+}
+
+double ReactNativeFeatureFlags::discordUiManagerOptimization() {
+  return getAccessor().discordUiManagerOptimization();
 }
 
 bool ReactNativeFeatureFlags::enableAccessibilityOrder() {

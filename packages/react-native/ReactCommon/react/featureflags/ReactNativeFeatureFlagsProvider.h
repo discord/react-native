@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<5eb81b58f370b88b51712ed5662197d2>>
+ * @generated SignedSource<<ee2cf18a159b03f37b0dc95110a0c801>>
  */
 
 /**
@@ -37,6 +37,7 @@ class ReactNativeFeatureFlagsProvider {
   virtual bool disableSubviewClippingAndroid() = 0;
   virtual bool disableTextLayoutManagerCacheAndroid() = 0;
   virtual bool disableViewPreallocationAndroid() = 0;
+  virtual double discordUiManagerOptimization() = 0;
   virtual bool enableAccessibilityOrder() = 0;
   virtual bool enableAccumulatedUpdatesInRawPropsAndroid() = 0;
   virtual bool enableAndroidTextMeasurementOptimizations() = 0;
