@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<47eea5c86d3f5bddedd0f4fb00b32aab>>
+ * @generated SignedSource<<fd827f02cf87afa56d3827c6fd29a31f>>
  */
 
 /**
@@ -99,9 +99,9 @@ class ReactNativeFeatureFlagsJavaProvider
     return method(javaProvider_);
   }
 
-  bool discordUiManagerLazyPropertiesOptimization() override {
+  double discordUiManagerOptimization() override {
     static const auto method =
-        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("discordUiManagerLazyPropertiesOptimization");
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jdouble()>("discordUiManagerOptimization");
     return method(javaProvider_);
   }
 
@@ -687,9 +687,9 @@ bool JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid(
   return ReactNativeFeatureFlags::disableViewPreallocationAndroid();
 }
 
-bool JReactNativeFeatureFlagsCxxInterop::discordUiManagerLazyPropertiesOptimization(
+double JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
-  return ReactNativeFeatureFlags::discordUiManagerLazyPropertiesOptimization();
+  return ReactNativeFeatureFlags::discordUiManagerOptimization();
 }
 
 bool JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder(
@@ -1194,8 +1194,8 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
         "disableViewPreallocationAndroid",
         JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid),
       makeNativeMethod(
-        "discordUiManagerLazyPropertiesOptimization",
-        JReactNativeFeatureFlagsCxxInterop::discordUiManagerLazyPropertiesOptimization),
+        "discordUiManagerOptimization",
+        JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization),
       makeNativeMethod(
         "enableAccessibilityOrder",
         JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder),

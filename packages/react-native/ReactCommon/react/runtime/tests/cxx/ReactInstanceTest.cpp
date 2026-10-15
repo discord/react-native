@@ -231,16 +231,13 @@ TEST_F(ReactInstanceTest, testBridgelessFlagIsSet) {
   EXPECT_EQ(val.getBool(), true);
 }
 
-TEST_F(
-    ReactInstanceTest,
-    testUiManagerLazyPropertiesOptimizationFlagIsSetBeforeBundle) {
+TEST_F(ReactInstanceTest, testUiManagerOptimizationFlagIsSetBeforeBundle) {
   initializeRuntimeWithScript(R"(
-    globalThis.uiManagerLazyPropertiesOptimizationFlagWasDefined =
-      typeof RN$discordUiManagerLazyPropertiesOptimization === 'boolean';
+    globalThis.uiManagerOptimizationFlagWasDefined =
+      typeof RN$discordUiManagerOptimization === 'number';
   )");
 
-  auto val =
-      eval("globalThis.uiManagerLazyPropertiesOptimizationFlagWasDefined");
+  auto val = eval("globalThis.uiManagerOptimizationFlagWasDefined");
   EXPECT_EQ(val.getBool(), true);
 }
 

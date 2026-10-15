@@ -33,6 +33,10 @@ const sizesDiffer = require('../Utilities/differ/sizesDiffer').default;
 const UIManager = require('./UIManager').default;
 const nullthrows = require('nullthrows');
 
+const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
+const shouldLoadViewManagerConstantsOnDemand =
+  uiManagerOptimization === 2 || uiManagerOptimization === 3;
+
 function getNativeComponentAttributes(uiViewClassName: string): any {
   const viewConfig = UIManager.getViewManagerConfig(uiViewClassName);
 
@@ -113,6 +117,18 @@ function attachDefaultEventTypes(viewConfig: any) {
   // This is supported on UIManager platforms (ex: Android),
   // as lazy view managers are not implemented for all platforms.
   // See [UIManager] for details on constants and implementations.
+  if (
+    global.RN$Bridgeless === true &&
+    shouldLoadViewManagerConstantsOnDemand &&
+    UIManager.getDefaultEventTypes != null
+  ) {
+    // The narrow native API avoids materializing every view manager's constants
+    // just to determine which default event types should be attached.
+    const defaultEventTypes = UIManager.getDefaultEventTypes();
+    merge(viewConfig, defaultEventTypes);
+    return;
+  }
+
   const constants = UIManager.getConstants();
   if (constants.ViewManagerNames || constants.LazyViewManagersEnabled) {
     // Lazy view managers enabled.

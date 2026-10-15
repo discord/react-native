@@ -47,6 +47,10 @@ const getConstantsForViewManager: ?(viewManagerName: string) => ?Object =
 const getDefaultEventTypes: ?() => Object =
   global.RN$LegacyInterop_UIManager_getDefaultEventTypes;
 
+const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
+const shouldLoadViewManagerConstantsOnDemand =
+  uiManagerOptimization === 2 || uiManagerOptimization === 3;
+
 const getDefaultEventTypesCached = (function () {
   let wasCalledOnce = false;
   let result = null;
@@ -260,6 +264,10 @@ const UIManagerJSPlatformAPIs = Platform.select({
   },
 });
 
+// Building every eagerly registered view manager's constants up front is slow.
+// In the on-demand experiment, cache only the view managers JS actually uses.
+const viewManagerConfigs: {[viewManagerName: string]: ?Object} = {};
+
 const UIManagerJS: UIManagerJSInterface & {[string]: any} = {
   ...UIManagerJSOverridenAPIs,
   ...UIManagerJSDeprecatedPlatformAPIs,
@@ -267,6 +275,17 @@ const UIManagerJS: UIManagerJSInterface & {[string]: any} = {
   ...UIManagerJSUnusedInNewArchAPIs,
   getViewManagerConfig: (viewManagerName: string): unknown => {
     if (getUIManagerConstants) {
+      if (shouldLoadViewManagerConstantsOnDemand) {
+        if (
+          viewManagerConfigs[viewManagerName] == null &&
+          UIManagerJS.getConstantsForViewManager
+        ) {
+          viewManagerConfigs[viewManagerName] =
+            UIManagerJS.getConstantsForViewManager(viewManagerName);
+        }
+        return viewManagerConfigs[viewManagerName];
+      }
+
       const constants = getUIManagerConstantsCached();
       if (
         !constants[viewManagerName] &&
@@ -396,7 +415,7 @@ const UIManagerJS: UIManagerJSInterface & {[string]: any} = {
   },
 };
 
-if (getUIManagerConstants) {
+if (getUIManagerConstants && !shouldLoadViewManagerConstantsOnDemand) {
   Object.keys(getUIManagerConstantsCached()).forEach(viewConfigName => {
     UIManagerJS[viewConfigName] = getUIManagerConstantsCached()[viewConfigName];
   });

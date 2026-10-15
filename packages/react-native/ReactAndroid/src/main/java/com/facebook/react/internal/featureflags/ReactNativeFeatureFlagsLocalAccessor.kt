@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<1afc0b84e52c5cb0743597d5d1247c79>>
+ * @generated SignedSource<<bf74b75d5d8ac7eac7666dafefb03b0f>>
  */
 
 /**
@@ -34,7 +34,7 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
   private var disableSubviewClippingAndroidCache: Boolean? = null
   private var disableTextLayoutManagerCacheAndroidCache: Boolean? = null
   private var disableViewPreallocationAndroidCache: Boolean? = null
-  private var discordUiManagerLazyPropertiesOptimizationCache: Boolean? = null
+  private var discordUiManagerOptimizationCache: Double? = null
   private var enableAccessibilityOrderCache: Boolean? = null
   private var enableAccumulatedUpdatesInRawPropsAndroidCache: Boolean? = null
   private var enableAndroidTextMeasurementOptimizationsCache: Boolean? = null
@@ -224,12 +224,12 @@ internal class ReactNativeFeatureFlagsLocalAccessor : ReactNativeFeatureFlagsAcc
     return cached
   }
 
-  override fun discordUiManagerLazyPropertiesOptimization(): Boolean {
-    var cached = discordUiManagerLazyPropertiesOptimizationCache
+  override fun discordUiManagerOptimization(): Double {
+    var cached = discordUiManagerOptimizationCache
     if (cached == null) {
-      cached = currentProvider.discordUiManagerLazyPropertiesOptimization()
-      accessedFeatureFlags.add("discordUiManagerLazyPropertiesOptimization")
-      discordUiManagerLazyPropertiesOptimizationCache = cached
+      cached = currentProvider.discordUiManagerOptimization()
+      accessedFeatureFlags.add("discordUiManagerOptimization")
+      discordUiManagerOptimizationCache = cached
     }
     return cached
   }

@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<6bc2590b37f390d7faeabe0351e65e19>>
+ * @generated SignedSource<<380250279c76aca0f139fdd0eac141db>>
  */
 
 /**
@@ -56,7 +56,7 @@ class NativeReactNativeFeatureFlags
 
   bool disableViewPreallocationAndroid(jsi::Runtime& runtime);
 
-  bool discordUiManagerLazyPropertiesOptimization(jsi::Runtime& runtime);
+  double discordUiManagerOptimization(jsi::Runtime& runtime);
 
   bool enableAccessibilityOrder(jsi::Runtime& runtime);
 

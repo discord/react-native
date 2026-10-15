@@ -78,7 +78,7 @@ declare var global: {
   // Internal-specific
   +__DEV__?: boolean,
   +RN$Bridgeless?: boolean,
-  +RN$discordUiManagerLazyPropertiesOptimization?: boolean,
+  +RN$discordUiManagerOptimization?: number,
 
   // setupDOM
   +DOMRect: typeof DOMRect,

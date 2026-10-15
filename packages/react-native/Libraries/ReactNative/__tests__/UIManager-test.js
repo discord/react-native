@@ -18,24 +18,25 @@ jest.unmock('../UIManager');
 
 describe('UIManager', () => {
   const originalBridgelessValue = global.RN$Bridgeless;
-  const originalLazyPropertiesOptimization =
-    global.RN$discordUiManagerLazyPropertiesOptimization;
+  const originalUIManagerOptimization = global.RN$discordUiManagerOptimization;
   const originalGetConstants = global.RN$LegacyInterop_UIManager_getConstants;
   const originalGetConstantsForViewManager =
     global.RN$LegacyInterop_UIManager_getConstantsForViewManager;
   const originalGetDefaultEventTypes =
     global.RN$LegacyInterop_UIManager_getDefaultEventTypes;
-  const viewManagerConfig = {Commands: {focus: 1}};
+  const viewManagerConfig = {Commands: {focus: 1}, NativeProps: {}};
   const getConstants = jest.fn(() => ({
     LazyViewManagersEnabled: true,
     ViewManagerNames: ['RCTTestView'],
   }));
   const getConstantsForViewManager = jest.fn(() => viewManagerConfig);
+  const getDefaultEventTypes = jest.fn(() => ({}));
 
   beforeEach(() => {
     jest.resetModules();
     getConstants.mockClear();
     getConstantsForViewManager.mockClear();
+    getDefaultEventTypes.mockClear();
 
     // $FlowExpectedError[cannot-write]
     global.RN$Bridgeless = true;
@@ -45,17 +46,15 @@ describe('UIManager', () => {
     global.RN$LegacyInterop_UIManager_getConstantsForViewManager =
       getConstantsForViewManager;
     // $FlowExpectedError[cannot-write]
-    global.RN$LegacyInterop_UIManager_getDefaultEventTypes = jest.fn(
-      () => ({}),
-    );
+    global.RN$LegacyInterop_UIManager_getDefaultEventTypes =
+      getDefaultEventTypes;
   });
 
   afterEach(() => {
     // $FlowExpectedError[cannot-write]
     global.RN$Bridgeless = originalBridgelessValue;
     // $FlowExpectedError[cannot-write]
-    global.RN$discordUiManagerLazyPropertiesOptimization =
-      originalLazyPropertiesOptimization;
+    global.RN$discordUiManagerOptimization = originalUIManagerOptimization;
     // $FlowExpectedError[cannot-write]
     global.RN$LegacyInterop_UIManager_getConstants = originalGetConstants;
     // $FlowExpectedError[cannot-write]
@@ -67,9 +66,9 @@ describe('UIManager', () => {
     jest.resetModules();
   });
 
-  it('preserves lazy ViewManager getters when composing the Bridgeless implementation', () => {
+  it('preserves lazy ViewManager getters in optimization mode 1', () => {
     // $FlowExpectedError[cannot-write]
-    global.RN$discordUiManagerLazyPropertiesOptimization = true;
+    global.RN$discordUiManagerOptimization = 1;
 
     const UIManager = require('../UIManager').default;
 
@@ -85,9 +84,9 @@ describe('UIManager', () => {
     expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
   });
 
-  it('eagerly reads ViewManager getters when the optimization is disabled', () => {
+  it('eagerly reads ViewManager getters in optimization mode 0', () => {
     // $FlowExpectedError[cannot-write]
-    global.RN$discordUiManagerLazyPropertiesOptimization = false;
+    global.RN$discordUiManagerOptimization = 0;
 
     const UIManager = require('../UIManager').default;
 
@@ -95,4 +94,47 @@ describe('UIManager', () => {
     expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
     expect(Reflect.get(UIManager, 'RCTTestView')).toBe(viewManagerConfig);
   });
+
+  it.each([2, 3])(
+    'loads and caches individual ViewManager configs on demand in optimization mode %s',
+    optimization => {
+      // $FlowExpectedError[cannot-write]
+      global.RN$discordUiManagerOptimization = optimization;
+
+      const UIManager = require('../UIManager').default;
+
+      expect(getConstants).not.toHaveBeenCalled();
+      expect(getConstantsForViewManager).not.toHaveBeenCalled();
+
+      expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
+        viewManagerConfig,
+      );
+      expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
+        viewManagerConfig,
+      );
+      expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
+
+      expect(UIManager.getConstants()).toEqual({
+        LazyViewManagersEnabled: true,
+        ViewManagerNames: ['RCTTestView'],
+      });
+      expect(getConstants).toHaveBeenCalledTimes(1);
+    },
+  );
+
+  it.each([2, 3])(
+    'does not load all constants when attaching default event types in optimization mode %s',
+    optimization => {
+      // $FlowExpectedError[cannot-write]
+      global.RN$discordUiManagerOptimization = optimization;
+
+      const getNativeComponentAttributes =
+        require('../getNativeComponentAttributes').default;
+      getNativeComponentAttributes('RCTTestView');
+
+      expect(getConstants).not.toHaveBeenCalled();
+      expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
+      expect(getDefaultEventTypes).toHaveBeenCalledTimes(1);
+    },
+  );
 });

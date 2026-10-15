@@ -396,14 +396,13 @@ void defineReactInstanceFlags(
   // Discord: inject feature flag value to global runtime object. The feature
   // flag is set on the native side at app start. This way JS can read its
   // value immediately.
-  const auto uiManagerLazyPropertiesOptimizationEnabled =
-      ReactNativeFeatureFlags::discordUiManagerLazyPropertiesOptimization();
-  auto uiManagerLazyPropertiesOptimizationValue =
-      jsi::Value(uiManagerLazyPropertiesOptimizationEnabled);
+  const auto uiManagerOptimization =
+      ReactNativeFeatureFlags::discordUiManagerOptimization();
+  auto uiManagerOptimizationValue = jsi::Value(uiManagerOptimization);
   defineReadOnlyGlobal(
       runtime,
-      "RN$discordUiManagerLazyPropertiesOptimization",
-      std::move(uiManagerLazyPropertiesOptimizationValue));
+      "RN$discordUiManagerOptimization",
+      std::move(uiManagerOptimizationValue));
 
   if (options.isProfiling) {
     defineReadOnlyGlobal(runtime, "__RCTProfileIsProfiling", jsi::Value(true));

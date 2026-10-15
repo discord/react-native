@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<9e727309ab94fe32fee937502251b4b0>>
+ * @generated SignedSource<<584ebd805c4a72383eb1e07ef28d490b>>
  */
 
 /**
@@ -60,7 +60,7 @@ class JReactNativeFeatureFlagsCxxInterop
   static bool disableViewPreallocationAndroid(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
-  static bool discordUiManagerLazyPropertiesOptimization(
+  static double discordUiManagerOptimization(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop>);
 
   static bool enableAccessibilityOrder(

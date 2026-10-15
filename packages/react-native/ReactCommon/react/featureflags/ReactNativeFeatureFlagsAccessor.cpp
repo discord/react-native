@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<3169c783d2059d89e0942a07fe20b042>>
+ * @generated SignedSource<<ba31b0f93b70e168bb4f9182ebbcbb2a>>
  */
 
 /**
@@ -209,8 +209,8 @@ bool ReactNativeFeatureFlagsAccessor::disableViewPreallocationAndroid() {
   return flagValue.value();
 }
 
-bool ReactNativeFeatureFlagsAccessor::discordUiManagerLazyPropertiesOptimization() {
-  auto flagValue = discordUiManagerLazyPropertiesOptimization_.load();
+double ReactNativeFeatureFlagsAccessor::discordUiManagerOptimization() {
+  auto flagValue = discordUiManagerOptimization_.load();
 
   if (!flagValue.has_value()) {
     // This block is not exclusive but it is not necessary.
@@ -218,10 +218,10 @@ bool ReactNativeFeatureFlagsAccessor::discordUiManagerLazyPropertiesOptimization
     // be accessing the provider multiple times but the end state of this
     // instance and the returned flag value would be the same.
 
-    markFlagAsAccessed(10, "discordUiManagerLazyPropertiesOptimization");
+    markFlagAsAccessed(10, "discordUiManagerOptimization");
 
-    flagValue = currentProvider_->discordUiManagerLazyPropertiesOptimization();
-    discordUiManagerLazyPropertiesOptimization_ = flagValue;
+    flagValue = currentProvider_->discordUiManagerOptimization();
+    discordUiManagerOptimization_ = flagValue;
   }
 
   return flagValue.value();

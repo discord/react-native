@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<e9abfe5a37094ab93bd7ef6ff2a55e0d>>
+ * @generated SignedSource<<4d3705bd5161ff7635e97ae248c74868>>
  */
 
 /**
@@ -42,7 +42,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool disableSubviewClippingAndroid();
   bool disableTextLayoutManagerCacheAndroid();
   bool disableViewPreallocationAndroid();
-  bool discordUiManagerLazyPropertiesOptimization();
+  double discordUiManagerOptimization();
   bool enableAccessibilityOrder();
   bool enableAccumulatedUpdatesInRawPropsAndroid();
   bool enableAndroidTextMeasurementOptimizations();
@@ -154,7 +154,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> disableSubviewClippingAndroid_;
   std::atomic<std::optional<bool>> disableTextLayoutManagerCacheAndroid_;
   std::atomic<std::optional<bool>> disableViewPreallocationAndroid_;
-  std::atomic<std::optional<bool>> discordUiManagerLazyPropertiesOptimization_;
+  std::atomic<std::optional<double>> discordUiManagerOptimization_;
   std::atomic<std::optional<bool>> enableAccessibilityOrder_;
   std::atomic<std::optional<bool>> enableAccumulatedUpdatesInRawPropsAndroid_;
   std::atomic<std::optional<bool>> enableAndroidTextMeasurementOptimizations_;

@@ -208,7 +208,11 @@ const UIManagerOverrides = {
 };
 
 let UIManager: UIManagerJSInterface;
-if (global.RN$discordUiManagerLazyPropertiesOptimization === true) {
+const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
+const shouldPreserveLazyProperties =
+  uiManagerOptimization === 1 || uiManagerOptimization === 3;
+
+if (shouldPreserveLazyProperties) {
   // Copy property descriptors instead of spreading UIManagerImpl. In Bridgeless
   // mode, UIManagerImpl may define enumerable lazy ViewManager getters. Spreading
   // the object would invoke every getter during module initialization.
