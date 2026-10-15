@@ -95,46 +95,40 @@ describe('UIManager', () => {
     expect(Reflect.get(UIManager, 'RCTTestView')).toBe(viewManagerConfig);
   });
 
-  it.each([2, 3])(
-    'loads and caches individual ViewManager configs on demand in optimization mode %s',
-    optimization => {
-      // $FlowExpectedError[cannot-write]
-      global.RN$discordUiManagerOptimization = optimization;
+  it('loads and caches individual ViewManager configs on demand in optimization mode 2', () => {
+    // $FlowExpectedError[cannot-write]
+    global.RN$discordUiManagerOptimization = 2;
 
-      const UIManager = require('../UIManager').default;
+    const UIManager = require('../UIManager').default;
 
-      expect(getConstants).not.toHaveBeenCalled();
-      expect(getConstantsForViewManager).not.toHaveBeenCalled();
+    expect(getConstants).not.toHaveBeenCalled();
+    expect(getConstantsForViewManager).not.toHaveBeenCalled();
 
-      expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
-        viewManagerConfig,
-      );
-      expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
-        viewManagerConfig,
-      );
-      expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
+    expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
+      viewManagerConfig,
+    );
+    expect(UIManager.getViewManagerConfig('RCTTestView')).toBe(
+      viewManagerConfig,
+    );
+    expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
 
-      expect(UIManager.getConstants()).toEqual({
-        LazyViewManagersEnabled: true,
-        ViewManagerNames: ['RCTTestView'],
-      });
-      expect(getConstants).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(UIManager.getConstants()).toEqual({
+      LazyViewManagersEnabled: true,
+      ViewManagerNames: ['RCTTestView'],
+    });
+    expect(getConstants).toHaveBeenCalledTimes(1);
+  });
 
-  it.each([2, 3])(
-    'does not load all constants when attaching default event types in optimization mode %s',
-    optimization => {
-      // $FlowExpectedError[cannot-write]
-      global.RN$discordUiManagerOptimization = optimization;
+  it('does not load all constants when attaching default event types in optimization mode 2', () => {
+    // $FlowExpectedError[cannot-write]
+    global.RN$discordUiManagerOptimization = 2;
 
-      const getNativeComponentAttributes =
-        require('../getNativeComponentAttributes').default;
-      getNativeComponentAttributes('RCTTestView');
+    const getNativeComponentAttributes =
+      require('../getNativeComponentAttributes').default;
+    getNativeComponentAttributes('RCTTestView');
 
-      expect(getConstants).not.toHaveBeenCalled();
-      expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
-      expect(getDefaultEventTypes).toHaveBeenCalledTimes(1);
-    },
-  );
+    expect(getConstants).not.toHaveBeenCalled();
+    expect(getConstantsForViewManager).toHaveBeenCalledTimes(1);
+    expect(getDefaultEventTypes).toHaveBeenCalledTimes(1);
+  });
 });

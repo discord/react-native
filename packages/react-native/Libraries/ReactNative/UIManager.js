@@ -209,8 +209,7 @@ const UIManagerOverrides = {
 
 let UIManager: UIManagerJSInterface;
 const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
-const shouldPreserveLazyProperties =
-  uiManagerOptimization === 1 || uiManagerOptimization === 3;
+const shouldPreserveLazyProperties = uiManagerOptimization === 1;
 
 if (shouldPreserveLazyProperties) {
   // Copy property descriptors instead of spreading UIManagerImpl. In Bridgeless

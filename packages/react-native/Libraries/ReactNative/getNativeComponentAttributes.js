@@ -34,8 +34,7 @@ const UIManager = require('./UIManager').default;
 const nullthrows = require('nullthrows');
 
 const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
-const shouldLoadViewManagerConstantsOnDemand =
-  uiManagerOptimization === 2 || uiManagerOptimization === 3;
+const shouldLoadViewManagerConstantsOnDemand = uiManagerOptimization === 2;
 
 function getNativeComponentAttributes(uiViewClassName: string): any {
   const viewConfig = UIManager.getViewManagerConfig(uiViewClassName);

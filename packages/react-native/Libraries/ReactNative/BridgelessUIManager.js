@@ -48,8 +48,7 @@ const getDefaultEventTypes: ?() => Object =
   global.RN$LegacyInterop_UIManager_getDefaultEventTypes;
 
 const uiManagerOptimization = global.RN$discordUiManagerOptimization ?? 0;
-const shouldLoadViewManagerConstantsOnDemand =
-  uiManagerOptimization === 2 || uiManagerOptimization === 3;
+const shouldLoadViewManagerConstantsOnDemand = uiManagerOptimization === 2;
 
 const getDefaultEventTypesCached = (function () {
   let wasCalledOnce = false;

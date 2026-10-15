@@ -163,8 +163,8 @@ const definitions: FeatureFlagDefinitions = {
       metadata: {
         dateAdded: '2026-10-15',
         description:
-          'Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand, 3 = enable both.',
-        expectedReleaseValue: 3,
+          'Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.',
+        expectedReleaseValue: 2,
         purpose: 'experimentation',
       },
       ossReleaseStage: 'none',

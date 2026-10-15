@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<857952a326f15422d1d9f70892ff1003>>
+ * @generated SignedSource<<cffc01d719cbe277b0663bc53798f525>>
  * @flow strict
  * @noformat
  */
@@ -253,7 +253,7 @@ export const disableTextLayoutManagerCacheAndroid: Getter<boolean> = createNativ
  */
 export const disableViewPreallocationAndroid: Getter<boolean> = createNativeFlagGetter('disableViewPreallocationAndroid', false);
 /**
- * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand, 3 = enable both.
+ * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
  */
 export const discordUiManagerOptimization: Getter<number> = createNativeFlagGetter('discordUiManagerOptimization', 0);
 /**

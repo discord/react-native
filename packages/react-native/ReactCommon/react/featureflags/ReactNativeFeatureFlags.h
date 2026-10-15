@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<bf92ed071cfc94901e3c55636b5cabd2>>
+ * @generated SignedSource<<01cfdab8946e251169d6a69ed712d57e>>
  */
 
 /**
@@ -90,7 +90,7 @@ class ReactNativeFeatureFlags {
   RN_EXPORT static bool disableViewPreallocationAndroid();
 
   /**
-   * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand, 3 = enable both.
+   * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
    */
   RN_EXPORT static double discordUiManagerOptimization();
 
