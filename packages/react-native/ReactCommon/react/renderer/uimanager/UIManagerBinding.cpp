@@ -481,13 +481,16 @@ jsi::Value UIManagerBinding::get(
           auto shadowNodeList = shadowNodeListFromValue(runtime, arguments[1]);
 
           static const clock::time_point t0 = clock::now();
-          const bool isWithinFirst5s = (clock::now() - t0) < std::chrono::seconds(5);
+          const bool isWithinFirst5s =
+              (clock::now() - t0) < std::chrono::seconds(5);
 
           uiManager->completeSurface(
               surfaceId,
               shadowNodeList,
               {.enableStateReconciliation = true,
-               .mountSynchronously = isWithinFirst5s, // make sure we push first render as soon as possible otherwise we observe 200ms delay
+               .mountSynchronously =
+                   isWithinFirst5s, // make sure we push first render as soon as
+                                    // possible otherwise we observe 200ms delay
                .source = ShadowTree::CommitSource::React});
 
           return jsi::Value::undefined();

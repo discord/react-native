@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<22e430660a18eb259806cad2c5644b48>>
+ * @generated SignedSource<<fd827f02cf87afa56d3827c6fd29a31f>>
  */
 
 /**
@@ -96,6 +96,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool disableViewPreallocationAndroid() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("disableViewPreallocationAndroid");
+    return method(javaProvider_);
+  }
+
+  double discordUiManagerOptimization() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jdouble()>("discordUiManagerOptimization");
     return method(javaProvider_);
   }
 
@@ -681,6 +687,11 @@ bool JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid(
   return ReactNativeFeatureFlags::disableViewPreallocationAndroid();
 }
 
+double JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::discordUiManagerOptimization();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableAccessibilityOrder();
@@ -1182,6 +1193,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "disableViewPreallocationAndroid",
         JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid),
+      makeNativeMethod(
+        "discordUiManagerOptimization",
+        JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization),
       makeNativeMethod(
         "enableAccessibilityOrder",
         JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder),
