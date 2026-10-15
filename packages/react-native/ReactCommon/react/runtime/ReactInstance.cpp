@@ -393,6 +393,18 @@ void defineReactInstanceFlags(
     const ReactInstance::JSRuntimeFlags& options) noexcept {
   defineReadOnlyGlobal(runtime, "RN$Bridgeless", jsi::Value(true));
 
+  // Discord: inject feature flag value to global runtime object. The feature
+  // flag is set on the native side at app start. This way JS can read its
+  // value immediately.
+  const auto uiManagerLazyPropertiesOptimizationEnabled =
+      ReactNativeFeatureFlags::discordUiManagerLazyPropertiesOptimization();
+  auto uiManagerLazyPropertiesOptimizationValue =
+      jsi::Value(uiManagerLazyPropertiesOptimizationEnabled);
+  defineReadOnlyGlobal(
+      runtime,
+      "RN$discordUiManagerLazyPropertiesOptimization",
+      std::move(uiManagerLazyPropertiesOptimizationValue));
+
   if (options.isProfiling) {
     defineReadOnlyGlobal(runtime, "__RCTProfileIsProfiling", jsi::Value(true));
   }

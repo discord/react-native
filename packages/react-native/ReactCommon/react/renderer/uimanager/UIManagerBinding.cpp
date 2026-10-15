@@ -11,7 +11,6 @@
 #include <glog/logging.h>
 #include <jsi/JSIDynamic.h>
 #include <react/debug/react_native_assert.h>
-#include <react/featureflags/ReactNativeFeatureFlags.h>
 #include <react/renderer/components/view/PointerEvent.h>
 #include <react/renderer/core/LayoutableShadowNode.h>
 #include <react/renderer/dom/DOM.h>
@@ -31,14 +30,6 @@ void UIManagerBinding::createAndInstallIfNeeded(
   auto uiManagerValue =
       runtime.global().getProperty(runtime, uiManagerModuleName);
   if (uiManagerValue.isUndefined()) {
-    // Discord: inject feature flag value to global runtime object. The feature
-    // flag is set on the native side at app start. This way JS can read its
-    // value immediately.
-    if (ReactNativeFeatureFlags::discordUiManagerLazyPropertiesOptimization()) {
-      runtime.global().setProperty(
-          runtime, "discordUiManagerLazyPropertiesOptimization", true);
-    }
-
     // The global namespace does not have an instance of the binding;
     // we need to create, install and return it.
     auto uiManagerBinding = std::make_shared<UIManagerBinding>(uiManager);

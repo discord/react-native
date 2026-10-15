@@ -231,6 +231,19 @@ TEST_F(ReactInstanceTest, testBridgelessFlagIsSet) {
   EXPECT_EQ(val.getBool(), true);
 }
 
+TEST_F(
+    ReactInstanceTest,
+    testUiManagerLazyPropertiesOptimizationFlagIsSetBeforeBundle) {
+  initializeRuntimeWithScript(R"(
+    globalThis.uiManagerLazyPropertiesOptimizationFlagWasDefined =
+      typeof RN$discordUiManagerLazyPropertiesOptimization === 'boolean';
+  )");
+
+  auto val =
+      eval("globalThis.uiManagerLazyPropertiesOptimizationFlagWasDefined");
+  EXPECT_EQ(val.getBool(), true);
+}
+
 TEST_F(ReactInstanceTest, testProfilingFlag) {
   auto valBefore = tryEval("__RCTProfileIsProfiling === true", "false");
   EXPECT_EQ(valBefore.getBool(), false);

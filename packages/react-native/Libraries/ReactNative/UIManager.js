@@ -208,22 +208,20 @@ const UIManagerOverrides = {
 };
 
 let UIManager: UIManagerJSInterface;
-if (global.discordUiManagerLazyPropertiesOptimization) {
+if (global.RN$discordUiManagerLazyPropertiesOptimization === true) {
   // Copy property descriptors instead of spreading UIManagerImpl. In Bridgeless
   // mode, UIManagerImpl may define enumerable lazy ViewManager getters. Spreading
   // the object would invoke every getter during module initialization.
   // $FlowFixMe[incompatible-type] Flow cannot infer properties from descriptors.
-  UIManager = Object.create(
-    Object.getPrototypeOf(UIManagerImpl),
-    {
-      ...Object.getOwnPropertyDescriptors(
-        // $FlowFixMe[class-object-subtyping] UIManagerImpl is a runtime object.
-        UIManagerImpl,
-      ),
-      ...Object.getOwnPropertyDescriptors(UIManagerOverrides),
-    },
-  );
+  UIManager = Object.create(Object.getPrototypeOf(UIManagerImpl), {
+    ...Object.getOwnPropertyDescriptors(
+      // $FlowFixMe[class-object-subtyping] UIManagerImpl is a runtime object.
+      UIManagerImpl,
+    ),
+    ...Object.getOwnPropertyDescriptors(UIManagerOverrides),
+  });
 } else {
+  // $FlowFixMe[cannot-spread-interface]
   UIManager = {
     ...UIManagerImpl,
     ...UIManagerOverrides,
