@@ -8,7 +8,6 @@
  * @format
  */
 
-import type {UnsafeObject} from '../Types/CodegenTypes';
 import type {UIManagerJSInterface} from '../Types/UIManagerJSInterface';
 
 import {getFabricUIManager} from './FabricUIManager';
@@ -208,19 +207,27 @@ const UIManagerOverrides = {
   },
 };
 
-// Copy property descriptors instead of spreading UIManagerImpl. In Bridgeless
-// mode, UIManagerImpl may define enumerable lazy ViewManager getters. Spreading
-// the object would invoke every getter during module initialization.
-// $FlowFixMe[incompatible-type] Flow cannot infer properties from descriptors.
-const UIManager: UIManagerJSInterface = Object.create(
-  Object.getPrototypeOf(UIManagerImpl),
-  {
-    ...Object.getOwnPropertyDescriptors(
-      // $FlowFixMe[class-object-subtyping] UIManagerImpl is a runtime object.
-      UIManagerImpl,
-    ),
-    ...Object.getOwnPropertyDescriptors(UIManagerOverrides),
-  },
-);
+let UIManager: UIManagerJSInterface;
+if (global.discordUiManagerLazyPropertiesOptimization) {
+  // Copy property descriptors instead of spreading UIManagerImpl. In Bridgeless
+  // mode, UIManagerImpl may define enumerable lazy ViewManager getters. Spreading
+  // the object would invoke every getter during module initialization.
+  // $FlowFixMe[incompatible-type] Flow cannot infer properties from descriptors.
+  UIManager = Object.create(
+    Object.getPrototypeOf(UIManagerImpl),
+    {
+      ...Object.getOwnPropertyDescriptors(
+        // $FlowFixMe[class-object-subtyping] UIManagerImpl is a runtime object.
+        UIManagerImpl,
+      ),
+      ...Object.getOwnPropertyDescriptors(UIManagerOverrides),
+    },
+  );
+} else {
+  UIManager = {
+    ...UIManagerImpl,
+    ...UIManagerOverrides,
+  };
+}
 
 export default UIManager;
