@@ -31,10 +31,12 @@ void UIManagerBinding::createAndInstallIfNeeded(
   auto uiManagerValue =
       runtime.global().getProperty(runtime, uiManagerModuleName);
   if (uiManagerValue.isUndefined()) {
-    // Discord: inject feature flag value to global runtime object. The feature flag
-    // is set on the native side at app start. This way JS can read its value immediately.
+    // Discord: inject feature flag value to global runtime object. The feature
+    // flag is set on the native side at app start. This way JS can read its
+    // value immediately.
     if (ReactNativeFeatureFlags::discordUiManagerLazyPropertiesOptimization()) {
-        runtime.global().setProperty(runtime, "discordUiManagerLazyPropertiesOptimization", true);
+      runtime.global().setProperty(
+          runtime, "discordUiManagerLazyPropertiesOptimization", true);
     }
 
     // The global namespace does not have an instance of the binding;
@@ -488,13 +490,16 @@ jsi::Value UIManagerBinding::get(
           auto shadowNodeList = shadowNodeListFromValue(runtime, arguments[1]);
 
           static const clock::time_point t0 = clock::now();
-          const bool isWithinFirst5s = (clock::now() - t0) < std::chrono::seconds(5);
+          const bool isWithinFirst5s =
+              (clock::now() - t0) < std::chrono::seconds(5);
 
           uiManager->completeSurface(
               surfaceId,
               shadowNodeList,
               {.enableStateReconciliation = true,
-               .mountSynchronously = isWithinFirst5s, // make sure we push first render as soon as possible otherwise we observe 200ms delay
+               .mountSynchronously =
+                   isWithinFirst5s, // make sure we push first render as soon as
+                                    // possible otherwise we observe 200ms delay
                .source = ShadowTree::CommitSource::React});
 
           return jsi::Value::undefined();
