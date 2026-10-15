@@ -158,6 +158,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    discordUiManagerLazyPropertiesOptimization: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-10-15',
+        description:
+          'Optimize lazy properties in UIManager.',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableAccessibilityOrder: {
       defaultValue: false,
       metadata: {
