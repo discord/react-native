@@ -218,6 +218,7 @@ internal class ReactInstance(
     // initialized.
     // This happens inside getTurboModuleManagerDelegate getter.
     if (ReactNativeFeatureFlags.useNativeViewConfigsInBridgelessMode()) {
+      val customBubblingEvents: MutableMap<String, Any> = HashMap()
       val customDirectEvents: MutableMap<String, Any> = HashMap()
 
       UIConstantsProviderBinding.install(
@@ -237,19 +238,30 @@ internal class ReactInstance(
             getConstantsForViewManager(viewManager, customDirectEvents)
           },
           {
-            UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap()
-                ?: run {
-                  val viewManagers: List<ViewManager<*, *>> =
-                      ArrayList(viewManagerResolver.eagerViewManagerMap.values)
-                  val constants = createConstants(viewManagers, customDirectEvents)
+            val constantsCache = UIManagerConstantsCache.getInstance()
+            val cachedConstants = constantsCache.getUIManagerConstantsAsWritableMap()
+            if (cachedConstants != null) {
+              cachedConstants
+            } else {
+              val viewManagers: List<ViewManager<*, *>> =
+                  ArrayList(viewManagerResolver.eagerViewManagerMap.values)
+              val constants =
+                  createConstants(viewManagers, customBubblingEvents, customDirectEvents)
 
-                  val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
-                  if (!lazyViewManagers.isEmpty()) {
-                    constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
-                    constants["LazyViewManagersEnabled"] = true
-                  }
-                  Arguments.makeNativeMap(constants)
-                }
+              val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
+              if (!lazyViewManagers.isEmpty()) {
+                constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
+                constants["LazyViewManagersEnabled"] = true
+              }
+
+              // Persist only after the constants are complete so a cache hit returns the exact
+              // same shape as the miss path.
+              constantsCache.saveConstantsAndBubblingEventsTypes(
+                  constants,
+                  customBubblingEvents,
+              )
+              Arguments.makeNativeMap(constants)
+            }
           },
       )
     }
@@ -592,6 +604,7 @@ internal class ReactInstance(
 
     private fun createConstants(
         viewManagers: List<ViewManager<in Nothing, in Nothing>>,
+        customBubblingEvents: MutableMap<String, Any>?,
         customDirectEvents: MutableMap<String, Any>?,
     ): MutableMap<String, Any> {
       ReactMarker.logMarker(ReactMarkerConstants.CREATE_UI_MANAGER_MODULE_CONSTANTS_START)
@@ -601,7 +614,7 @@ internal class ReactInstance(
       try {
         return UIManagerModuleConstantsHelper.createConstants(
             viewManagers,
-            null,
+            customBubblingEvents,
             customDirectEvents,
         )
       } finally {
