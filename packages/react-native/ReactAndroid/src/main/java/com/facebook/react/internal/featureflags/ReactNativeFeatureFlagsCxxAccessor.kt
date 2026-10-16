@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<10c483c7007076bb3c1cee1197c20c89>>
+ * @generated SignedSource<<2f795a10a9de5d60ddf07671aa7b7c9d>>
  */
 
 /**
@@ -30,6 +30,7 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
   private var disableSubviewClippingAndroidCache: Boolean? = null
   private var disableTextLayoutManagerCacheAndroidCache: Boolean? = null
   private var disableViewPreallocationAndroidCache: Boolean? = null
+  private var discordSkipUnchangedYogaDirtyCache: Boolean? = null
   private var discordUiManagerOptimizationCache: Double? = null
   private var enableAccessibilityOrderCache: Boolean? = null
   private var enableAccumulatedUpdatesInRawPropsAndroidCache: Boolean? = null
@@ -206,6 +207,15 @@ internal class ReactNativeFeatureFlagsCxxAccessor : ReactNativeFeatureFlagsAcces
     if (cached == null) {
       cached = ReactNativeFeatureFlagsCxxInterop.disableViewPreallocationAndroid()
       disableViewPreallocationAndroidCache = cached
+    }
+    return cached
+  }
+
+  override fun discordSkipUnchangedYogaDirty(): Boolean {
+    var cached = discordSkipUnchangedYogaDirtyCache
+    if (cached == null) {
+      cached = ReactNativeFeatureFlagsCxxInterop.discordSkipUnchangedYogaDirty()
+      discordSkipUnchangedYogaDirtyCache = cached
     }
     return cached
   }

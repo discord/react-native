@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fd827f02cf87afa56d3827c6fd29a31f>>
+ * @generated SignedSource<<79f454a4ac0fe044f40517855ba49deb>>
  */
 
 /**
@@ -96,6 +96,12 @@ class ReactNativeFeatureFlagsJavaProvider
   bool disableViewPreallocationAndroid() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("disableViewPreallocationAndroid");
+    return method(javaProvider_);
+  }
+
+  bool discordSkipUnchangedYogaDirty() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jboolean()>("discordSkipUnchangedYogaDirty");
     return method(javaProvider_);
   }
 
@@ -687,6 +693,11 @@ bool JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid(
   return ReactNativeFeatureFlags::disableViewPreallocationAndroid();
 }
 
+bool JReactNativeFeatureFlagsCxxInterop::discordSkipUnchangedYogaDirty(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::discordSkipUnchangedYogaDirty();
+}
+
 double JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::discordUiManagerOptimization();
@@ -1193,6 +1204,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "disableViewPreallocationAndroid",
         JReactNativeFeatureFlagsCxxInterop::disableViewPreallocationAndroid),
+      makeNativeMethod(
+        "discordSkipUnchangedYogaDirty",
+        JReactNativeFeatureFlagsCxxInterop::discordSkipUnchangedYogaDirty),
       makeNativeMethod(
         "discordUiManagerOptimization",
         JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization),
