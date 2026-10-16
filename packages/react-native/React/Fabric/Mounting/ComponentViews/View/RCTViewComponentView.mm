@@ -10,6 +10,7 @@
 
 #import <CoreGraphics/CoreGraphics.h>
 #import <QuartzCore/QuartzCore.h>
+#import <math.h>
 #import <objc/runtime.h>
 #import <optional>
 #import <ranges>
@@ -39,6 +40,19 @@
 using namespace facebook::react;
 
 const CGFloat BACKGROUND_COLOR_ZPOSITION = -1024.0f;
+
+BOOL RCTViewComponentViewHasRecycleTransformLeak(
+    CATransform3D layerTransform,
+    const facebook::react::Transform &propsTransform)
+{
+  return propsTransform == Transform::Identity() && !CATransform3DIsIdentity(layerTransform);
+}
+
+BOOL RCTViewComponentViewHasRecycleOpacityLeak(float layerOpacity, facebook::react::Float propsOpacity)
+{
+  float expectedOpacity = (float)propsOpacity;
+  return expectedOpacity >= 0.999f && fabsf(layerOpacity - expectedOpacity) > 0.01f;
+}
 
 @implementation RCTViewComponentView {
   UIColor *_backgroundColor;
@@ -699,6 +713,31 @@ static BOOL RCTLayerTransformCollapsesAxis(CALayer *layer)
   if ([_propKeysManagedByAnimated_DO_NOT_USE_THIS_IS_BROKEN containsObject:@"opacity"]) {
     self.layer.opacity = (float)props.opacity;
   }
+
+#if RCT_DEBUG
+  // Native code can stamp layer.transform / layer.opacity outside the prop pipeline.
+  // After recycle, updateProps diffs _props and skips the write, so leftovers poison
+  // the next consumer. Warn so the call site can reset on unmount (do not sanitize here).
+  if (RCTViewComponentViewHasRecycleTransformLeak(self.layer.transform, props.transform)) {
+    RCTLogWarn(
+        @"[FabricRecycleLeak] %@ tag=%ld size=%.0fx%.0f leftover layer.transform %@ "
+         @"(props.transform is identity). Reset on unmount or opt out of recycling via +shouldBeRecycled.",
+        NSStringFromClass(self.class),
+        (long)self.tag,
+        self.bounds.size.width,
+        self.bounds.size.height,
+        NSStringFromCGAffineTransform(CATransform3DGetAffineTransform(self.layer.transform)));
+  }
+  if (RCTViewComponentViewHasRecycleOpacityLeak(self.layer.opacity, props.opacity)) {
+    RCTLogWarn(
+        @"[FabricRecycleLeak] %@ tag=%ld leftover layer.opacity=%.3f (props.opacity=%.3f). "
+         @"Reset on unmount or opt out of recycling.",
+        NSStringFromClass(self.class),
+        (long)self.tag,
+        self.layer.opacity,
+        (float)props.opacity);
+  }
+#endif
 
   // Clean up box shadow layers to prevent cross-component contamination
   if (_boxShadowLayers != nullptr) {
