@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<01cfdab8946e251169d6a69ed712d57e>>
+ * @generated SignedSource<<096729bde9a4580be6756ff8f7bb5045>>
  */
 
 /**
@@ -88,6 +88,11 @@ class ReactNativeFeatureFlags {
    * Force disable view preallocation triggered from createNode off the main thread on Android
    */
   RN_EXPORT static bool disableViewPreallocationAndroid();
+
+  /**
+   * Skip dirtying Yoga nodes in setSize/setPositionType when the value is unchanged (react-native#59101).
+   */
+  RN_EXPORT static bool discordSkipUnchangedYogaDirty();
 
   /**
    * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.

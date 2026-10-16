@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<652b195c21ffe47263fcfbe77a898aa1>>
+ * @generated SignedSource<<8004c71ad564ff4bfb2766ad3665c2e5>>
  */
 
 /**
@@ -89,6 +89,12 @@ public object ReactNativeFeatureFlags {
    */
   @JvmStatic
   public fun disableViewPreallocationAndroid(): Boolean = accessor.disableViewPreallocationAndroid()
+
+  /**
+   * Skip dirtying Yoga nodes in setSize/setPositionType when the value is unchanged (react-native#59101).
+   */
+  @JvmStatic
+  public fun discordSkipUnchangedYogaDirty(): Boolean = accessor.discordSkipUnchangedYogaDirty()
 
   /**
    * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.

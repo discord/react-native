@@ -158,6 +158,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    discordSkipUnchangedYogaDirty: {
+      defaultValue: false,
+      metadata: {
+        dateAdded: '2026-10-16',
+        description:
+          'Skip dirtying Yoga nodes in setSize/setPositionType when the value is unchanged (react-native#59101).',
+        expectedReleaseValue: true,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     discordUiManagerOptimization: {
       defaultValue: 0,
       metadata: {

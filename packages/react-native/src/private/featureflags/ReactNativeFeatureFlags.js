@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<cffc01d719cbe277b0663bc53798f525>>
+ * @generated SignedSource<<91aeb0b626fa2146487c73d4cc2d9d82>>
  * @flow strict
  * @noformat
  */
@@ -57,6 +57,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   disableSubviewClippingAndroid: Getter<boolean>,
   disableTextLayoutManagerCacheAndroid: Getter<boolean>,
   disableViewPreallocationAndroid: Getter<boolean>,
+  discordSkipUnchangedYogaDirty: Getter<boolean>,
   discordUiManagerOptimization: Getter<number>,
   enableAccessibilityOrder: Getter<boolean>,
   enableAccumulatedUpdatesInRawPropsAndroid: Getter<boolean>,
@@ -252,6 +253,10 @@ export const disableTextLayoutManagerCacheAndroid: Getter<boolean> = createNativ
  * Force disable view preallocation triggered from createNode off the main thread on Android
  */
 export const disableViewPreallocationAndroid: Getter<boolean> = createNativeFlagGetter('disableViewPreallocationAndroid', false);
+/**
+ * Skip dirtying Yoga nodes in setSize/setPositionType when the value is unchanged (react-native#59101).
+ */
+export const discordSkipUnchangedYogaDirty: Getter<boolean> = createNativeFlagGetter('discordSkipUnchangedYogaDirty', false);
 /**
  * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
  */
