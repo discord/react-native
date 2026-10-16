@@ -218,7 +218,6 @@ internal class ReactInstance(
     // initialized.
     // This happens inside getTurboModuleManagerDelegate getter.
     if (ReactNativeFeatureFlags.useNativeViewConfigsInBridgelessMode()) {
-      val customBubblingEvents: MutableMap<String, Any> = HashMap()
       val customDirectEvents: MutableMap<String, Any> = HashMap()
 
       UIConstantsProviderBinding.install(
@@ -245,8 +244,7 @@ internal class ReactInstance(
             } else {
               val viewManagers: List<ViewManager<*, *>> =
                   ArrayList(viewManagerResolver.eagerViewManagerMap.values)
-              val constants =
-                  createConstants(viewManagers, customBubblingEvents, customDirectEvents)
+              val constants = createConstants(viewManagers, customDirectEvents)
 
               val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
               if (!lazyViewManagers.isEmpty()) {
@@ -254,12 +252,9 @@ internal class ReactInstance(
                 constants["LazyViewManagersEnabled"] = true
               }
 
-              // Persist only after the constants are complete so a cache hit returns the exact
-              // same shape as the miss path.
-              constantsCache.saveConstantsAndBubblingEventsTypes(
-                  constants,
-                  customBubblingEvents,
-              )
+              // The full constants already contain each ViewManager's bubbling metadata.
+              // Bridgeless does not use the legacy module's separate cumulative bubbling map.
+              constantsCache.saveConstantsAndBubblingEventsTypes(constants, null)
               Arguments.makeNativeMap(constants)
             }
           },
@@ -604,7 +599,6 @@ internal class ReactInstance(
 
     private fun createConstants(
         viewManagers: List<ViewManager<in Nothing, in Nothing>>,
-        customBubblingEvents: MutableMap<String, Any>?,
         customDirectEvents: MutableMap<String, Any>?,
     ): MutableMap<String, Any> {
       ReactMarker.logMarker(ReactMarkerConstants.CREATE_UI_MANAGER_MODULE_CONSTANTS_START)
@@ -614,7 +608,7 @@ internal class ReactInstance(
       try {
         return UIManagerModuleConstantsHelper.createConstants(
             viewManagers,
-            customBubblingEvents,
+            null,
             customDirectEvents,
         )
       } finally {
