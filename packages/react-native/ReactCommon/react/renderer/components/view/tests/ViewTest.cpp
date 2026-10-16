@@ -10,6 +10,8 @@
 
 #include <gtest/gtest.h>
 
+#include <react/featureflags/ReactNativeFeatureFlags.h>
+#include <react/featureflags/ReactNativeFeatureFlagsDefaults.h>
 #include <react/renderer/componentregistry/ComponentDescriptorProviderRegistry.h>
 #include <react/renderer/components/root/RootComponentDescriptor.h>
 #include <react/renderer/components/scrollview/ScrollViewComponentDescriptor.h>
@@ -22,6 +24,14 @@
 #include <yoga/numeric/FloatOptional.h>
 
 namespace facebook::react {
+
+class SkipUnchangedYogaDirtyFeatureFlags
+    : public ReactNativeFeatureFlagsDefaults {
+ public:
+  bool discordSkipUnchangedYogaDirty() override {
+    return true;
+  }
+};
 
 class YogaDirtyFlagTest : public ::testing::Test {
  protected:
@@ -83,6 +93,18 @@ class YogaDirtyFlagTest : public ::testing::Test {
      * Yoga nodes are clean (not dirty) right after layout pass.
      */
     EXPECT_FALSE(rootShadowNode_->layoutIfNeeded());
+  }
+
+  void TearDown() override {
+    ReactNativeFeatureFlags::dangerouslyReset();
+  }
+
+  static void enableSkipUnchangedYogaDirty() {
+    // The fixture constructor already read the flags, so reset before
+    // overriding.
+    ReactNativeFeatureFlags::dangerouslyReset();
+    ReactNativeFeatureFlags::override(
+        std::make_unique<SkipUnchangedYogaDirtyFeatureFlags>());
   }
 };
 
@@ -225,6 +247,67 @@ TEST_F(YogaDirtyFlagTest, updatingStateForScrollViewMistNotDirtyYogaNode) {
              .children = ShadowNodeFragment::childrenPlaceholder(),
              .state = newState});
       });
+
+  EXPECT_FALSE(
+      static_cast<RootShadowNode&>(*newRootShadowNode).layoutIfNeeded());
+}
+
+TEST_F(YogaDirtyFlagTest, settingUnchangedSizeMustNotDirtyYogaNode) {
+  enableSkipUnchangedYogaDirty();
+
+  /*
+   * Component descriptors call `setSize` from `adopt`, which runs on every
+   * clone. Setting the size a node already has must *not* dirty its Yoga node,
+   * otherwise every commit that clones it re-runs layout.
+   */
+  auto setSize = [](const ShadowNode& oldShadowNode) {
+    auto newShadowNode = oldShadowNode.clone({});
+    static_cast<YogaLayoutableShadowNode&>(*newShadowNode)
+        .setSize({.width = 100, .height = 200});
+    return newShadowNode;
+  };
+
+  auto sizedRootShadowNode =
+      rootShadowNode_->cloneTree(innerShadowNode_->getFamily(), setSize);
+
+  /*
+   * Changing the size *must* dirty the Yoga node.
+   */
+  EXPECT_TRUE(
+      static_cast<RootShadowNode&>(*sizedRootShadowNode).layoutIfNeeded());
+
+  auto newRootShadowNode =
+      sizedRootShadowNode->cloneTree(innerShadowNode_->getFamily(), setSize);
+
+  EXPECT_FALSE(
+      static_cast<RootShadowNode&>(*newRootShadowNode).layoutIfNeeded());
+}
+
+TEST_F(YogaDirtyFlagTest, settingUnchangedPositionTypeMustNotDirtyYogaNode) {
+  enableSkipUnchangedYogaDirty();
+
+  /*
+   * Setting the position type a node already has must *not* dirty its Yoga
+   * node.
+   */
+  auto setPositionType = [](const ShadowNode& oldShadowNode) {
+    auto newShadowNode = oldShadowNode.clone({});
+    static_cast<YogaLayoutableShadowNode&>(*newShadowNode)
+        .setPositionType(YGPositionTypeAbsolute);
+    return newShadowNode;
+  };
+
+  auto absoluteRootShadowNode = rootShadowNode_->cloneTree(
+      innerShadowNode_->getFamily(), setPositionType);
+
+  /*
+   * Changing the position type *must* dirty the Yoga node.
+   */
+  EXPECT_TRUE(
+      static_cast<RootShadowNode&>(*absoluteRootShadowNode).layoutIfNeeded());
+
+  auto newRootShadowNode = absoluteRootShadowNode->cloneTree(
+      innerShadowNode_->getFamily(), setPositionType);
 
   EXPECT_FALSE(
       static_cast<RootShadowNode&>(*newRootShadowNode).layoutIfNeeded());
