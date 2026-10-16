@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<4d3705bd5161ff7635e97ae248c74868>>
+ * @generated SignedSource<<9e33add4f9ea7ed16248e7ae0333b127>>
  */
 
 /**
@@ -43,6 +43,7 @@ class ReactNativeFeatureFlagsAccessor {
   bool disableTextLayoutManagerCacheAndroid();
   bool disableViewPreallocationAndroid();
   double discordUiManagerOptimization();
+  double discordTextOptimization();
   bool enableAccessibilityOrder();
   bool enableAccumulatedUpdatesInRawPropsAndroid();
   bool enableAndroidTextMeasurementOptimizations();
@@ -142,7 +143,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::unique_ptr<ReactNativeFeatureFlagsProvider> currentProvider_;
   bool wasOverridden_;
 
-  std::array<std::atomic<const char*>, 99> accessedFeatureFlags_;
+  std::array<std::atomic<const char*>, 100> accessedFeatureFlags_;
 
   std::atomic<std::optional<bool>> commonTestFlag_;
   std::atomic<std::optional<bool>> cdpInteractionMetricsEnabled_;
@@ -155,6 +156,7 @@ class ReactNativeFeatureFlagsAccessor {
   std::atomic<std::optional<bool>> disableTextLayoutManagerCacheAndroid_;
   std::atomic<std::optional<bool>> disableViewPreallocationAndroid_;
   std::atomic<std::optional<double>> discordUiManagerOptimization_;
+  std::atomic<std::optional<double>> discordTextOptimization_;
   std::atomic<std::optional<bool>> enableAccessibilityOrder_;
   std::atomic<std::optional<bool>> enableAccumulatedUpdatesInRawPropsAndroid_;
   std::atomic<std::optional<bool>> enableAndroidTextMeasurementOptimizations_;

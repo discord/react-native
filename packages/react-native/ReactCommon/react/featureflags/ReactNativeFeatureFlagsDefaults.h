@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<d2a632a098313bbafabfdc9ee52efdbb>>
+ * @generated SignedSource<<f7f4e092504d7270e6bf33e3f9f6c032>>
  */
 
 /**
@@ -68,6 +68,10 @@ class ReactNativeFeatureFlagsDefaults : public ReactNativeFeatureFlagsProvider {
   }
 
   double discordUiManagerOptimization() override {
+    return 0.0;
+  }
+
+  double discordTextOptimization() override {
     return 0.0;
   }
 

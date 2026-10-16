@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<fd827f02cf87afa56d3827c6fd29a31f>>
+ * @generated SignedSource<<0be74c94405970ebed9a3deab3fe0a48>>
  */
 
 /**
@@ -102,6 +102,12 @@ class ReactNativeFeatureFlagsJavaProvider
   double discordUiManagerOptimization() override {
     static const auto method =
         getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jdouble()>("discordUiManagerOptimization");
+    return method(javaProvider_);
+  }
+
+  double discordTextOptimization() override {
+    static const auto method =
+        getReactNativeFeatureFlagsProviderJavaClass()->getMethod<jdouble()>("discordTextOptimization");
     return method(javaProvider_);
   }
 
@@ -692,6 +698,11 @@ double JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization(
   return ReactNativeFeatureFlags::discordUiManagerOptimization();
 }
 
+double JReactNativeFeatureFlagsCxxInterop::discordTextOptimization(
+    facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
+  return ReactNativeFeatureFlags::discordTextOptimization();
+}
+
 bool JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder(
     facebook::jni::alias_ref<JReactNativeFeatureFlagsCxxInterop> /*unused*/) {
   return ReactNativeFeatureFlags::enableAccessibilityOrder();
@@ -1196,6 +1207,9 @@ void JReactNativeFeatureFlagsCxxInterop::registerNatives() {
       makeNativeMethod(
         "discordUiManagerOptimization",
         JReactNativeFeatureFlagsCxxInterop::discordUiManagerOptimization),
+      makeNativeMethod(
+        "discordTextOptimization",
+        JReactNativeFeatureFlagsCxxInterop::discordTextOptimization),
       makeNativeMethod(
         "enableAccessibilityOrder",
         JReactNativeFeatureFlagsCxxInterop::enableAccessibilityOrder),
