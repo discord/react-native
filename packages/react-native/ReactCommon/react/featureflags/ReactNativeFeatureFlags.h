@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<01cfdab8946e251169d6a69ed712d57e>>
+ * @generated SignedSource<<f679ea9525ce373bfde704471dee579a>>
  */
 
 /**
@@ -93,6 +93,11 @@ class ReactNativeFeatureFlags {
    * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
    */
   RN_EXPORT static double discordUiManagerOptimization();
+
+  /**
+   * Select text optimizations: 0 = none, 1 = keep paragraph content across unchanged clones, 2 = 1 + skip unused getDesiredWidth on Android.
+   */
+  RN_EXPORT static double discordTextOptimization();
 
   /**
    * When enabled, the accessibilityOrder prop will propagate to native platforms and define the accessibility order.

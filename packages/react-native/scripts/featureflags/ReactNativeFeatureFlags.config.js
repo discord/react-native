@@ -169,6 +169,17 @@ const definitions: FeatureFlagDefinitions = {
       },
       ossReleaseStage: 'none',
     },
+    discordTextOptimization: {
+      defaultValue: 0,
+      metadata: {
+        dateAdded: '2026-10-16',
+        description:
+          'Select text optimizations: 0 = none, 1 = keep paragraph content across unchanged clones, 2 = 1 + skip unused getDesiredWidth on Android.',
+        expectedReleaseValue: 2,
+        purpose: 'experimentation',
+      },
+      ossReleaseStage: 'none',
+    },
     enableAccessibilityOrder: {
       defaultValue: false,
       metadata: {

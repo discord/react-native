@@ -4,7 +4,7 @@
  * This source code is licensed under the MIT license found in the
  * LICENSE file in the root directory of this source tree.
  *
- * @generated SignedSource<<cffc01d719cbe277b0663bc53798f525>>
+ * @generated SignedSource<<22d010497ee09894e5d76890d0bd96af>>
  * @flow strict
  * @noformat
  */
@@ -58,6 +58,7 @@ export type ReactNativeFeatureFlags = $ReadOnly<{
   disableTextLayoutManagerCacheAndroid: Getter<boolean>,
   disableViewPreallocationAndroid: Getter<boolean>,
   discordUiManagerOptimization: Getter<number>,
+  discordTextOptimization: Getter<number>,
   enableAccessibilityOrder: Getter<boolean>,
   enableAccumulatedUpdatesInRawPropsAndroid: Getter<boolean>,
   enableAndroidTextMeasurementOptimizations: Getter<boolean>,
@@ -256,6 +257,10 @@ export const disableViewPreallocationAndroid: Getter<boolean> = createNativeFlag
  * Select UIManager optimizations: 0 = none, 1 = preserve lazy properties, 2 = load view manager constants on demand.
  */
 export const discordUiManagerOptimization: Getter<number> = createNativeFlagGetter('discordUiManagerOptimization', 0);
+/**
+ * Select text optimizations: 0 = none, 1 = keep paragraph content across unchanged clones, 2 = 1 + skip unused getDesiredWidth on Android.
+ */
+export const discordTextOptimization: Getter<number> = createNativeFlagGetter('discordTextOptimization', 0);
 /**
  * When enabled, the accessibilityOrder prop will propagate to native platforms and define the accessibility order.
  */
