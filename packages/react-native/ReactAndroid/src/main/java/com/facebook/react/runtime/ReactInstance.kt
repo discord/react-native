@@ -239,19 +239,26 @@ internal class ReactInstance(
             getConstantsForViewManager(viewManager, customDirectEvents)
           },
           {
-            UIManagerConstantsCache.getInstance().getUIManagerConstantsAsWritableMap()
-                ?: run {
-                  val viewManagers: List<ViewManager<*, *>> =
-                      ArrayList(viewManagerResolver.eagerViewManagerMap.values)
-                  val constants = createConstants(viewManagers, customDirectEvents)
+            val constantsCache = UIManagerConstantsCache.getInstance()
+            val cachedConstants = constantsCache.getUIManagerConstantsAsWritableMap()
+            if (cachedConstants != null) {
+              cachedConstants
+            } else {
+              val viewManagers: List<ViewManager<*, *>> =
+                  ArrayList(viewManagerResolver.eagerViewManagerMap.values)
+              val constants = createConstants(viewManagers, customDirectEvents)
 
-                  val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
-                  if (!lazyViewManagers.isEmpty()) {
-                    constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
-                    constants["LazyViewManagersEnabled"] = true
-                  }
-                  Arguments.makeNativeMap(constants)
-                }
+              val lazyViewManagers = viewManagerResolver.lazyViewManagerNames
+              if (!lazyViewManagers.isEmpty()) {
+                constants["ViewManagerNames"] = ArrayList(lazyViewManagers)
+                constants["LazyViewManagersEnabled"] = true
+              }
+
+              // The full constants already contain each ViewManager's bubbling metadata.
+              // Bridgeless does not use the legacy module's separate cumulative bubbling map.
+              constantsCache.saveConstantsAndBubblingEventsTypes(constants, null)
+              Arguments.makeNativeMap(constants)
+            }
           },
       )
     }

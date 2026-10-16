@@ -24,20 +24,19 @@ import java.util.concurrent.CountDownLatch;
  *   • Full UIManager constants (under MMKV_KEY_CONSTANTS)
  *   • bubblingEventTypes map only (under MMKV_KEY_BUBBLING)
  *
- * On init(...), a background thread:
- *   1) calls MMKV.initialize(...)
- *   2) reads both keys, parses them into Maps
- *   3) countDown()s loadLatch
+ * When enabled, init(...) initializes MMKV and starts a background thread that reads both keys,
+ * parses them into Maps, and countDown()s loadLatch.
  *
- * Exposed methods all block until that single background load finishes:
+ * When enabled, getters block until that single background load finishes:
  *   • getCachedConstants() → Map<String,Object> or null
  *   • getCachedBubblingEventsTypes() → Map<String,Object> or null
  *   • getUIManagerConstantsAsWritableMap() → WritableNativeMap or null
  *
- * To persist:
- *   • call saveConstantsAndBubblingEventsTypes(freshConstantsMap, freshBubblingEventsMap)
- *     which writes two JSON strings (one under each key) off the main thread,
- *     and updates in‐memory maps immediately.
+ * saveConstantsAndBubblingEventsTypes(...) synchronously serializes and writes the supplied maps.
+ * It does not update the in-memory maps loaded during init(...).
+ *
+ * When disabled, getters return null and saves are ignored without touching MMKV or waiting on the
+ * load latch.
  */
 public class UIManagerConstantsCache {
     private static final String TAG = "UIManagerConstantsCache";
@@ -64,6 +63,9 @@ public class UIManagerConstantsCache {
     /** Ensures init(...) is only done once. */
     private volatile boolean initCalled = false;
 
+    /** Allows the host application to disable all cache work for the lifetime of the process. */
+    private volatile boolean cacheEnabled = false;
+
     private String cacheVersionName = null;
 
     private UIManagerConstantsCache() {
@@ -75,17 +77,31 @@ public class UIManagerConstantsCache {
     }
 
     /**
-     * Must be called (once) from Application or MainActivity before any UIManager
-     * constants are accessed. This kicks off:
+     * Must be called once from Application before any UIManager constants are accessed. This kicks
+     * off:
      *   1) MMKV.initialize(...)
      *   2) A background thread that reads two MMKV keys, parses them → Maps,
      *      and countDown()s loadLatch.
      */
-    public synchronized void init(Context appContext) {
+    public void init(Context appContext) {
+        init(appContext, true);
+    }
+
+    /**
+     * Initializes the cache when enabled. The first call fixes the state for the process so a later
+     * fallback init(...) call from ReactActivity cannot change the host application's decision.
+     */
+    public synchronized void init(Context appContext, boolean enabled) {
         if (initCalled) {
             return;
         }
+        cacheEnabled = enabled;
         initCalled = true;
+
+        if (!cacheEnabled) {
+            loadLatch.countDown();
+            return;
+        }
 
         // Its possible that the constants change between versions, so we have to keep track of the version
         // and reset the cache if it changes.
@@ -96,6 +112,8 @@ public class UIManagerConstantsCache {
                     .versionName;
         } catch (PackageManager.NameNotFoundException e) {
             Log.e(TAG, "Failed to get app version name; continuing without caching!", e);
+            cacheEnabled = false;
+            loadLatch.countDown();
             return;
         }
 
@@ -183,6 +201,9 @@ public class UIManagerConstantsCache {
      * @return parsed Map<String,Object> or null if none stored / parse failed.
      */
     public Map<String,Object> getCachedConstants() {
+        if (!isCacheEnabled()) {
+            return null;
+        }
         try {
             loadLatch.await();
         } catch (InterruptedException e) {
@@ -200,6 +221,9 @@ public class UIManagerConstantsCache {
      * @return parsed Map<String,Object> or null if none stored / parse failed.
      */
     public Map<String,Object> getCachedBubblingEventsTypes() {
+        if (!isCacheEnabled()) {
+            return null;
+        }
         try {
             loadLatch.await();
         } catch (InterruptedException e) {
@@ -223,6 +247,9 @@ public class UIManagerConstantsCache {
      * @return WritableNativeMap or null if no full-constants available.
      */
     public WritableNativeMap getUIManagerConstantsAsWritableMap() {
+        if (!isCacheEnabled()) {
+            return null;
+        }
         try {
             loadLatch.await();
         } catch (InterruptedException e) {
@@ -238,14 +265,13 @@ public class UIManagerConstantsCache {
         }
     }
 
-    /**
-     * Takes freshly-built maps (full constants & bubblingEventTypes) and:
-     *   1) Spawns a background thread to JSON-serialize + write each to its own MMKV key,
-     *   2) Updates in-memory caches (constants, bubbling types, and native map) so getters return immediately.
-     */
+    /** Synchronously serializes and writes freshly-built constants and bubblingEventTypes. */
     public void saveConstantsAndBubblingEventsTypes(
             final Map<String,Object> constants,
             final Map<String,Object> bubblingEventsTypes) {
+        if (!isCacheEnabled()) {
+            return;
+        }
         if (constants == null) {
             return;
         }
@@ -280,6 +306,10 @@ public class UIManagerConstantsCache {
         }
 
         MMKV.defaultMMKV().encode(MMKV_KEY_VERSION, cacheVersionName);
+    }
+
+    private boolean isCacheEnabled() {
+        return cacheEnabled;
     }
 
     // ────────────────────────────────────────────────────────────────────────────────
