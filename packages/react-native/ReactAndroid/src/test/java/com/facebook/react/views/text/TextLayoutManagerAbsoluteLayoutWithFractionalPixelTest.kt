@@ -13,9 +13,11 @@ import android.text.Layout
 import android.text.SpannableString
 import android.text.TextPaint
 import android.text.TextUtils
+import com.facebook.react.internal.featureflags.ReactNativeFeatureFlagsForTests
 import com.facebook.yoga.YogaMeasureMode
 import kotlin.math.ceil
 import org.assertj.core.api.Assertions.assertThat
+import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
@@ -40,6 +42,11 @@ import org.robolectric.RobolectricTestRunner
  */
 @RunWith(RobolectricTestRunner::class)
 class TextLayoutManagerAbsoluteLayoutWithFractionalPixelTest {
+
+  @Before
+  fun setUp() {
+    ReactNativeFeatureFlagsForTests.setUp()
+  }
 
   @Test
   fun `EXACTLY mode with fractional width allocates a layout wide enough to fit its own text`() {
