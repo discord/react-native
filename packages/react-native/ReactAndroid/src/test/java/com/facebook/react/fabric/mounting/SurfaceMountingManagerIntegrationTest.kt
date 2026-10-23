@@ -77,7 +77,7 @@ class SurfaceMountingManagerIntegrationTest {
           override fun enableFabricLogs(): Boolean = true
         }
     ReactNativeFeatureFlags.override(featureFlags)
-    FLog.setMinimumLoggingLevel(android.util.Log.DEBUG)
+    FLog.minimumLoggingLevel = android.util.Log.DEBUG
 
     reactContext = BridgeReactContext(RuntimeEnvironment.getApplication())
     themedReactContext = ThemedReactContext(reactContext, reactContext, null, -1)
