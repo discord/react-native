@@ -386,6 +386,19 @@ internal constructor(
       return
     }
 
+    // The parent may have been deleted while this operation was queued in the
+    // ViewTransitionCoordinator.
+    val parentViewState = getNullableViewState(parentView.id)
+    if (parentViewState == null) {
+      ReactSoftExceptionLogger.logSoftException(
+          ReactSoftExceptionLogger.Categories.SURFACE_MOUNTING_MANAGER_MISSING_VIEWSTATE,
+          ReactNoCrashSoftException(
+              "Unable to find viewState for tag: [${parentView.id}] for addViewAtInternal",
+          ),
+      )
+      return
+    }
+
     val childParent = child.parent
     if (childParent != null) {
       val actualParentId = if (childParent is ViewGroup) childParent.id else View.NO_ID
@@ -410,7 +423,6 @@ internal constructor(
       logViewHierarchy(parentView, false)
     }
 
-    val parentViewState = getViewState(parentView.id)
     try {
       getViewGroupManager(parentViewState).addView(parentView, child, atIndex)
     } catch (e: IllegalStateException) {
@@ -514,13 +526,25 @@ internal constructor(
       tag: Int,
       index: Int,
   ): Unit {
+    // The parent may have been deleted while this operation was queued in the
+    // ViewTransitionCoordinator.
+    val parentViewState = getNullableViewState(parentTag)
+    if (parentViewState == null) {
+      ReactSoftExceptionLogger.logSoftException(
+          ReactSoftExceptionLogger.Categories.SURFACE_MOUNTING_MANAGER_MISSING_VIEWSTATE,
+          ReactNoCrashSoftException(
+              "Unable to find viewState for tag: [$parentTag] for removeViewAtInternal",
+          ),
+      )
+      return
+    }
+
     if (SHOW_CHANGED_VIEW_HIERARCHIES) {
       // Display children before deleting any
       FLog.e(TAG, "removeViewAt: [$tag] -> [$parentTag] idx: $index BEFORE")
       logViewHierarchy(parentView, false)
     }
 
-    val parentViewState = getViewState(parentTag)
     val viewGroupManager = getViewGroupManager(parentViewState)
 
     // Verify that the view we're about to remove has the same tag we expect
