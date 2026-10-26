@@ -90,8 +90,9 @@ constructor(context: Context, private val fpsListener: FpsListener? = null) :
     VirtualViewContainer,
     HasChildPressedStateDelay {
 
-  internal companion object {
-    internal var MAX_FLING_VELOCITY: Int? = null
+  public companion object {
+    // Discord: set by the app (ReactScrollViewOverride) to cap fling velocity like its RecyclerViews.
+    @JvmField public var MAX_FLING_VELOCITY: Int? = null
 
     private var scrollerField: java.lang.reflect.Field? = null
     private var triedToGetScrollerField = false
