@@ -150,9 +150,6 @@ class UIManager final : public ShadowTreeDelegate {
       const RootShadowNode::Shared &rootShadowNode,
       const std::vector<const LayoutableShadowNode *> &affectedLayoutableNodes) const noexcept override;
 
-  void shadowTreeCommitSucceeded(const ShadowTreeCommitOptions& commitOptions) const override;
-  void shadowTreeCommitFinalized(const ShadowTreeCommitOptions& commitOptions) const override;
-
   std::shared_ptr<ShadowNode> createNode(
       Tag tag,
       const std::string &componentName,
